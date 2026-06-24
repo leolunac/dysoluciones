@@ -1,0 +1,13 @@
+# Archivos de datos del sistema
+clientes.csv
+db.sqlite3
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración del entorno virtual
+venv/
+.env
