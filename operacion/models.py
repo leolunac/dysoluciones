@@ -202,10 +202,9 @@ class EquipoUnidad(models.Model):
         ("BOMBA_IMPULSION", "Motobomba de impulsión"),
         ("BOMBA_PRESION", "Motobomba de presión"),
         ("HIDROFLOW", "Hidroflow"),
-        ("TANQUE", "Tanque"),
         ("TABLERO", "Tablero eléctrico"),
         ("VALVULERIA", "Válvulería"),
-        ("OTRO", "Otro (controlado)"),
+        ("OTRO", "Otro"),
     ]
 
     ESTADO = [
@@ -213,6 +212,33 @@ class EquipoUnidad(models.Model):
         ("FUERA_SERVICIO", "Fuera de servicio"),
         ("EN_REPARACION", "En reparación"),
     ]
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="equipos")
+    torre = models.CharField(max_length=100, null=True, blank=True)
+    ubicacion = models.CharField(max_length=150, null=True, blank=True)
+
+    tipo = models.CharField(max_length=30, choices=TIPO_EQUIPO)
+    cantidad = models.PositiveIntegerField(default=1)
+
+    marca = models.CharField(max_length=100, null=True, blank=True)
+    modelo = models.CharField(max_length=100, null=True, blank=True)
+    serie = models.CharField(max_length=100, null=True, blank=True)
+    potencia = models.CharField(max_length=100, null=True, blank=True)
+    voltaje = models.CharField(max_length=100, null=True, blank=True)
+    control = models.CharField(max_length=100, null=True, blank=True)
+    valor_comercial = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+
+    estado = models.CharField(max_length=20, choices=ESTADO, default="OPERATIVO")
+    causa_fuera_servicio = models.TextField(null=True, blank=True)
+    ultima_revision = models.DateField(null=True, blank=True)
+    observaciones = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cliente.nombre} - {self.get_tipo_display()}"
+
+    
+
+    
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="equipos")
     tipo = models.CharField(max_length=30, choices=TIPO_EQUIPO)
@@ -264,3 +290,38 @@ class UsuarioCliente(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.cliente.nombre}"
+    
+class TanqueUnidad(models.Model):
+
+    TIPO_TANQUE = [
+        ("IMPULSION", "Tanque de impulsión"),
+        ("TERRAZA", "Tanque de terraza"),
+        ("HIDRONEUMATICO", "Tanque hidroneumático"),
+        ("OTRO", "Otro"),
+    ]
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="tanques")
+    torre = models.CharField(max_length=100, null=True, blank=True)
+    ubicacion = models.CharField(max_length=150, null=True, blank=True)
+    tipo_tanque = models.CharField(max_length=30, choices=TIPO_TANQUE)
+    cantidad = models.PositiveIntegerField(default=1)
+    material = models.CharField(max_length=100, null=True, blank=True)
+    capacidad = models.CharField(max_length=100, null=True, blank=True)
+    observaciones = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cliente.nombre} - {self.get_tipo_tanque_display()}"
+
+
+class DistribucionUnidad(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="distribuciones")
+    torre = models.CharField(max_length=100, null=True, blank=True)
+    cantidad_pisos = models.PositiveIntegerField(null=True, blank=True)
+    presion_desde = models.PositiveIntegerField(null=True, blank=True)
+    presion_hasta = models.PositiveIntegerField(null=True, blank=True)
+    gravedad_desde = models.PositiveIntegerField(null=True, blank=True)
+    gravedad_hasta = models.PositiveIntegerField(null=True, blank=True)
+    observaciones = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cliente.nombre} - {self.torre}"
