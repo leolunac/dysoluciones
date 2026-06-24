@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Cliente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    font-family:'Segoe UI';
+    margin:0;
+    background:#f4f6f9;
+}
+
+/* HEADER */
+.header{
+    background:#1e3a8a;
+    color:white;
+    padding:10px;
+}
+
+/* CONTENEDOR */
+.container{
+    padding:15px;
+}
+
+/* KPI GRID */
+.grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+    gap:10px;
+}
+
+.card{
+    padding:8px;
+    border-radius:8px;
+    color:white;
+    font-size:12px;
+}
+
+.blue{ background:#2563eb; }
+.green{ background:#16a34a; }
+.red{ background:#dc2626; }
+.orange{ background:#f59e0b; }
+
+.kpi{
+    font-size:16px;
+    font-weight:bold;
+}
+
+/* SECCIONES */
+.section{
+    margin-top:15px;
+    background:white;
+    padding:12px;
+    border-radius:8px;
+}
+
+/* ALERTAS */
+.alert{
+    padding:8px;
+    border-radius:5px;
+    margin-bottom:10px;
+    font-size:13px;
+}
+
+.alert-red{ background:#fee2e2; color:#b91c1c; }
+.alert-green{ background:#dcfce7; color:#166534; }
+
+/* BOTONES */
+.btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:6px 10px;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:12px;
+}
+
+/* TARJETAS EQUIPOS */
+.cards-equipos{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap:10px;
+}
+
+.equipo-card{
+    background:white;
+    border-radius:8px;
+    padding:6px;
+    box-shadow:0 1px 5px rgba(0,0,0,0.08);
+    font-size:12px;
+}
+
+.equipo-header{
+    font-weight:bold;
+    font-size:14px;
+    margin-bottom:6px;
+}
+
+.equipo-body div{
+    margin-bottom:4px;
+}
+
+/* COLORES POR ESTADO */
+.estado-operativo{ border-left:5px solid #16a34a; }
+.estado-reparacion{ border-left:5px solid #f59e0b; }
+.estado-fuera{ border-left:5px solid #dc2626; }
+
+/* BADGES */
+.badge{
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:11px;
+}
+
+.badge-verde{ background:#dcfce7; color:#166534; }
+.badge-amarillo{ background:#fef3c7; color:#92400e; }
+.badge-rojo{ background:#fee2e2; color:#991b1b; }
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h2>{{ cliente.nombre }}</h2>
+    <small>{{ cliente.direccion }}</small>
+</div>
+
+<div class="container">
+
+<!-- BOTONES -->
+<div style="margin-bottom:10px;">
+    <a href="/export/excel/{{ cliente.id }}/"><button class="btn">Excel</button></a>
+    <a href="/export/csv/{{ cliente.id }}/"><button class="btn">CSV</button></a>
+    <a href="/reporte/pdf/{{ cliente.id }}/"><button class="btn">PDF</button></a>
+</div>
+
+<!-- ALERTAS -->
+{% if fuera_servicio > 0 %}
+<div class="alert alert-red">
+⚠ Equipos fuera de servicio
+</div>
+{% else %}
+<div class="alert alert-green">
+✔ Todo operativo
+</div>
+{% endif %}
+
+<!-- KPIs -->
+<div class="grid">
+
+<div class="card blue">
+Total<br>
+<div class="kpi">{{ total_equipos }}</div>
+</div>
+
+<div class="card green">
+Operativos<br>
+<div class="kpi">{{ operativos }}</div>
+</div>
+
+<div class="card red">
+No operativos<br>
+<div class="kpi">{{ fuera_servicio }}</div>
+</div>
+
+<div class="card orange">
+Emergencias<br>
+<div class="kpi">{{ emergencias_mes }}</div>
+</div>
+
+</div>
+
+<!-- GRÁFICA -->
+<div class="section">
+<h4>Emergencias (12 meses)</h4>
+<canvas id="grafica" height="80"></canvas>
+</div>
+
+<!-- EQUIPOS -->
+<div class="section">
+<h4>Equipos fuera de servicio</h4>
+
+<div class="cards-equipos">
+
+{% for e in equipos_fuera %}
+<div class="equipo-card 
+{% if e.estado == 'OPERATIVO' %}estado-operativo{% endif %}
+{% if e.estado == 'EN_REPARACION' %}estado-reparacion{% endif %}
+{% if e.estado == 'FUERA_SERVICIO' %}estado-fuera{% endif %}
+">
+
+<div class="equipo-header">
+{{ e.get_tipo_display }}
+</div>
+
+<div class="equipo-body">
+
+<div><strong>Cant:</strong> {{ e.cantidad }}</div>
+
+<div>
+<span class="badge
+{% if e.estado == 'OPERATIVO' %}badge-verde{% endif %}
+{% if e.estado == 'EN_REPARACION' %}badge-amarillo{% endif %}
+{% if e.estado == 'FUERA_SERVICIO' %}badge-rojo{% endif %}
+">
+{{ e.get_estado_display }}
+</span>
+</div>
+
+<div style="font-size:12px; color:#555;">
+{{ e.causa_fuera_servicio }}
+</div>
+
+</div>
+
+</div>
+{% empty %}
+<p>✔ Sin novedades</p>
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+const labels = {{ labels|safe }};
+const data = {{ values|safe }};
+
+new Chart(document.getElementById('grafica'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Emergencias',
+            data: data,
+            fill:true
+        }]
+    }
+});
+</script>
+
+</body>
+</html>

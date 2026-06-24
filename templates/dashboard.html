@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard Gerencial 7x24</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
+    h1 { margin:0 0 10px 0; }
+    .sub { color:#555; margin-bottom:18px; }
+    .grid { display:flex; gap:12px; flex-wrap:wrap; }
+    .card { background:#fff; border-radius:10px; padding:16px; min-width:210px; flex:1; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .kpi { font-size:28px; font-weight:700; margin-top:6px; }
+    .row { display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
+    .panel { background:#fff; border-radius:10px; padding:16px; flex:1; box-shadow:0 2px 8px rgba(0,0,0,.06); min-width:320px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th, td { border-bottom:1px solid #eee; padding:10px; text-align:left; font-size:14px; }
+    th { background:#fafafa; }
+    .badge { padding:4px 8px; border-radius:999px; font-size:12px; display:inline-block; }
+    .ALTA { background:#ffe3e3; }
+    .MEDIA { background:#fff1cc; }
+    .NORMAL { background:#e6f4ff; }
+  </style>
+</head>
+<body>
+  <h1>Dashboard Operativo 7x24</h1>
+  <div class="sub">Resumen del mes {{ mes }}/{{ anio }}</div>
+
+  <div class="grid">
+    <div class="card">
+      <div>Emergencias del mes</div>
+      <div class="kpi">{{ total_mes }}</div>
+    </div>
+    <div class="card">
+      <div>Pendientes</div>
+      <div class="kpi">{{ pendientes }}</div>
+    </div>
+    <div class="card">
+      <div>Atendidas</div>
+      <div class="kpi">{{ atendidas }}</div>
+    </div>
+    <div class="card">
+      <div>Nocturnas</div>
+      <div class="kpi">{{ nocturnas }}</div>
+    </div>
+    <div class="card">
+      <div>Valor total mes</div>
+      <div class="kpi">$ {{ facturacion_mes }}</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="panel">
+      <h3>Emergencias por prioridad</h3>
+      <canvas id="chartPrioridad" height="120"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>Últimas 10 emergencias</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Nocturna</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in ultimas %}
+          <tr>
+            <td>{{ e.fecha_llamada|date:"Y-m-d H:i" }}</td>
+            <td>{{ e.cliente.nombre }}</td>
+            <td><span class="badge {{ e.prioridad }}">{{ e.prioridad }}</span></td>
+            <td>{{ e.estado }}</td>
+            <td>{% if e.es_nocturna %}Sí{% else %}No{% endif %}</td>
+            <td>$ {{ e.valor_total }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6">No hay emergencias este mes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const data = {{ por_prioridad|safe }};
+    const labels = data.map(x => x.prioridad);
+    const values = data.map(x => x.total);
+
+    const ctx = document.getElementById('chartPrioridad').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label: 'Emergencias', data: values }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+  </script>
+</body>
+</html>

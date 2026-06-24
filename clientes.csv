@@ -1,0 +1,432 @@
+"id_cliente","cliente","persona","direccion","ciudad","telefono","correo_electronico"
+"32471225","HOTEL VILLA REAL-MEDELLIN","Persona Jurídica","CR 70 45 E 153","Medellín","4441298",
+"800002017","EDIFICIO BOSQUES DE VIZCAYA","Persona Jurídica","Cl 10 30 A 71 IN 1","Medellín","2687775",
+"800008630","UNIDAD RESIDENCIAL PLAZA DEL ACARI P.H","Persona Jurídica","CL 36 63 B 89","Medellín","2652775",
+"800021132","CONJUNTO RESIDENCIAL POBLADO DE CHIPRE","Persona Jurídica","Cr 42 5 sur 46","Medellín","3108204621",
+"900070749","EDIFICIO VERSALLES P.H.","Persona Juridica","CR 86 B 49 A 80","Medellin","3027105267","edversalles@hotmail.com"
+"800031171","CONJUNTO MULTIFAMILIAR QUINTAS DEL PALMAR","Persona Jurídica","CL 36D SUR 27 80","Medellín","3360390","administracion@quintasdelpalmar.co"
+"800033954","EDIFICIO CALLE ARRIBA PH","Persona Jurídica","MEDELLIN","Medellín","3172632",
+"800043725","URBANIZACION MILAN CONDOMINIO No. 9 PH","Persona Jurídica","CL 44 SUR 47 18","Envigado","3317859","urbmilan9@gmail.com"
+"800046300","CONJUNTO RESIDENCIAL AIRES DE VIGIA DEL FUERTE P. H.","Persona Jurídica","CL 18AA SUR 29C 311","Medellín","1234567","airesdevigiadelfuerte@gmail.com"
+"800053714","CONJUNTO RESIDENCIAL MIRADOR DE SAN ANGEL P.H","Persona Jurídica","cl 18b sur 36 35","Medellín","3123379","tesoreria@admonyasesorias.com"
+"800058986","CONJUNTO RESIDENCIAL PRADOS DEL TESORO PH","Persona Jurídica","CL 25 2 30","Medellín","2667077","admonlmpfacturas@hotmail.com"
+"800059113","EDIFICIO EL GALEON P.H","Persona Jurídica","CR 25 9 A SUR 176","Medellín","4484173","tesoreria@caaph.co"
+"800061826","EDIFICIO ALMONTE P.H.","Persona Jurídica","CL 12 SUR 25 127","Medellín","3002081298","comprascrismatt@gmail.com"
+"800063302","EDIFICIO ""SOTOVERDE"" P.H.","Persona Jurídica","CR 36 B CL 11 51","Medellín","3215606","mga.admonph@gmail.com"
+"800078783","EDIFICIO SAIGAMA PH","Persona Jurídica","CL 14SUR 43A 239","Medellín","3023121568","contabilidad@tmgservicios.com"
+"800102496","URBANIZACION PARQUE LORENA P.H","Persona Jurídica","CL 10 SUR 43 A 54","Medellín","2680853","comprascrismatt@gmail.com"
+"800113986","EDIFICIO CATAY 7 P.H","Persona Jurídica","CR 35 A 5 A 211","Medellín","3136082","tesoreria@caaph.co"
+"800132447","CONJUNTO RESIDENCIAL MOMPOX P.H","Persona Jurídica","CL 12 SUR 25 237","Medellín","6037107","mompoxph@gmail.com"
+"800134211","CENTRO COMERCIAL UNION PLAZA P.H.","Persona Jurídica","CR 50 CL 52 50","Medellín","5119749","info@unionplaza.com.co"
+"800171185","PARCELACION ALTOS DE LA BONITA, 1-2-3 ETAPA","Persona Jurídica","VEREDA NECHI SECTOR LA BONITA","Medellín","2685588",
+"800171747","UNIDAD MEDICA TORRE PLAZA P.H. EDIFICIO FORMACOL","Persona Jurídica","CL 4 S 43AA 30","Medellín","3117737",
+"800172353","HOTEL LAURELES 70","Persona Jurídica","CIRC 5A 70 -15","Medellín","4112828",
+"800182713","EDIFICIO SANTA COLOMA P.H","Persona Jurídica","Cr 64 36 15","Medellín","2658259","tesoreria@admonyasesorias.com"
+"800233841","HOTEL BOSTON LTDA","Persona Jurídica","CL 25 B 31 14","Sincelejo","2804022",
+"800250299","EDIFICIO BALCONES DE PADUA PH","Persona Jurídica","CL 6 25 125","Medellín","3112862",
+"800250763","SEA BOARD DE COLOMBIA S.A.","Persona Jurídica","CR 12 79-43 OF 701","Bogotá","3130513",
+"900990493","CONJUNTO RESIDENCIAL TIROL II - P H","Persona Juridica","Cl 66 103 B 15","Medellin","3003260834","conjuntoresidencialtirol2@gmail.com"
+"805005633","HOTEL DON JAIME","Persona Jurídica","AV 6 NORTE 15N 25","Cali","6672828",
+"805029991","HOTEL VALDIVIA PLAZA CIA LTDA","Persona Jurídica","CL 44 4N 138","Cali","6550345","mtvega@uniweb.net.co"
+"811001813","CONJUNTO RESIDENCIAL CIUDADELA REAL P.H.","Persona Jurídica","CL 48 C SUR 43 A 50","Envigado","3329078","crciudadelareal@yahoo.es"
+"811002696","VILANOA  APARTAMENTOS  P.H. ","Persona Jurídica","CL 23 SUR 28 49","Sabaneta","3172040","vilanova2849@gmail.com"
+"811002999","EDIFICIO TORRES DE HUNGRIA P.H","Persona Jurídica","CR 34 16 A SUR 37","Medellín","3132702","aymacosas@gmail.com"
+"811004177","EDIFICIO TIERRALTA P.H.","Persona Jurídica","cl 18 sur 25 c 21","Medellín","3173039","tesoreria@admonyasesorias.com"
+"811005332","EDIFICIO SAN MARTHIN PH","Persona Jurídica","CR 4 16A SUR 14","Medellín","2682429","nora1002@hotmail.com"
+"811005504","URBANIZACION PARQUES SANTA CATALINA P.H","Persona Jurídica","CL 75 SUR 52 101","Itagüí","3095316","parquessantacatalina@gmail.com"
+"811006259","CENTRO COMERCIAL CAMPESTRE DRIVE IN","Persona Jurídica","CL 16A SUR 32B 38","Medellín","3136577",
+"811007098","EDIFICIO CAYARU","Persona Jurídica","CL 16 A SUR 34 41","Medellín","1234567","tesoreria@admonyasesorias.com"
+"811019381","EDIFICIO SAN GIORGIO 2 P.H.","Persona Jurídica","CR 37 18 SUR 33","Medellín","2669327","edificiosangiorgio2@hotmail.com"
+"811026034","EDIFICIO GUADALUPE","Persona Jurídica","Cl 7 25 177","Medellín","1234567","cordobaarangoasistente@gmail.com"
+"811027400","EDIFICIO SANTO TOMAS PH","Persona Jurídica","CR 82B 33 B 51","Medellín","2507558","carteradysam@gmail.com"
+"811030881","URBANIZACION CANTA PIEDRA P.H","Persona Jurídica","CL 21 SUR 41","Envigado","5803483","cantapiedraph@gmail.com"
+"811031035","CONJUNTO RESIDENCIAL CONDOMINIO SANTA CLARA P.H.","Persona Jurídica","CL 7 B 27 30","Medellín","3524873","consueloorozco@clburbanistica.com"
+"811033278","URBANIZACION REFUGIO DE VILLA VERDE","Persona Jurídica","Cl 39 Sur 25 B 130","Medellín","3327560","refugiodevillaverde.ph@gmail.com"
+"811033475","EDIFICIO BOSQUES DE SANTIAGO PH","Persona Jurídica","CL 18A SUR 22 115","Medellín","3212127","compras@abelardoyepes.com"
+"811034872","EDIFICIO PIEDRA AZUL","Persona Jurídica","Calle 35 # 64 A - 55","Medellín","2355545","tesoreria@admonyasesorias.com"
+"811034918","URBANIZACION LA ESTANCIA PH","Persona Jurídica","Cl  3 3B-60","Medellín","4481557","tesoreria@admonyasesorias.com"
+"811043645","CONJUNTO FLORES DE LA COLINA 3 ETAPA","Persona Jurídica","CR 43A 15 SUR 15","Medellín","3333333","floresdelacolina3@gmail.com"
+"811045291","EDIFICIO TORREON DEL PARQUE PH","Persona Jurídica","CL 48 80 84","Medellín","3007578412","torreodelparque@gmail.com"
+"811045854","EDIFICIO ""TORRE PRAVIA"" -P.H.-","Persona Jurídica","CL 12 31 217","Medellín","3003255858","edificiopraviaph@gmail.com"
+"811046096","URBANIZACION PIE DEL BOSQUE P.H.","Persona Jurídica","CL 6 A CR 18 60","Medellín","3524385","admonpiedelbosque@gmail.com"
+"811046965","CONJUNTO RESIDENCIAL QUINTAS DEL CEDRO P.H.","Persona Jurídica","CL 6 18 129","Medellín","4480785","tesoreria@admonyasesorias.com"
+"890918210","EDIFICIO BAHIA ETAPA B P.H","Persona Jurídica","CR 65 42 127","Medellín","6042305454",
+"890934478","CONJUNTO RESIDENCIAL LA CONCHA ETAPA 2","Persona Jurídica","CL 10 28 78","Medellín","3184722255","cordobaarango8@gmail.com"
+"890937478","EDIFICIO EL AVILA P.H","Persona Jurídica","CR 44 21 SUR 100","Envigado","2704265","comprascrismatt@gmail.com"
+"890938413","EDIFICIO CENTRO SANTILLANA P.H.","Persona Jurídica","CR 43 A 1 SUR 143","Medellín","2665256","asistentesantillana@mts.com.co"
+"890938789","CONJUNTO RESIDENCIAL ""CRUCERO DEL SUR"" - P.H.-","Persona Jurídica","CL 12 SUR 43 A 255","Medellín","3136575","crucerodelsur1@gmail.com"
+"890938799","CONJUNTO RESIDENCIAL ALTOS DE TORRE MOLINOS","Persona Jurídica","Cr 34 16 A sur 150","Medellín","3135977","torremolinos7@gmail.com"
+"890940079","UNIDAD RESIDENCIAL LAS BRUJAS P.H","Persona Jurídica","CL 37 B SUR 28 C 01","Envigado","4795608","unidadresidenciallasbrujas@gmail.com"
+"890940114","EDIFICIO ALTOS DE SAN LUCAS P.H.","Persona Jurídica","CL 20 SUR 26 C 66","Medellín","3212401","tesoreria@admonyasesorias.com"
+"890943134","LUKAS HOTEL Y CIA SAS","Persona Jurídica","CR 70 44 A 28","Medellín","3627360","hotellukas70@gmail.com"
+"900003344","EDIFICIO JARDINES DE PERU","Persona Jurídica","Cl 55 41 44","Medellín","1234567","edificiojardinesdeperuph@hotmail.com"
+"900010147","CONJUNTO RESIDENCIAL PONTEVEDRA ETAPA 1 P.H.","Persona Jurídica","CR 42 B 25 A SUR 41","Envigado","3335590","comprascrismatt@gmail.com"
+"900010822","CONJUNTO RESIDENCIAL BOSQUES DE LA CASCADA PH","Persona Jurídica","Cr 32 6 Sur 45","Medellín","5709411","bdbosquesdelacascada@gmail.com"
+"900011430","RECUPERADORA INDUSTRIAL REINDEX LTDA EXEDENTES & R","Persona Jurídica","CLLE 41A SUR No.43A-82 P5","Envigado","3312164",
+"900029538","HOTEL ANVAMAR S.A.S.","Persona Jurídica","CR 21 14 20","Pereira","3449901",
+"900054741","HOTEL CASTILLA DE ORO","Persona Jurídica","CL 100 CR 14 14 07","Medellín","8272185",
+"900055955","UNIDAD AZALEA DEL PARQUE P.H.","Persona Jurídica","CR 87 A 32 81","Medellín","3471522","azaleadelparque@hotmail.com"
+"900061612","SANTANILLA DE INVERSIONES S.A.S.","Persona Jurídica","AV 4 9 77","Palmira","6618045",
+"900062114","GRUPO LEMON S.A.","Persona Jurídica","CL 51 S 48 81 LOC 2189","Sabaneta","3770180",
+"900064345","HOTEL SANTA ANA MEDELLIN S.A.","Persona Jurídica","CL 15 SUR 48 34","Medellín","3140707",
+"900065317","CONJUNTO RESIDENCIAL SANTOS P.H.","Persona Jurídica","CL 7 B 27 95","Medellín","2344367","edificiosantosph@gmail.com"
+"900075297","HOTEL GUATATUR E.U","Persona Jurídica","CL 31 31 04","Guatape","2728280",
+"900078511","URBANIZACION TORRES DE SANTA CECILIA PH","Persona Jurídica","CL 20 ASUR 22 84","Medellín","4484173","bdstcecilia@gmail.com"
+"900092792","URBANIZACION PARQUE RESIDENCIA","Persona Jurídica","KM 12 CARRETERA LAS PALMAS","Medellín","3172979",
+"900115975","EDIFICIO PALMAR DEL VALLE P-H","Persona Jurídica","DG 75 B 32 A 196","Medellín","4121590","humbertof49@hotmail.com"
+"900116998","VILLA DEL CARMELO","Persona Jurídica","CR 51 51 37","Medellín","2750676",
+"900118838","RUTA DEL SOL II S.A.","Persona Jurídica","PUENTE LAUREANO","Ciénaga","1234567",
+"900120384","UNIDAD RESIDENCIAL TORREON DE CASTROPOL PH","Persona Jurídica","CR 41 14 27","Medellín","3214653219","edificiotorreondecastropol@gmail.com"
+"900128089","URBANIZACION PUENTE MADERO","Persona Jurídica","Cl 5 A 35 87","Medellín","1234567","tesoreria@admonyasesorias.com"
+"900129842","CONJUNTO RESIDENCIAL PALO VERDE","Persona Jurídica","Cl 39 Sur 25C 89","Medellín","3346200",
+"900145475","INVERSIONES ESCOBAR RUIZ Y CIA S EN CS","Persona Jurídica","CENTRO COMERCIAL MAYORCA BURBUJA 360","Sabaneta","3779329",
+"900146310","EDIFICIO OCARINAS P.H","Persona Jurídica","CR 65 C C CL 31 34","Medellín","2358559","admon.edificiocarinas@gmail.com"
+"900147743","CONSTRUCCIONES TORRE LA VEGA DEL SUR SAS","Persona Jurídica","DG 32 32A SUR 25 OF 101","Envigado","3325366",
+"900148385","EDIFICIO ATLANTIC","Persona Jurídica","CR 25 9B SUR 197","Medellín","3524873","cartera@docaph.com"
+"900149480","INVERSIONES MONTOYA PINEDA S.A.","Persona Jurídica","AUT. NORTE KM 20  GIRARDOTA","Girardota","2745759",
+"900155524","URBANIZACION BIZET 1 P.H.","Persona Jurídica","CL 9 72 50","Medellín","3004475295",
+"900155740","PROMOTORA SAN SEBASTIAN DE LA LOMA S.A.","Persona Jurídica","CR 36 8A 109 OF 201","Medellín","3113366",
+"900163370","URBANIZACION MONTEPINAR P.H","Persona Jurídica","CL 38 B SUR 26 01","Envigado","5966166","facturacion@administracionmgm.com"
+"900166209","CONJUNTO RESIDENCIAL PUERTO MONTT PROPIEDAD HORIZONTAL","Persona Jurídica","CR 50 A CL 76 SUR 111 IN 1","Medellín","5706553","unidadespuertomontt@gmail.com"
+"900169032","EDIFICIO BLUX PH","Persona Jurídica","cl 12 30 126","Medellín","4480786","tesoreria@admonyasesorias.com"
+"900172266","HOTEL SAUCES DEL ESTADIO LTDA","Persona Jurídica","CR 69 49 A 30","Medellín","2607474",
+"900174563","SYNERGEX LOGISTICS S.A","Persona Jurídica","CL 106 15 25 BODEGA","Bogotá","7430100",
+"900242043","SOLARIS APARTAMENTOS P.H.","","","","",
+"900200998","CONJUNTO RESIDENCIAL ESCARLATA PH","Persona Jurídica","Cr, 27 38 Sur 10","Medellín","3346696","escarlata.ph@gmail.com"
+"900201480","URBANIZACION RESERVA DE LA MARIA 1- ETAPA 1 P.H","Persona Jurídica","CR 46 22 SUR 50","Envigado","2704341","reservadelamaria1@gmail.com"
+"900201890","CONJUNTO RESIDENCIAL RESERVA DE SAN DIEGO","Persona Jurídica","Cr 28 29 85","Medellín","2274901",
+"900220951","HOTEL PLAZA 43","Persona Jurídica","CL 43 44 147","Barranquilla","3702554",
+"900248438","CONJUNTO RESIDENCIAL ATAVANZA ETAPAS I Y II - P.H","Persona Jurídica","CR 82 9 A SUR 28","Medellín","3041081061","conjunto.residencial.atavanza@gmail.com"
+"900255186","PARCELACION LA BOTERO ALTA","Persona Jurídica","Vía Puente Iglesias - Támesis KM 1","Medellín","3122867043",
+"900267269","EDIFICIO SALAMANCA PH","Persona Jurídica","cl 27ASUR 25 48","Envigado","3017355134","pqrssalamanca@gmail.com"
+"900272993","CONJUNTO RESIDENCIAL KANDALA P.H.","Persona Jurídica","CR 42 60 SUR 15","Sabaneta","5709393","kandalaph@hotmail.com"
+"900278226","HOTELES VIA SAN DIEGO SAS","Persona Jurídica","CL 31 43 90","Medellín","4449002",
+"900281335","ALTERNATIVAS VERTICALES SAS","Persona Jurídica","Cr. 48 10 45","Medellín","8861111",
+"900291903","PARCELACION ENTREBOSQUES DE SAN SEBASTIAN","Persona Jurídica","VDA CARRIZALES","Medellín","6043223095","auxiliar@conbienesurbanistica.com"
+"900302232","URBANIZACION GUAYACAN DE LA CALERA","Persona Jurídica","Cl 6 A 16 45","Medellín","3683768",
+"900302237","URBANIZACION ARRAYANES DE LA CALERA PH","Persona Jurídica","Cl 6 A 16 15","Medellín","3683779","tesoreria@admonyasesorias.com"
+"900314606","CONJUNTO RESIDENCIAL SALTAMONTE P.H","Persona Jurídica","CR 27 G CL 35 SUR 175","Envigado","2355690","admonsaltamonte@gmail.com"
+"900316657","REPRESENTACIONES RAMIREZ Y MARIN S,A,S,","Persona Jurídica","CL 16 A SUR 29B 20 CA 146","Medellín","2689028",
+"900326827","URBANIZACION ESTAMBUL","Persona Jurídica","CL 2B 81 A380","Medellín","1234567",
+"900328935","INVERSIONES CASTAÑO S.A.S.","Persona Jurídica","CR 45 74 SUR 67","Sabaneta","3065864",
+"900367849","HOTEL SALOMA","Persona Jurídica","CLL 26 38 69 B","Villavicencio","6682341",
+"900371703","CORDOBA ARANGO ADMINISTRACIONES S.A.S.","Persona Jurídica","CR 25 9 A SUR 176 AP 501","Medellín","4484173","cordobaarangopagos@gmail.com"
+"900375992","CONSTRUCTORA AVELLANAS SAS","Persona Jurídica","CARRERA 46 7 103","Medellín","3115676",
+"900381103","S.S. PALMA DE MAYORCA","Persona Jurídica","KM2 VIA TURBO","Necoclí","1234567",
+"900390727","CONSTRUCTORA ARES","Persona Jurídica","Carrera 46 No. 7 - 103","Medellín","3115676","auxiliar.administrativa@dysam.com.co"
+"900396433","EDIFICIO MOLIERE P.H.","Persona Jurídica","CL 14 SUR 43 A 147","Medellín","4483149","compras@abelardoyepes.com"
+"900397244","CONSTRUCTORA ALTOS DE LA ABADIA S.A.S.","Persona Jurídica","CL 17 A SUR 44 214","Medellín","4486800","vcontabilidad@verticeing.com"
+"900398709","CONSTRUCTORA SURAMERICA SAS","Persona Jurídica","CR 43A 15 SUR 15","Medellín","4485354","almacen2.jardinesdelsur@gmail.com"
+"900421826","HOTEL ORQUIDEA REAL NEWS S.A.S.","Persona Jurídica","CR 5 4 41 BR  CENTRO","San Vicente del Caguán","4645813",
+"900428139","CONJUNTO RESIDENCIAL PALMAS DE SAN PABLO  P.H","Persona Jurídica","Calle 32 32 16","Medellín","3183165786","ed.palmasdes.ph@gmail.com"
+"900428158","U.R JARDINES DE LA PLAZA","Persona Jurídica","Cr 41 49 52","Medellín","5707968",
+"900430090","EDIFICIO MARAT","Persona Jurídica","Cl 72 Sur 34 119","Medellín","4174277","edificiomarat@yahoo.com"
+"900437565","INVERSIONES CARLOS FERNANDO EL CALEÑO S.A.S","Persona Jurídica","CL 33 65B 10","Medellín","3162298",
+"900448282","UNIDAD JARDINES PROPIEDAD HORIZONTAL","Persona Jurídica","CL 44 C 91 54","Medellín","5789500","unidadjardines@gmail.com"
+"900458145","HOTEL DON ALFONSO S.A.S","Persona Jurídica","CR 13 12 37 SAN JOSE SUR","Pereira","3330909",
+"900460182","EDIFICIO TORRE SION PH","Persona Jurídica","Cr 86 45B 40","Medellín","3207721660",
+"900469931","INVERSIONES REIMORAN S.A.S","Persona Jurídica","CRA 47 84-56","Barranquilla","3857947",
+"900472776","INVERSIONES EL CONRO S.A.S","Persona Jurídica","CR 53 49 47","Medellín","5126535",
+"900474965","GRUPO EMPRESARIAL MLS S.A.S.","Persona Jurídica","CR 75 40 35","Medellín","4090240",
+"900480181","UNIDAD RESIDENCIAL CRISTALES DE ZUÑIGA P.H","Persona Jurídica","CR 46 22 A SUR 37","Envigado","3027750","admoncristalesdezuniga@gmail.com"
+"900480554","CONJUNTO RESIDENCIAL CAMINO DE LAS AGUAS P.H.","Persona Jurídica","CL 39 D SUR CR 24 D 12","Envigado","5788475","caminodelasaguas@hotmail.com"
+"900493077","CONJUNTO RESIDENCIAL CIUDADELA DEL VALLE","Persona Jurídica","CR 59 70 349","Itagüí","4187136","proveedoresciudadela@gmail.com"
+"900493419","AREA DIEZ TIENDA INMOBILIARIA SABANETA SAS","Persona Jurídica","Cl 67 Sur 43 C 38","Medellín","4487999",
+"900503347","URBANIZACION TORRES DEL CAMPO","Persona Jurídica","CR 52 B 37 05","Rionegro","3105154409","torresdelcampoph@gmail.com"
+"900556545","PROMOTORA TIERRA GRATA SAS","Persona Jurídica","CL 27 SUR 27 92","Medellín","1234567",
+"900556626","EDIFICIO NATUZZI LIVING PH","Persona Jurídica","CL 17A SUR 44 70","Medellín","4486744","nandog08@gmail.com"
+"900557858","INVERSIONES STA FE GROUP S.A.S","Persona Jurídica","CL 13 7 163","Santafé de Antioquia","8533646",
+"900559296","CONJUNTO RESIDENCIAL BALTICO P.H.","Persona Jurídica","CR 27 CL 36 SUR 159","Envigado","4185688","facturacion@administracionmgm.com"
+"900564896","PARCELACION VEGAS DE PORCE","Persona Jurídica","PORCE","Medellín","1234567",
+"900574702","CONSTRUCCION URBANA S.A.S","Persona Jurídica","CL 11 A SUR 44 143","Medellín","5897959","vilanovadireccion@gmail.com"
+"900576538","CONJUNTO RESIDENCIAL LAURELEN - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 43 73 51","Medellín","5048406","crlaurelen@gmail.com"
+"900582114","EDIFICIO LOS PARRA PROPIEDAD HORIZONTAL","Persona Jurídica","CL 1 29 330","Medellín","3013939702","edificiolosparrasph@gmail.com"
+"900585137","INVERSIONES ARIAS SERNA S.A.S","Persona Jurídica","AUTOPISTA MEDELLIN BOGOTA","Medellín","5514171",
+"900585434","INVERSIONES ARIAS SERNA S.A.S","Persona Jurídica","KM 20 AUTOPISTA MED-GTA VDA EL SANGO","Guarne","5514171",
+"900609584","CENTRO INDUSTRIAL PUERTA DEL SUR P.H.","Persona Jurídica","CL 98 SUR 48 225","Medellín","4116645","aguilarantonio248@gmail.com"
+"900628755","EDIFICIO ALTOS DE SAN MIGUEL PH","Persona Jurídica","CL 77C SUE 44 10","Medellín","3007908910","administracionph@areadiez.co"
+"900642010","URBANIZACION IBERICA VITAL","Persona Jurídica","Cl 27 27 55","Medellín","5702367",
+"900642312","MAXORATA SAS","Persona Jurídica","CR 70 44B 38","Medellín","2604900",
+"900643828","GRUPO HOTELERO EL MIRADOR S.A.S","Persona Jurídica","CR 27 32 73","Arboletes","8200441",
+"900651430","EDIFICIO MENTA PROPIEDAD HORIZONTAL","Persona Jurídica","CL 13SUR 37B 50","Medellín","4484173","cordobaarangoasistente@gmail.com"
+"900654889","EDIFICIO BALCONES DE LA HOLANDA P. H.","Persona Jurídica","CL 80 SUR 47 C 61","Medellín","3226468723","balconesdlaholanda@gmail.com"
+"900664886","CONJUNTO RESIDENCIAL TIERRA GRATA PALMAS PROPIEDAD HORIZONTAL","Persona Jurídica","CR 51 C 13 A 79","Rionegro","3667253","tesoreria@caaph.co"
+"900665649","INVERSIONES GOMEZ ROJAS S.A.S","Persona Jurídica","CL 50 A 39 62","Medellín","4488214",
+"900673552","HSEQ DEL GOLFO S.A.S","Persona Jurídica","CL 100 99 A 2 BARRIO CHINITA","Palmira","8280576",
+"900683868","APARTAMENTOS SERRANA PH","Persona Jurídica","Cl 61 Sur 43 A 32","Medellín","5970705",
+"900684427","HOTELES ARAWAK DE COLOMBIA S.A.S","Persona Jurídica","CL 32 29-32","Sincelejo","2804817",
+"900685554","MARINELA COLONIAL S.A.S","Persona Jurídica","CL 42 KM A VIA PALMIRA","Palmira","2724010",
+"900686005","URBANIZACIÓN LA QUINTA PROPIEDAD HORIZONTAL","Persona Jurídica","AV 18 CR 18 BRR LLANO DE BOLIVAR SEC LOS TANQUES","Santafé de Antioquia","3183165786","urbanizacionlaquinta.ph@gmail.com"
+"900688908","GO GROUP INVERSIONES SAS","Persona Jurídica","CALLE 125","Medellín","1234567",
+"900689335","CONDOMINIO PRADOS DE ZUÑIGA P.H.","Persona Jurídica","CL 20 SUR 45 40","Envigado","4083183","condominiopradosph@gmail.com"
+"900717982","CONJUNTO RESIDENCIAL MATTIZ P.H","Persona Jurídica","Cr 45 77 Sur 170","Medellín","3012636","conjunto_residencial.mattiz@hotmail.com"
+"900719377","UNIDAD RESIDENCIAL TOULOUSE - PROPIEDAD HORIZONTAL","Persona Jurídica","Cl 14 40 A 75","Medellín","5700256","tesoreria@admonyasesorias.com"
+"900720930","MODULARES Y MONTAJES GARCES S.A.S","Persona Jurídica","CR 52 N, 13A SUR 75","Medellín","2853110",
+"900730953","URBANIZACION SAINT PIERRE PH","Persona Jurídica","Cr 29E 11 Sur 110","Medellín","4480786","tesoreria@admonyasesorias.com"
+"900730967","URBANIZACION SAINT MARTEEN PH","Persona Jurídica","Cr 29 E 11 Sur 50","Medellín","4480786","saintmarteen.admon@gmail.com"
+"900733467","CONJUNTO RESIDENCIAL ALTOS DE LOS ALMENDROS P.H.","Persona Jurídica","CL 48 F SUR 39 B 314","Envigado","5797234","craalmendros@gmail.com"
+"900736616","UNIDAD RESIDENCIAL AREKA P.H.","Persona Jurídica","CL 27 SUR 27 B 87","Envigado","4483149","ryepes@abelardoyepes.com"
+"900738981","INVERSIONES CAS DIGITAL S.A.S","Persona Jurídica","CRA 43A 1A SUR 69 LC 1","Medellín","1234567",
+"900746048","INVERSIONES RESTAURANTE DIMAR DE COLOMBIA","Persona Jurídica","CENTRO CIAL CALIMA LC R08","Bogotá","1234567",
+"900761943","EDIFICIO AMBAR","Persona Jurídica","CL 32 A SUR 28 21","Medellín","3335594",
+"900778057","URBANIZACION Q - PROPIEDAD HORIZONTAL","Persona Jurídica","CL 18ASUR 25C 25","Medellín","5810122","urbanizacionqtower@gmail.com"
+"900779033","CONJUNTO RESIDENCIAL ATALAYA DE SAN JORGE P.H","Persona Jurídica","CL 37 B SUR 27 B 81CL 37 B SUR 27 B 81","Envigado","5707547","grupoochoproveedores@gmail.com"
+"900780143","EDIFICIO POSITANO","Persona Jurídica","CL 24SUR 27B 69","Medellín","3325208","alianzaph2015@gmail.com"
+"900792093","CONJUNTO RESIDENCIAL NATIVO FLORA P.H.","Persona Jurídica","CR 27 A A 36 SUR 151","Envigado","4998363","tesoreria@caaph.co"
+"900792136","URBANIZACION GREEN ECOLIVING","Persona Jurídica","CR 30 16 A SUR 116","Medellín","4483468","caja@unidadesurbanas.com"
+"900797554","URBANIZACIÓN ARAMUS P.H.","Persona Jurídica","CL 75 SUR 34 240","Sabaneta","2888163","aramusadmon@gmail.com"
+"900815105","UNIDAD RESIDENCIAL EL CARMELO PROPIEDAD HORIZONTAL","Persona Jurídica","CL 20 25 51","La Ceja","3136464","tesoreria@caaph.co"
+"900822591","METALMECANICA MARANATHA S.A.S","Persona Jurídica","CL 29 58 10","Medellín","3160902",
+"900822639","EDIFICIO BELLAGIO","Persona Jurídica","Cr 16 12 Sur 65","Medellín","3135186594","tesoreria@caap.co"
+"900839905","CONJUNTO RESIDENCIAL ALTOBELO","Persona Jurídica","Cr 59 B 51 58","Medellín","5706318",
+"900860652","CONJUNTO RESIDENCIAL PALMERAS ETAPA 2 PH","Persona Jurídica","CR 24B No 40A sur 52","Medellín","5781179","info@enlacejuridicointegral.com"
+"900861039","CONDOMINIO CAMPESTRE SOTO DEL ESTE P.H.","Persona Jurídica","VDA PANTANILLO KM 2","Retiro","5413853","parcelacionsotodeleste@gmail.com"
+"900866992","PACTIA SAS","Persona Jurídica","CR 43A 18 sur 135 P4","Medellín","4025700",
+"900869979","EDIFICIO OPERA P.H.","Persona Jurídica","CR 42 B 23 A SUR 84","Envigado","5772860","compras@abelardoyepes.com"
+"900872119","RESTAURANTE Y CONCETRADOS DON LALO S.A","Persona Jurídica","TV 6  8 18","Venecia","8449035",
+"900873967","FIJACIONES Y ANCLAJES MEDELLIN S.A.S","Persona Jurídica","CL 43 69 62","Medellín","2603054",
+"900874953","GRUAS FERNANDEZ SAS","Persona Jurídica","CR 59 70 349 TO 4 AP 1124","Itagüí","4186001",
+"900875907","PROMOTORA DE FERRETERIAS DEL MUEBLE S.A.S","Persona Jurídica","CR 45 32D 135 IN 105","Bello","4449190",
+"900879901","EDIFICIO FIJI PH","Persona Jurídica","CR 41 No. 24 sur 05","Envigado","4442420","contabilidad@administracionm.co"
+"900924495","SANIGEO - SERVICIOS AMBIENTALES SAS","Persona Jurídica","CR 85d N 53 25 OF 1101","Medellín","5810502",
+"900931134","INVERSIONES FERROCARRIL DE ANTIOQUIA S.A.S.","Persona Jurídica","CRA 57 CL 44A-33","Medellín","2316162",
+"900943243","SURAMERICA COMERCIAL S.A.S.","Persona Jurídica","CRA 1 37-36 CALLE 37","Cali","1234567",
+"900943498","INVERSIONES ALZATE GONZALEZ S.A.S","Persona Jurídica","CR 52D 75A A SUR 280","Itagüí","1234567",
+"900944872","EDIFICIO ZAGUAN DE MANILA PROPIEDAD HORIZONTAL","Persona Jurídica","CL 13 43D79","Medellín","3117850","comprascrismatt@gmail.com"
+"900957214","URBANIZACIÓN STANZA - PROPIEDAD HORIZONTAL","Persona Jurídica","CL 32 5 G 70","Medellín","3136464","cordobaarangoasistente@gmail.com"
+"900958438","HOTEL BOUTIQUE CASA COLONIAL S.A.S.","Persona Jurídica","CR 59 72 129","Barranquilla","3013771",
+"900967143","URBANIZACION ZARZAMORA P.H","Persona Jurídica","CR 27 23 SUR 69","Medellín","3212201","cordobaarangoasistente@gmail.com"
+"900967458","CONJUNTO RESIDENCIAL TRIGALES PH","Persona Jurídica","Cr 18 No 84 84 P3","Medellín","1234567","aureliotabordamesa@hotmail.com"
+"900968167","CONJUNTO DE USO MIXTO OBRASQUINCE PROPIEDAD HORIZONTAL","Persona Jurídica","CR 36 1SUR 15","Medellín","3139716","solicitudes@quantumadministraciones.com"
+"900975120","UNIDAD RESIDENCIAL CITTE - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 33 27 A 91","Medellín","3163221789","citteph@gmail.com"
+"900980179","CONJUNTO RESIDENCIAL FONT ETAPA 1","Persona Jurídica","CL 37A  15 B 50","Medellín","3116425711","conjuntofont@gmail.com"
+"900981887","CONJUNTO RESIDENCIAL AMONTE PH","Persona Jurídica","CR 86C 80SUR 155","Sabaneta","2099630","contabilidad@tmgservicios.com"
+"900999181","ONE PLAZA PH","Persona Jurídica","CR 43 43A 5 A 13","Medellín","1234567","contabilidadoneplaza@mts.com.co"
+"901001718","MALL VIVA PALMAS","Persona Jurídica","AVENIDA LAS PALMAS KM. 17","Medellín","3661557",
+"901003050","CONJUNTO RESIDENCIAL TIERRA GRATA DEL ESMERALDAL","Persona Jurídica","Cl 27 Sur 27 92","Medellín","2685588","tierragratadelesmeraldal@gmail.com"
+"901011269","INV.MARMAX  S.A.S.","Persona Jurídica","CL 23 43A-85 L 140","Medellín","2322536",
+"901016294","EDIFICIO MONDRIAN","Persona Jurídica","Cl 15 D Sur 32 12","Medellín","3105263922",
+"901019248","EDIFICIO VERDUN P.H.","Persona Jurídica","CL 39 D SUR 24 E E 146","Envigado","4798252",
+"901020155","UNIDAD RESIDENCIAL EDIFICIO BOTSUANA","Persona Jurídica","CR 39 12 10","Medellín","2685588","edificiobotsuana@gmail.com"
+"901022548","CONJUNTO RESIDENCIAL NATIVO MADERA P.H.","Persona Jurídica","Carrera 27AA # 36 Sur  170","Medellín","4485354","admon@nativomadera.com"
+"901029179","PROMOTORA AJL SAS","Persona Jurídica","CR 74B 39 D 6","Medellín","4114991",
+"901033723","URBANIZACION MESA DEL CAMPO","Persona Jurídica","CL 26B 25 20","Medellín","5629552","urmesadelcampo@gmail.com"
+"901038356","BALSO RESERVADO PROPIEDAD HORIZONTAL","Persona Jurídica","CR 37A 9 SUR 202","Medellín","4480786","tesoreria@admonyasesorias.com"
+"901040654","EDIFICIO SANTELMO - PROPIEDAD HORIZONTAL","Persona Jurídica","CIR 1 5 32","Medellín","2973470","edsantelmo.ph@gmail.com"
+"901041997","URBANIZACION CANELA P.H.","Persona Jurídica","cr 41 57 sur 01","Medellín","1234567",
+"901051864","EDIFICIO WHITE PROPIEDAD HORIZONTAL","Persona Jurídica","CR 39 13 SUR 28","Medellín","3148204043","tesoreria@admonyasesorias.com"
+"901053024","CONJUNTO RESIDENCIAL CALIFORNIA P.H.","Persona Jurídica","CR 25 A 38 D SUR 30","Envigado","4449624","andresgiraldo76@hotmail.com"
+"901065512","HOTEL AJ FERIAL BOGOTA SAS","Persona Jurídica","CR 36 25B78","Bogotá","5168765",
+"901081447","CONJUNTO RESIDENCIAL ANTARES ETAPA 4 TORRE 4- PROPIEDAD HORIZONTAL","Persona Jurídica","CL 32C 28 A 65","Medellín","1234567",
+"901089729","CONJUNTO RESIDENCIAL MANZANA ONCE PH","Persona Jurídica","CR 79 A SUR 46 49","Medellín","3205148987","facturacion@administracionmgm.com"
+"901092017","URBANIZACION LA FORET","Persona Jurídica","CR 20 No 12 SUR 92","Medellín","1234567","tesoreria@admonyasesorias.com"
+"901107910","CONJUNTO RESIDENCIA ANTARES ETAPA 5-TORRE 5 PH","Persona Jurídica","CL 32C 27 A 43","Medellín","4981692","concejotorre5@hotmail.com"
+"901109479","EDIFICIO RESIDENCIAL LALIK - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 37 A 11 B 57","Medellín","317146","cospina.servicios@gmail.com"
+"901109939","EDIFICIO LUXOR P.H","Persona Jurídica","CR 20 No 12 SUR 92","Medellín","1234567",
+"901111326","CENTRO EMPRESARIAL S-48 TOWERS PH","Persona Jurídica","CALLE 49 SUR #45 - 300","Medellín","2554200","facturacions48tower@gmail.com"
+"901114824","CONJUNTO RESIDENCIAL OBRADIECINUEVE - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 35 1 A SUR 2","Medellín","5898536","mantenimientogrupoochoph@gmail.com"
+"901117025","HOTEL H&M S.A.S.","Persona Jurídica","CR 33 30 41","Cali","1234567",
+"901117665","EDIFICIO TERRANOVA PH","Persona Jurídica","TV 35 SUR 30 02","Envigado","4442420","jose@tmgservicios.com"
+"901134610","URBANIZACION CACTUS P.H","Persona Jurídica","CL 75 A A SUR 53 246","La Estrella","3104455055","cactustorre1@gmail.com"
+"901140342","EDIFICIO TURCAL  DE LAURELES - PROPIEDAD HORIZONTAL","Persona Jurídica","CIR 4 71 74","Medellín","1234567",
+"901142267","CONJUNTO RESIDENCIAL URBANIZACION MONT CLAIRE PH","Persona Jurídica","CL 24 SUR 38 91","Envigado","3127838254","andresgiraldo76@hotmail.com"
+"901147602","UNIDAD RESIDENCIAL ED ACQUAVELLA PH","Persona Jurídica","CL 24 39A 70","Medellín","4449624","andresgiraldo76@hotmail.com"
+"901147823","LA ANDALUZA PARCELACION PH","Persona Jurídica","SEC LAS PALMAS","Medellín","3136506781","adrian6azul@hotmail.com"
+"901154354","CONJUNTO RESIDENCIAL LEMONT II PH","Persona Jurídica","KM 15 ALTO DE LAS PALMAS","Medellín","4483149","mcramirez@abelardoyepes.com"
+"901160334","URBANIZACION BOSQUES DE SAUCES PRIMERA ETAPA P.H","Persona Jurídica","CR 50 99 SUR 69","La Estrella","4442015","admonbosquesdesauces@gmail.com"
+"901161651","CONJUNTO RESIDENCIAL BILBAO 2 P.H.","Persona Jurídica","CR 57 B 76 SUR 75","La Estrella","3222323","bilbao2ph@gmail.com"
+"901166042","URBANIZACIÓN DUVILLE APARTAMENTOS PH","Persona Jurídica","CR 20 12SUR 42","Medellín","4442015","duvilleph@gmail.com"
+"901183328","PARCELACION BRACAMONTE P.H","Persona Jurídica","VDA LAS PALMAS PD 472","Medellín","3136506781","adrian6azul@hotmail.com"
+"901184287","EDIFICIO CUMBRES DE MARIA P.H. PRIMERA ETAPA Y SEGUNDA ETAPA","Persona Jurídica","CR 60 77 SUR 84","La Estrella","3107884087","cumbresdemaria@hotmail.com"
+"901187614","CONJUNTO RESIDENCIAL AMSTERDAM  APARTAMENTOS","Persona Jurídica","CL 5 25 115","Medellín","4480786","administracion@administracionesyasesorias.com"
+"901187625","CLUB RESIDENCIAL FIDELINA PARK P.H","Persona Jurídica","CL 75B 38 05","Sabaneta","2209039","fidelinapark@gmail.com"
+"901190138","CONJUNTO RESIDENCIA NATIVO ARENA PH","Persona Jurídica","CR 27 AA 30 SUR 160","Envigado","3007829888","compras@abelardoyepes.com"
+"901199269","CONJUNTO RESIDENCIAL BAMBÚ PH","Persona Jurídica","Cr 33 72 sur 35","Medellín","4034391","crbambuph@gmail.com"
+"901221013","URBANIZACION ALDEA DEL SUR TORRE 1 P.H.","Persona Jurídica","CR 56 C 83 D D SUR 201","La Estrella","5898936","aldeadelsurph@gmail.com"
+"901223457","EDIFICIO AMATISTA LIFE STYLE P.H.","Persona Jurídica","CR 72 34 25","Medellín","5791199","admon.amatista1@gmail.com"
+"901237105","URBANIZACION DANZA DEL CAMPO PH","Persona Jurídica","CR 26 25A 61","Retiro","2853187","evolucionadmon@hotmail.com"
+"901242203","CONJUNTO RESIDENCIAL VISTA APARTAMIRADOR P.H. ETAPA 1 - TORRE 1","Persona Jurídica","CL 71 SUR 33 150","Sabaneta","3225044","contabilidad@tmgservicios.com"
+"901245692","EDIFICIO LAS VEGAS PROPIEDAD HORIZONTAL","Persona Jurídica","CR 48A 16SUR 42","Medellín","44879999","edificiolasvegasph05@gmail.com"
+"901248938","CONJUNTO RESIDENCIAL URBANIZACION ROSSET","Persona Jurídica","CL 27 SUR 28 49","Medellín","3325208","tesoreria@caaph.co"
+"901255551","EDIFICIO MIRADOR VERDE PH","Persona Jurídica","CIR 2 66B74","Medellín","4487999","miradorverdeph@gmail.com"
+"901263808","EDIFICIO IBIZA LOFTS - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 47 C 76 D SUR 20","Sabaneta","3003255858","ibizaloftph@gmail.com"
+"901331496","EDIFICIO MONTREAL PH","Persona Jurídica","CR 18 7 78","Girardota","3045242226","montrealph5@gmail.com"
+"901332535","EDIFICIO TORRE SCAGLIA - PROPIEDAD HORIZONTAL","Persona Jurídica","CL 43A 15 sur 15","Medellín","4485354","torrescagliaph@gmail.com"
+"901358146","EDIFICO ALUNA PH","Persona Jurídica","CR 25 41B SUR 37","Envigado","4484173","admonedificioaluna@gmail.com"
+"901359102","EDIFICIO NATURAL P.H.","Persona Jurídica","CL 39 D SUR 25 121","Medellín","3221851","facturacion@administracionmgm.com"
+"901368258","EDIFICIO 35 PALMS - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 35 15 B 143","Medellín","3202567584","contabilidad35palms@mts.com.co"
+"901384899","EDIFICIO BILBAO PH","Persona Jurídica","CR 20 8 42","Girardota","2943096","mariaisabelcadavids@gmail.com"
+"901390799","SQUARE TRADE AND HOME - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 43 9 SUR 105","Medellín","4795850","asistentesquare@mts.com.co"
+"901392726","EDIFICIO MURANO PLAZA P.H.","Persona Jurídica","CL 40SUE 41 44","Envigado","3202098764","muranoplazaph@gmail.com"
+"901399851","URBANIZACION LAUREL PH","Persona Jurídica","CR 41 57 SUR 60","Sabaneta","5879307","laurel240.ph@gmail.com"
+"901399867","URBANIZACION MADEROS DEL RETIRO DE USO MIXTO","Persona Jurídica","CL 24 A 20 65","Retiro","3218027941","comprascrismatt@gmail.com"
+"901418955","CONJUNTO RESIDENCIAL MAZZARO ETAPA 1 P.H","Persona Jurídica","CR 32 A 77 SUR 73","Sabaneta","3173676046","conjuntoresidencialmazzaro@gmail.com"
+"901441644","EDIFICIO VISTA DEL VALLE TORRE 1 ETAPA 1 P. H.","Persona Jurídica","CR 32 B 63 B SUR 33","Sabaneta","3345055","contabilidad@tmgservicios.com"
+"901462757","CONJUNTO RESIDENCIAL ANTARES ETAPA 6 TORRE 6 - PROPIEDAD HORIZONTAL","Persona Jurídica","CL 32 C 28 A 70","Medellín","3006162174","antaresciudadelat6@gmail.com"
+"901464618","EDIFICIO EL ENCANTO P.H.","Persona Jurídica","Calle 40 C sur # 42 A 27","Envigado","58623491","edificioelencantoph@gmail.com"
+"901493310","CONJUNTO RESIDENCIAL DUBLIN P.H.","Persona Jurídica","CR 35 65 S 135","Sabaneta","3103423917","comprascrismatt@gmail.com"
+"901508042","CONJUNTO MIXTO EDIFICIO FORETTI PH","Persona Jurídica","Cr 43A 15sur 15","Medellín","3006162174","forettiadmon@gmail.com"
+"901522487","CONJUNTO RESIDENCIAL CANTO APARTAMENTOS -PROPIEDAD HORIZONTAL","Persona Jurídica","CR 35 19 620","Rionegro","3667253","tesoreria@caaph.co"
+"901537569","CONJUNTO RESIDENCIAL TIERRA GRATA BOSQUE SANTO PH","Persona Jurídica","CR 31 19 445","Medellín","3173857907","contabilidad@tmgservicios.com"
+"901539316","CONJUNTO INMOBILIARIO PARMA -PROPIEDAD HORIZONTAL","Persona Jurídica","CL 12 40 A A 135","Medellín","4480786","tesoreria@admonyasesorias.com"
+"901539578","EDIFICIO GO LIVING & SUITES-PROPIEDAD HORIZONTAL","Persona Jurídica","CL 10 SUR 45 45 240 260","Medellín","4480786","tesoreria@admonyasesorias.com"
+"901540475","URBANIZACION FORESTA P.H","Persona Jurídica","CR 24 C CL 41 SUR 127 URB FORESTA","Envigado","3016940","urbanizacionforestaph@gmail.com"
+"901548331","CONDOMINIO ALCALA P.H","Persona Jurídica","VDA EL TAMBO","La Ceja","3103733557","alcalacondominioph@gmail.com"
+"901563326","ALTOS DE MARIA AUXILIADORA PROYECTO VIS P.H","Persona Jurídica","CL 56 SUR 34 52 54 VDA MARIA AUXILIADORA","Sabaneta","3137651481","auxiliadoraphaltosdemaria@gmail.com"
+"901615409","EDIFICIO SANTA CLARA P.H.","Persona Jurídica","transversal 32 sur # 31 D 37","Envigado","123456879","edificiosantaclaraph1@gmail.com"
+"901648372","EDIFICIO RIO VERDE - PROPIEDAD HORIZONTAL MIXTO","Persona Jurídica","CL 38 64 A 28 30 32 34","Medellín","3148506136","edificiorioverdeph@gmail.com"
+"901685297","CONJUNTO DE USO MIXTO JARDINES DEL SUR P.H.","Persona Jurídica","CR 50 100 D SUR 189","La Estrella","3156718469","admonjardinesdelsurph@gmail.com"
+"1017125584","LEIDY JOHANA LOBO PIEDRAHITA","Persona Natural","Cr. 49 56 50","Medellín","3484424",
+"9002813351","ALTERNATIVAS VERTICALES SAS","Persona Jurídica","DG 32B 29 SUR 74","Medellín","3335893",
+"9999999999","OTROS CLIENTES","","","","",
+"90627371","EDIFICIO ROBLES DE LA CALERA","Persona Jurídica","","","",
+"901575084","WALL APARTAMENTOS - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 29 A 5 SUR 332","Medellin","",
+"900731875","EDIFICIO  MACANA - PROPIEDAD HORIZONTAL","Persona Jurídica","CR 37 2 SUR 7","Medellin","","consueloorozco@conbienesurbanistica.com"
+"901541186","EDIFICIO KAMELOT P.H ","Persona Jurídica","CR 45 A 79 SUR 134","Sabaneta","3662204","gerenciapropiedadhorizontal@gmail.com"
+"901200501","SAN FRANCISCO CENTRO EMPRESARIAL","Persona Juridica","CR 43 A 14 57 63 Y CR 43 B 14 44 46 48 50 54","Medellin","3104553260",
+"901134108","URBANIZACIÓN KORE APARTAMENTOS PH","Persona Juriica","CR  46 No. 76 Sur 70","Sabaneta","",
+"900016568","UNIDAD RESIDENCIAL SENDERO DE
+LOS BERNAL","Persona Juridica","CL 7 80 119","Medellin","",
+"901301265","EDIFICIO ZURICH   P.H.","Persona Juridica","Cl. 48 F F Sur 42 C -113","Envigado","","edificiozurichph@gmail.com"
+"901719576","SERRANIA DE LOS BOSQUES  P.H.","Persona Juridica","Cr. 15 A 10B 95","","","administracion3@next-one.com.co"
+"900551702","EDIFICIO VILLA SOL P.H.","Persona Juridica","CL 84 58 50","Itagui","","admonvillasol@gmail.com"
+"900037468","UNIDAD RESIDENCIAL BALCON DE LA RAZA P.H.","Persona Juridica","Cl","Envigado","8888",
+"900645675","CONJUNTO RESIDENCIAL CANTOLUNA P.H.","Persona Juridica","CR 43 A 70 SUR 17","Sabaneta","3145863964","crcantoluna@hotmail.com"
+"811042796","URBANIZACION NUEVO LINARES DE LA SIERRA PROPIEDAD HORIZONTAL","Persona Juridica","CL 45 SUR 41 135","Envigado","3343539","nuevolinaresdelasierraph@hotmail.com"
+"901741670","EDIFICIO TURIN LUXURY - PROPIEDAD HORIZONTAL","Persona Juridica","CL 42 74 58 64 68 CL 43 74 45 53 61 69","Medellin","3014317679","turinluxuryph@gmail.com"
+"901045354","CONJUNTO RESIDENCIAL PALMERAS ETAPA 3 P.H","Persona Juridica","CL 40 A SUR 24 B 105","Envigado","3045310707","pagos.aph@gmail.com"
+"901180065","LISBOA - PROPIEDAD HORIZONTAL","Persona Juridica","CL 72 SUR 35 240","Sabaneta","5671790","urbanizacionlisboaph@gmail.com"
+"900770050","URBANIZACION  Q - CONCEPT","Persona Juridica","CL 18 A SUR 25 C 25","Medellin","3146104691","urbanzacionqtower@gmail.com"
+"900778000","URBANIZACION  Q - FEEL","Persona Juridica","CL 18 A SUR 25 C 25","Medellin","3146104691","urbanzacionqtower@gmail.com"
+"900778050","URBANIZACION  Q - TOWER","Persona Juridica","CL 18 A SUR 25 C 25","Medellin","3146104691","urbanzacionqtower@gmail.com"
+"900905796","URBANIZACION MUGA P.H.","Persona Juridica","Cr 27 B 37 B Sur 80","Envigado","3103733557","tesoreria@caaph.co"
+"900260810","MASEG S.A.S.","Persona Juridica","CL 28 69 B 08","Medellin","5824055","comercial@masegseguridad.com"
+"800254204","SOCIEDAD CIVIL EL NUEVO COLEGIO S.A.","Persona Juridica","CR 9 11 SUR 338","Medellin","5207270","contabilidad@thenewschool.edu.co"
+"900432922","CONJUNTO RESIDENCIAL OLIVARES DE CAMINO VERDE P . H . ETAPA 1","Persona Juridica","CR 25 39 B SUR 101","Envigado","3045786452","olivarescaminoverde@gmail.com"
+"900259520","EDIFICIO ZAFIRO P.H.","Persona Juridica","CL 39 66 A 68","Medellin","3117595141","secretariacoad@gmail.com"
+"777777777","EDIFICIO ASTORGA","Persona Juridica","Cl ","Poblado","66666",
+"901626082","EDIFICIO VILANOVA SUR P.H.","Persona Juridica","CR 34 B CR 50 A 45","Itagui","3013939702","vilanovasurph@gmail.com"
+"811009827","CONJUNTO RESIDENCIAL TIERRA DULCE P.H","Persona Juridica","CR 32 16 300","Medellin","3127464","jcaasesorias@une.net.co"
+"901164274","URBANIZACION VILLA ROMERA CAMPESTRE - PROPIEDAD HORIZONTAL","Persona Juridica","CR 38 55 A SUR 130","Sabaneta","3113478777","admonvillaromera@gmail.com"
+"901661339","URBANIZACION SAINT MICHEL APARTAMENTOS PROPIEDAD HORIZONTAL","Persona Juridica","CL 11 SUR 29 E 115","Medellin","3104553260","administracion@admonyasesorias.com"
+"900311867","URBANIZACION BOSQUEADENTRO P.H.","Persona Juridica","Cra 27 A 36 Sur 150","Envigado","316321146","tesoreria@caaph.co"
+"42897084","HOTEL LLERAS EXPRESS","Persona Juridica","Cr 38 No. 10-33","Medellin","8756972","migutierrezb@hotmail.com"
+"901741619","URBANIZACION RECINTO DE GUALANDAY - PROPIEDAD HORIZONTAL","Persona Juridica","CR 63 31 B 123","Rio Negro","3103733557","tesoreria@caaph.co"
+"1017211526","HOTEL DIX","Persona Juridica","CL 10 41 21","Medellin","6044480341","migutierrezb@hotmail.com"
+"900238491","PROPIEDAD HORIZONTAL EDIFICIO ""TORRE AVALONIA"" P.H.","Pesona Juridica","CR 66 38 34","Medellin","3104143780","avaloniaph@hotmail.com"
+"900164170","EDIFICIO CANTABRIA P.H.","Persona Juridica","CR 47 20 SUR 46 IN 1","Envigado","3002254256","admonpropiedad@une.net.co"
+"901188513","CONJUNTO RESIDENCIAL SELVATICA ETAPA1 P.H.","Persona Juridica","CL 72 SUR 33 59","Sabaneta","4449624","crselvaticaapartamentosph@gmail.com"
+"22222222","BALCONES DE TRIANON","Persona Juridica","Ckl 73","Medellin","999999",
+"900638675","URBANIZACION SAUCES DEL SUR  P.H","Perosna Juridica","Cl 99 Sur 49 D 73","Medellin","3135615670","admonsaucesdelsur@gmail.com"
+"901336080","CORPORACION CINTURON VERDE","Pwrsona Juridica","CR 12 2 10","Medellin","3136508033","asesoresgese@gmail.com"
+"900259699","CONJUNTO RESIDENCIAL "" SANTAS MARIAS DE LOS BALSOS"" P.H.","Persona Juridica","CL 16 A SUR 9 E 50","Medellin","3117468884","info@next-one.com.co"
+"900947614","EDIFICIO MIRADORES  DE ZUÑIGA","Persona Juridica","Cr. 47 19 SUR 64","Envigado","3113405830","alcaceballos@gmail.com"
+"901428858","SALAMANCA APARTAMENTOS- PROPIEDAD HORIZONTAL","Pesona Juridica","CR 29 A 5 SUR 275","Medellin","3104553260","administracion@admonyasesorias.com"
+"800033658","CONJUNTO RESIDENCIAL VIZCAYA REAL N.1 P.","Persona Juridica","Cr 32 B 10 30","Medellin","3054253646","vizcayareal1ph@gmail.com"
+"901573607","PARQUE LOGISTICO QUALITY CENTER","Persona Juridica","CARRERA 43A 15 SUR 15","Medellin","6042554200","gerenciaquality@mts.com.co"
+"900445344","INVERSIONES FAJITEX SAS","Persona Juridica","AV 33 N 78 131 LC 202","Medellin","4447169","catherinealvarez@fajasfajitex.com"
+"77777777","SIERRA MORENA","Persona Juridica","Cr","Medellin","99999",
+"901469538","PASEO COMERCIAL AMSTERDAM PLAZA - P.H","Persona Juridica","Carrera 25 # 4 ? 165","Medellin","(57604) 2554200","asistenteamsterdam@mts.com.co"
+"900845027","URBANIZACION AMARELLO INN PROPIEDAD HORIZONTAL","Persona Juridica","CR 27 D 27 SUR 164","Envigado","3175917850","tesoreria@caaph.co"
+"890933248","UNIDAD RESIDENCIAL CATAY BLOQUE 2 P.H.","Persona Juridica","CL 5 E 35 A 101 IN 2
+","Medellin","3103733557","tesoreria@caaph.co"
+"8110159452","TORCOROMA ALDEA CAMPESTRE P.H","Persona Juridica","CR 25 A 36 D 100","Envigado","4484173","tesoreria@caaph.co"
+"901593206","EDIFICIO TULIPANES DE SANTA MARÍA P.H.","Persona Juridica","CR 44 17 SUR 90 112 116","Medellin","3147735239","contacto@ambientehorizontal.com"
+"800062608","EDIFICIO BALCON DE LOS CEDROS P.H.","Persona Juridica","CL 6 25 34","Medellin","3128505413","balcondeloscedros@gmail.com"
+"800156664","HOTEL CASA LAURELES - INV CAMPO ISLEÑO","Persona Juridica","Av. Colon 2-77","Medellin","5123026","adrianaq@solarhoteles.co"
+"900306768","URBANIZACION CUMBRES DEL BOSQUE P.H","Persona Juridica","CL 27 D SUR 27 C 15","Envigado","3127838254","ANDRESGIRALDO76@HOTMAIL.COM"
+"900393386","URBANIZACION ENTREPUENTES P.H.","Persona Juridica","Cl. 5 A 35 107","Medellin","3120163","bdentrepuentes@gmail.com"
+"900637403","EDIFICIO RIO DE LA PLATA PROPIEDAD HORIZONTAL","Persona Juridica","CL 49 A CR 39 37","Medellin","3234880330","alejandro.jags@gmal.com"
+"77777778","RUTA N","Persona Juridica","cl","Medellin","777",
+"900543702","URBANIZACION LA VEGA PARQUE RESIDENCIAL P.H.","Persona Juridica","CR 38 CL 75 B SUR 115","Sabaneta","3206900903","copropiedadlavega@gmail.com"
+"901122122","CORTEZZA TERRANUM DESARROLLO SAS","Persona Juridica","Cl 26 92 32 MD -G ","Medellin","7426060","contabilidadfacturacion@terranum.com"
+"890900938","CORPORACION EDUCATIVA COLOMBO BRITANICO","Persona Juridica","Tv 29  Sur 32 B 97","Envigado","3327799","manuellopez@ccbenv.edu.co"
+"890939572","EDIFICIO TURINGIA P.H.","Persona Juridica","CR 32 CL 6 SUR 260","Medellin","3175917850","TESORERIA@CAAPH.CO"
+"900401190","EDIFICIO ALPES PLAZA PROPIEDAD HORIZONTAL","Persona Juridica","CL 30 A 83 25","Medellin","3172183456","alpesplaza.ph@gmail.com"
+"811033259","SOLUCIONES CIVILES S.A.S.","Persona Juridica","CR 43 B 16 41 OF 1703","Medellin","6044483960","info@solciviles.com"
+"901451986","URBANIZACION ALMENDROS DE LA CALERA- P. H.","Persona Juridica","CL 6 A 16 35","Medellin","3103983554","recepcion@abelardoyepes.com"
+"811008176","CONJUNTO RESIDENCIAL GUADUALES DE PATIO BONITO II","Persojna Juridica","CL 5 43 D 23","Medellin","3003255858","guadualespatiobonito2@gmail.com"
+"811003430","TORRE DE LOS CHALETS P.H","Persona Juridica","CR 74 41 28","Medellin","3127609265","nidiadegomez@hotmail.com"
+"999999989","PARCELACION  SAN LUIS   CASA 27","Persona Juridica","Cr 74","Medellin","9999999","parcelacion@gmail.com"
+"900769356","EDIFICIO MIXTO ""SOLOHIO 2"" PROPIEDAD HORIZONTAL","Persona Juridica","CR 67 48 D 109","Medellin","3128314328","solohio@hotmail.com"
+"901600255","URBANIZACION VILLA ROMERA UG-2 P.H.","Persona Juridica","CL 56 SUR 38 112","Sabaneta","3216049880","villaromeraug2a2b@gmail.com"
+"900363075","ASOCIACION DE VIVIENDA COMUNITARIA SIERRA CAMPESTRE","Persona Juridica","CL 35 50 A 74","Itagui","3725886","yanetmartinez1971@hotmail.com"
+"901016488","URBANIZACION BRUJAS CAMPESTRE P.H","Persona Juridica","CL 37 B SUR 27 17","Enviado","3127069414","brujascampestre@hotmail.com"
+"900307389","CONJUNTO RESIDENCIAL URBANIZACION PARQUE DE LOS BERNAL P.H.","Persona Juridica","CR 84 B 7 95 CON PARQUE DE LOS BERNAL ","Medellin","3016210281","parquedelosbernal@gmail.com"
+"900193435","URBANIZACION JARDINES DE LA MARIA 1 ETAPA 1 P.H.","Persona Juridica","CR 44 22 SUR 51","Envigado","311348400","jardinesdelamariaph@gmail.com"
+"901831449","EDIFICIO SAKURA APARTAMENTOS P.H.","Persona Juridica","CL 74 SUR 35 72","Sabaneta","3013939702","admonsakura@gmail.com"
+"900327261","CONJUNTO DE USO MIXTO TORRES DEL RIO P.H.","Persona Juridica","CL 19 CR 43 G 155","Medellin","3187398922","ctorresdelrio@gmail.com"
+"900027168","EDIFICIO BOM BINI  P.H","Persona Juidica","CR 36 1 B 80","Medellin","3104143780","edificiobombini@gmail.co"
+"800077372","URBANIZACION MILAN CONDOMINIO 4 P.H. ","Persona Juridica","Cr 46B 43 Sur 20","Medellin","6043312563","urbmilan4@mail.com"
+"811003185","UNIDAD RESIDENCIAL MULTIFAMILIARES COMPOSTELA P.H","Persona Juridica","CL 15 A 79 366","Medellin","3156437588","urcompostela@hotmail.com"
+"811016358","EDIFICIO SAN SEBASTIAN DE LA FRONTERA P.H.","Persona Juridica","Cl 20 Sur 351422","Medellin","6043140370","claraarango5@gmail.com"
+"800215145","URBANIZACION ""VILLA VERDE II"" (SUBETAPAS 2A Y 2B)-P.H.","Persona Juridica","CR 81 B 7 A 49 BRR BELEN LOMA DE LOS BERNAL","Medellin","3053303256","urbanizacionvillaverdedos@gmail.com"
+"900069145","URBANIZACION PARQUE DE SAN CARLOS P.H.","Persona Juridica","CL 45 A SUR CR 39 B 190","Envigado","3216166316","parquesancarlosph2021@gmail.com"
+"900960591","EDIFICIO TORRE LAS ACACIAS P.H","Persona Juridica","CR 50 N 137 A SUR 15","Caldas","3064179","edificiotorrelasacacias@hotmail.com"
+"900074782","EDIFICIO MILAN ","Persona Juridica","CR 46 C 44 SUR 100","Envigado","3022744","xxxxx@xxx"
+"900537981","EDIFICIO SAN LORENZO DEL ESCORIAL P.H","Persona Juridica","CL 46 CR 43 127
+sanlorenzophmedellin","Medellin","3182682804","sanlorenzophmedellin@gmail.com"
+"811046694","CONJUNTO RESIDENCIAL URBANIZACION SOL DE PLATA P.H.","Persona Juridica","CL 46 SUR 46 C 100","Envigado","3206861123","casoldeplata@gmail.com"
+"900679454","CONJUNTO RESIDENCIAL MIXTO DOMINICA TORRE 3 - PROPIEDAD HORIZONTAL","Persona Juridica","CL 9 SUR 79 C 139","Medellin","3233460533","crdominica@hotmail.com"
+"890908604","EDIFICIO CASA BLANCA","Persona Juridica","CL 52 43 118","Medellin","3122914823","edificiocasablancaph22@gmail.com"
+"901612107","EDIFICIO MULTIFAMILIAR FENIX - PROPIEDAD HORIZONTAL","Persona Juridica","CL 51 81 A 28 30 32","Medellin","3014936655","beatrizaranzazu02@gmail.com"
+"811013058","CONJUNTO RESIDENCIAL EL ASTILLERO -P.H.","Persona Juridica","CR 82 CL 52 B 30","Medellin","3218330052","rumbera-2505@hotmail.com"
+"901336243","CONJUNTO BULEVAR DEL ALCAZAR P.H. ETAPA 1","Persona Juridica","CR 43 A 64 SUR 65","Sabaneta","3104223300","administracion@bulevardelalcazar.com"
+"890981800","EDIFICIO LORENA P-H","Persona Juridica","CL 52 N 40 156","Medellin","3206713788","ed.lorenaph@gmail.com"
+"900051123","URBANIZACION PORTOFINO P.H","Persona Juridica","CR 32 6 SUR 295","Medellin"," 3046154852","phportofino@gmail.com"
+"900115371","URBANIZACION JARDINES DE MONTIEL P.H","Persona Juridica","CL 24 SUR 39 37","Envigado","3212253","jardinesdemontielph@gmail.com"
+"900978654","ENTORNO INMOBILIARIO DEL SUR S.A.S.","Persona Juricia","C L 1 29 330 I N 301","Medellin","3013939702","delsurentornoinmobiliario@gmail.com"
+"900180530","EDIFICIO JARDINES DE LA ABADIA P.H","Persona Juridica","CR 28 27 SUR 39","Envigado","3102079385","jardinesdelaabadia@gmail.com"
+"800150443","COMPAÑIA DE CONSTRUCTORES ASOCIADOS S.A.","Persona Juridica","CL 6 SUR 43 A 180","Medellin","6042665050","impuestos@casa.com.co"
+"900494355","SUPERTECHOS COLOMBIA S. A. S.","Persona Juridica","CR 50 42 85 BRR CENTRO","Medellin","6043229697","contabilidad@supertechos.com.co"
+"811010628","CONJUNTO RESIDENCIAL TORRE SONORA P.H.","Persona Juridica","CL 5 76 A 145","Medellin","3052529595","admontorresonora@hotmail.com"
+"900356033","EDIFICIO ""FUENTECLARA"" PROPIEDAD HORIZONTAL","Persona Juridica","DG 75 A 33 B 122","Medellin","3156437588","edificiofuenteclaraph@gmail.com"
+"800019119","EDIFICIO MARRUECOS P.H.","Persina Juridica","CL 4 SUR 43 B 60","Medellin","3104691555","ed.marruecos1@gmail.com"
+"900569391","EDIFICIO LOCATEL B.H. P.H.","Persona Juridica","CR 43 9 SUR 35","Medellin","3152986849","edificiobhprosant@gmail.com"
+"901139114","PARCELACION CAMPESTRE BOSQUES DE BAVARIA P.H.","Persona Juridica","PEAJE LAS PALMAS-VEREDA LA ESPERANZA","Envigado","3176548122","consueloorozco@conbienesurbanistica.com"
+"890938759","EDIFICIO HOJAS VERDE P.H.","Persona Juriica","Cra 43 A 25 B sur 108","Envigado","3206713788","hojasverdesph@mail.com"
+"800042608","CENTRO COMRCIAL PASEO BOLIVAR","Persona Juridica","Cl 41 51 15 OF 223","Medellin","3183730309","ccpaseobolivar@mail.com"
+"800233243","EDIFICIO ALTO VERDE P.H","Persona Juridica","CL 9 30 178 BRR POBLADO","Medellin","3206713788","altoverdeph@gmail.com"
+"800084755","EDIFICIO RIO CLARO P.H","Persona Juridica","Cll 11 30 A 12","Medellin","3206713788","ed.rioclaroph@gmail.com"
+"901189355","EDIFICIO ALTAIR","Persona Juridica","Cr","Medellin","8888","a@a"
+"811001328","PORTON DE LA LOMA","Persona Juridica","Cr","Medellin","9999","b@b"
+"800254433","EDIFICIO THUNAPA","Persona Juridica","cr","Medellin","10101","c@c"
+"901776971","URBANIZACION NATAL","Persona Juridica","Cr. 51-96 Sur 27","La Estrella","3044951267","natalapartaentos02@gmail.com"
+"800040834","CONJUNTO RESIDENCIAL BOSQUES DE VIENA","Persona Juridica","Cl 5A-3340","Medellin","3013462612","admonbosquesdeviena@gmail.com"
+"900854227","CONJUNTO RESIDENCIAL ZU-4121 PROPIEDAD HORIZONTAL","Persona Juridica","CR 41 21 SUR 91","Envigado","3164087286","crzu41.21@gmail.com"
+"900708766","EDIFICIO MACADAMIA - PROPIEDAD HORIZONTAL","Persona Juridica","CR 37 B 13 SUR 40","Medellin","3206713788","ed.macadamiaph@gmail.com"
+"890927050","EDIFICIO YARUMOS 1 P.H","Persona Juridica","CL 20 SUR 35 35","Medellin","3105055237","contacto@acelemental.com.co"
+"43733226","ALBA BURITICA","Persona Juridica","CR 20 12 SUR 424 TO 2 AP 1304","Medellin","32062458893","alba_buritica@hotmail.com"
+"901235688","UNIDAD RESIDENCIAL VENTUM P.H","Persona Juridica","Calle 64 Sur N°39 130","Sabaneta","312808556 5","ventum.ph@hotmail.com"
+"900280091","CONJUNTO INMOBILIARIO FLORES DE MAYORCA P.H.","Persona Juridica","CL 49 D SUR 40 A 508","Envigado","3164909099",
+"901951080","EDIFICIO 30  LIVING P.H.","Persona Juridica","Cl 30 82 C 40 42","Medellin","3162676137","tesoreria@caaph.co"
+"900807391","CONJUNTO RESIDENCIAL URBANIZACIÓN TORRES DE MAYORCA P. H","Persona Juridica","Cra 47 N°52 Sur110","Sabaneta","999999999","adinistraciontorres@torresde mayorca.co.co"
+"811037880","URBANIZACION RINCONES DE MONTICELLO PH","Persona Juridica","CR 15 10 A 04","Medellin","3103983554","recepcion@abelardoyepes.com"
+"811009248","CENTRO EMPRESARIAL DANN FINANCIERA HOTEL DANN CARLTON P.H","Persona Juridica","CR 43 A 7 50","Medellin","3006192376","admon@torredann.com"
+"900459473","CONJUNTO DE USO MIXTO URBANIZACION COLINA DE LOS BERNAL P.H.","Persona Juriica","CR 84 B 4 G 75","Medellin","3122491354","colinadelosbernal@gmail.com"
+"42865810","EDIFICIO RAMPATH P.H.","Persona Juriica","CR 34 #38 A SUR 26","Medellin","3006956276"," mesgiraldo53@gmail.com"
+"900186230","EDIFICIO ""BALSOS DEL CASTILLO"" P.H","Persona Juriica","CR 34 A 8 SUR 70","Medellin","3103983554","recepcion@abelardoyepes.com"
+"901821935","INVERSIONES LORY S.A.S","Persona Juridica","CL 10 40 61","Medellin","3148756972","contabilidadoficinalr@gmail.com"
+"901916401","EDIFICIO NATURA - PROPIEDAD HORIZONTAL","Persona Juridica","CL 38 64 A 77 80 82 84","Medellin","3148506136","edificionaturaph2@gmail.com"
+"901725310","EDIFICIO TORRE GALES - PROPIEDAD HORIZONTAL","Persona Juridica","CR 82 B 33 B 20 22 24","Medellin","3014936655","torregalesph@gmail.com"
+"901780850","EDIFICIO PORTON DE ALAMEDA PROPIEDAD HORIZONTAL","Persona Juriica","CL 36 A SUR 45 B 100","Envigado","3007733856","admonintegralfm@hotmail.com"
+"800080552","CONJUNTO RESIDENCIAL CASTELOBLANCO PROPIEDAD HORIZONTAL","Persona Juridica","CL 7 SUR 41 B 175","Medellin","6043135679","casteloblancoph@gmail.com"
+"9019051524","WOOD P.H","Persona Juridica","CR 17 19 158","Antioquia - Retiro","3003255858","woodnaturalliving@gmail.com"
+"901052554","CONJUNTO RESIDENCIAL MADERA ESENCIAL P.H","Persona Juridica","CR 44 26 71","Bello","3117703004","maderaesencial@gmail.com"
+"900411248","CONJUNTO INMOBILIARIO NUEVO MUNDO P.H.","Persona Juridica","CR 74 53 55 BRR LOS COLORES","Meellin","3146240263","admon.nuevomundo@hotmail.com"
+"901786014","PROYECTO PALMA PROPIEDAD HORIZONTAL","Persona Juridica","CR 52 D 75 A A SUR 221","Itagui","3148889270","palmaverdevivo@gmail.com"
+"890917131","EDIFICIO CIUDADELA P.H.","Persona Juridica","CL 11 B CR 36 B 53","Medellin","3206713788","ed.ciudadela@gmail.com"
+"901814336","UNIDAD RESIDENCIAL FAUNA - P.H.","Persona Juridica","CR 99 B 49 B 161","Medellín","3215862026","unidadresidencialfaunaph@gmail.com"
+"901103926","EDIFICIO HOUSING - PROPIEDAD HORIZONTAL","Persona Juridica","CL 37 66 A 47 55","Medellin","3137856910","edificiohousing@gmail.com"
+"901674173","EDIFICIO SALENTO - PROPIEDAD HORIZONTAL","Persona Juridica","CL 33 B 82 A 93 95 99","Medellin","3014936655","beatrizaranzazu02@gmail.com"
+"901649721","6 GROUP","Persona Juridica","TV 7 CR -30 224","Medellin","3006114462","seisgroupsas@gmail.com"
+"42822425","ARANZAZU ALZATE BEATRIZ","Persona Juridica","CL 40 86 A 20 AP 42 ED LA CUARENTA B. AMAERICA","Medellin","3014936655","beatrizaranzazu02@gmail.com"
+"901636610","EDIFICIO RIVANA BUSINESS PARK TORRE NORTE","Persona Juridica","CL 20 48 04 08 12 16","Medellin","3245009624","gerenciarivana@mts.com.co"
+"901546029","APARTAMENTOS SAN MARCOS P.H.","Persona Juridica","CL 132 SUR 49 51","Caldas- Antioquia","3148415881","edificiosanmarcoscaldas@gmail.com"
+"71793610","HERNANDEZ CARVAJAL JORGE IVAN","Persona Juridica","CR 77 A A 45 G 52 AP 901 EL VELODROMO","Medellin","3116834873","ddhhparatodasytodos@gmail.com"
+"900029495","EDIFICIO ""CORBANCA MIRAFLORES"" -P.H","Persona Juridica","CL 49 25 29","Medellin","3117016426","corbancamirafloresph@yahoo.com"
+"901367199","BEMINIMAL S.A.S.","Persona Juridica","CL 36 63 82","Medellin","3104363438","info@beminimal.co"
+"800067987","CONJUNTO RESIDENCIAL RONCESVALLES P.H.","Persona Juridica","CL 7 A SUR   35   55","Medellin","3162676137","TESORERIA@CAAPH.CO"
+"900480311","EDIFICIO RESIDENCIAL MANTIS P.H.","Persona Juridica","Cl 71 Sur 34 -314","Sabaneta","3148415881","admonmantis@gmail.com"
+"901020337","CONJUNTO DE USO MIXTO CITRINO","Persona Juridica","Cr 77  60-70","Medellin","3183165786","admon.citrino@gmail.com"
+"900894912","EDIFICIO TRENTTO P.H.","Persona Juridica","Cr. 78A 46-02","Medellin","3183165786","edificiotrentto2018@gmail.com"
