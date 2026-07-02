@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Gestionar Servicio</title>
+
+<style>
+body{
+    font-family:Arial, sans-serif;
+    background:#eef2f7;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.header{
+    background:linear-gradient(135deg,#002b5c,#00509e);
+    color:white;
+    padding:22px;
+    border-radius:16px;
+    margin-bottom:18px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+    margin-bottom:16px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:12px;
+}
+
+label{
+    font-weight:bold;
+    display:block;
+    margin-top:12px;
+    color:#003366;
+}
+
+input, select, textarea{
+    width:100%;
+    padding:9px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    margin-top:5px;
+}
+
+.btn{
+    background:#003366;
+    color:white;
+    padding:10px 15px;
+    text-decoration:none;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    display:inline-block;
+    margin-top:14px;
+}
+
+.btn-secondary{
+    background:#64748b;
+}
+
+.badge{
+    padding:6px 10px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.PENDIENTE{ background:#fee2e2; color:#991b1b; }
+.EN_PROCESO{ background:#fef3c7; color:#92400e; }
+.ATENDIDA{ background:#dbeafe; color:#1e40af; }
+.CERRADA{ background:#dcfce7; color:#166534; }
+
+.footer{
+    text-align:center;
+    color:#6b7280;
+    font-size:13px;
+    margin-top:25px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>📋 Gestionar Servicio</h1>
+        <p>Control, seguimiento y cierre del servicio 7x24</p>
+    </div>
+
+    <div class="card">
+        <h2 style="color:#003366;">Información del servicio</h2>
+
+        <div class="grid">
+            <p><strong>Servicio:</strong> #{{ servicio.id }}</p>
+            <p><strong>Fecha llamada:</strong> {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}</p>
+            <p><strong>Cliente:</strong> {{ servicio.cliente.nombre }}</p>
+            <p><strong>Contrato:</strong> {{ servicio.cliente.get_tipo_contrato_display }}</p>
+            <p><strong>Persona que llama:</strong> {{ servicio.persona_llama|default:"No registrado" }}</p>
+            <p><strong>Teléfono:</strong> {{ servicio.telefono_llama|default:"No registrado" }}</p>
+            <p><strong>Recibido por:</strong> {{ servicio.recibido_por|default:"No registrado" }}</p>
+            <p><strong>Técnico asignado:</strong> {{ servicio.tecnico|default:"Sin asignar" }}</p>
+            <p><strong>Prioridad:</strong> {{ servicio.get_prioridad_display }}</p>
+            <p>
+                <strong>Estado actual:</strong>
+                <span class="badge {{ servicio.estado }}">{{ servicio.get_estado_display }}</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="color:#003366;">Novedad reportada</h2>
+        <p>{{ servicio.descripcion_falla }}</p>
+    </div>
+
+    <div class="card">
+        <h2 style="color:#003366;">Seguimiento del servicio</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button class="btn" type="submit">
+                💾 Guardar seguimiento
+            </button>
+
+            <a class="btn btn-secondary" href="/centro-operaciones/">
+                ⬅ Volver
+            </a>
+        </form>
+    </div>
+
+    <div class="footer">
+        Sistema 7x24 - D&S Soluciones en Bombeo S.A.S.<br>
+        “El sistema no existe para registrar servicios; existe para garantizar que ningún servicio pierda su seguimiento.”
+    </div>
+
+</div>
+
+</body>
+</html>

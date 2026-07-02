@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Centro de Control 7x24</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#eef2f7;
+    color:#1f2937;
+}
+
+.container{
+    padding:22px;
+}
+
+.header{
+    background:linear-gradient(135deg,#002b5c,#00509e);
+    color:white;
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+}
+
+.header h1{
+    margin:0;
+    font-size:26px;
+}
+
+.header p{
+    margin:6px 0 0;
+    opacity:.9;
+}
+
+.logo-box{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.logo-box img{
+    width:88px;
+    background:white;
+    padding:8px;
+    border-radius:12px;
+}
+
+.header-actions{
+    text-align:right;
+}
+
+.btn{
+    display:inline-block;
+    background:#003366;
+    color:white;
+    padding:10px 14px;
+    text-decoration:none;
+    border-radius:8px;
+    font-size:14px;
+    margin:4px;
+}
+
+.btn-light{
+    background:white;
+    color:#003366;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.kpi-card{
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+    position:relative;
+    overflow:hidden;
+}
+
+.kpi-card small{
+    color:#6b7280;
+    font-weight:bold;
+}
+
+.kpi{
+    font-size:34px;
+    font-weight:bold;
+    margin-top:8px;
+}
+
+.kpi-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:6px;
+    height:100%;
+}
+
+.total::before{background:#003366;}
+.pendiente::before{background:#dc2626;}
+.proceso::before{background:#f59e0b;}
+.atendida::before{background:#2563eb;}
+.cerrada::before{background:#16a34a;}
+
+.section-title{
+    margin:20px 0 12px;
+    color:#003366;
+}
+
+.cards-servicios{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+    gap:14px;
+}
+
+.servicio-card{
+    background:white;
+    border-radius:15px;
+    padding:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+    border-top:5px solid #003366;
+}
+
+.servicio-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.servicio-top h3{
+    margin:0;
+    color:#003366;
+    font-size:17px;
+}
+
+.fecha{
+    font-size:12px;
+    color:#6b7280;
+}
+
+.cliente{
+    font-size:16px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.info{
+    font-size:13px;
+    margin:5px 0;
+}
+
+.label{
+    color:#6b7280;
+    font-weight:bold;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.PENDIENTE{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.EN_PROCESO{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.ATENDIDA{
+    background:#dbeafe;
+    color:#1e40af;
+}
+
+.CERRADA{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.prioridad-alta{
+    color:#991b1b;
+    font-weight:bold;
+}
+
+.prioridad-media{
+    color:#92400e;
+    font-weight:bold;
+}
+
+.prioridad-normal{
+    color:#166534;
+    font-weight:bold;
+}
+
+.falla{
+    background:#f8fafc;
+    border-radius:10px;
+    padding:10px;
+    font-size:13px;
+    margin-top:10px;
+    min-height:58px;
+}
+
+.acciones{
+    margin-top:12px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.action{
+    background:#f1f5f9;
+    color:#003366;
+    padding:7px 10px;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.action-primary{
+    background:#003366;
+    color:white;
+}
+
+.panel{
+    background:white;
+    border-radius:15px;
+    padding:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+    margin-top:18px;
+}
+
+.footer{
+    margin-top:24px;
+    text-align:center;
+    color:#6b7280;
+    font-size:13px;
+}
+
+.empty{
+    background:white;
+    border-radius:14px;
+    padding:25px;
+    text-align:center;
+    color:#6b7280;
+}
+
+@media(max-width:760px){
+    .header{
+        display:block;
+        text-align:center;
+    }
+
+    .header-actions{
+        text-align:center;
+        margin-top:12px;
+    }
+
+    .logo-box{
+        justify-content:center;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="logo-box">
+            <img src="/static/img/logo_dys.png" alt="D&S">
+            <div>
+                <h1>🚨 Centro de Control de Servicios D&S</h1>
+                <p>D&S Soluciones en Bombeo S.A.S. | Seguimiento operativo en tiempo real</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <a class="btn btn-light" href="/nueva-llamada/">+ Nueva llamada</a>
+            <a class="btn btn-light" href="/coordinador/">Escritorio coordinador</a>
+            <a class="btn btn-light" href="/">Inicio</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="kpi-card total">
+            <small>Total servicios</small>
+            <div class="kpi">{{ total }}</div>
+        </div>
+
+        <div class="kpi-card pendiente">
+            <small>Pendientes</small>
+            <div class="kpi">{{ pendientes }}</div>
+        </div>
+
+        <div class="kpi-card proceso">
+            <small>En proceso</small>
+            <div class="kpi">{{ en_proceso }}</div>
+        </div>
+
+        <div class="kpi-card atendida">
+            <small>Atendidas</small>
+            <div class="kpi">{{ atendidas }}</div>
+        </div>
+
+        <div class="kpi-card cerrada">
+            <small>Cerradas</small>
+            <div class="kpi">{{ cerradas }}</div>
+        </div>
+    </div>
+
+    <div class="panel">
+    <h2 style="margin-top:0;color:#003366;">☀️ Buenos días</h2>
+
+    <p style="font-size:15px;">
+        Durante la noche ocurrieron:
+    </p>
+
+    <div class="grid">
+        <div class="kpi-card total">
+            <small>Servicios nocturnos</small>
+            <div class="kpi">{{ total_noche }}</div>
+        </div>
+
+        <div class="kpi-card cerrada">
+            <small>Solucionados</small>
+            <div class="kpi">{{ solucionados_noche }}</div>
+        </div>
+
+        <div class="kpi-card pendiente">
+            <small>Pendientes por revisar</small>
+            <div class="kpi">{{ pendientes_noche }}</div>
+        </div>
+
+        <div class="kpi-card proceso">
+            <small>En proceso</small>
+            <div class="kpi">{{ en_proceso_noche }}</div>
+        </div>
+    </div>
+
+    <p style="color:#6b7280;font-size:13px;">
+        Periodo revisado:
+        {{ inicio_noche|date:"d/m/Y H:i" }}
+        -
+        {{ fin_noche|date:"d/m/Y H:i" }}
+    </p>
+
+    <p>
+        <strong>Objetivo del coordinador:</strong>
+        verificar tiempos, estado del servicio, novedades pendientes y confirmar cierre con el cliente.
+    </p>
+</div>
+
+    <h2 class="section-title">🚨 Últimos servicios registrados</h2>
+
+    <div class="cards-servicios">
+
+        {% for s in ultimos_servicios %}
+
+        <div class="servicio-card">
+
+            <div class="servicio-top">
+                <div>
+                    <h3>Servicio #{{ s.id }}</h3>
+                    <div class="fecha">{{ s.fecha_llamada|date:"d/m/Y H:i" }}</div>
+                </div>
+
+                <span class="badge {{ s.estado }}">
+                    {{ s.get_estado_display }}
+                </span>
+            </div>
+
+            <div class="cliente">
+                📍 {{ s.cliente.nombre }}
+            </div>
+
+            <div class="info">
+                <span class="label">Tipo:</span>
+                {{ s.get_tipo_servicio_display }}
+            </div>
+
+            <div class="info">
+                <span class="label">Persona que llama:</span>
+                {{ s.persona_llama|default:"No registrado" }}
+            </div>
+
+            <div class="info">
+                <span class="label">Teléfono:</span>
+                {{ s.telefono_llama|default:"No registrado" }}
+            </div>
+
+            <div class="info">
+                <span class="label">Recibido por:</span>
+                {{ s.recibido_por|default:"No registrado" }}
+            </div>
+
+            <div class="info">
+                <span class="label">Técnico asignado:</span>
+                {{ s.tecnico|default:"Sin asignar" }}
+            </div>
+
+            <div class="info">
+                <span class="label">Prioridad:</span>
+
+                {% if s.prioridad == "ALTA" %}
+                    <span class="prioridad-alta">🔴 {{ s.get_prioridad_display }}</span>
+                {% elif s.prioridad == "MEDIA" %}
+                    <span class="prioridad-media">🟡 {{ s.get_prioridad_display }}</span>
+                {% else %}
+                    <span class="prioridad-normal">🟢 {{ s.get_prioridad_display }}</span>
+                {% endif %}
+            </div>
+
+            <div class="falla">
+                <strong>Novedad reportada:</strong><br>
+                {{ s.descripcion_falla|truncatechars:120 }}
+            </div>
+
+            <div class="acciones">
+                {% if s.estado == "PENDIENTE" %}
+                    <span class="action">🔴 Requiere asignación</span>
+                {% elif s.estado == "EN_PROCESO" %}
+                    <span class="action">🟡 Hacer seguimiento</span>
+                {% elif s.estado == "ATENDIDA" %}
+                    <span class="action">☎ Llamar cliente</span>
+                {% elif s.estado == "CERRADA" %}
+                    <span class="action">✅ Cerrado</span>
+                {% endif %}
+
+               <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">
+                📋 Gestionar servicio
+                </a>
+            </div>
+
+        </div>
+
+        {% empty %}
+
+        <div class="empty">
+            <h3>No hay servicios registrados.</h3>
+            <p>Cuando se registre una nueva llamada, aparecerá aquí automáticamente.</p>
+            <a class="btn" href="/nueva-llamada/">+ Registrar primera llamada</a>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <div class="footer">
+        Sistema 7x24 - D&S Soluciones en Bombeo S.A.S.<br>
+        “El sistema no existe para registrar servicios; existe para garantizar que ningún servicio pierda su seguimiento.”
+    </div>
+
+</div>
+
+</body>
+</html>

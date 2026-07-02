@@ -1,5 +1,6 @@
 from django.urls import path
 
+
 from .views import (
     home,
     dashboard,
@@ -11,6 +12,10 @@ from .views import (
     export_excel,
     reporte_pdf,
     hoja_vida_pdf,
+    centro_operaciones,
+    escritorio_coordinador,
+    nueva_llamada,
+    gestionar_servicio,
 )
 
 urlpatterns = [
@@ -18,7 +23,9 @@ urlpatterns = [
     # LOGIN
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
-
+    path("centro-operaciones/", centro_operaciones, name="centro_operaciones"),
+    path("coordinador/", escritorio_coordinador, name="escritorio_coordinador"),
+    path("nueva-llamada/", nueva_llamada, name="nueva_llamada"),
     # HOME
     path("", home, name="home"),
 
@@ -65,5 +72,9 @@ urlpatterns = [
         reporte_pdf,
         name="reporte_pdf"
     ),
-
+path(
+    "servicio/<int:servicio_id>/gestionar/",
+    gestionar_servicio,
+    name="gestionar_servicio"
+),
 ]

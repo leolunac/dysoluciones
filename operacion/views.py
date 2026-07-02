@@ -15,6 +15,7 @@ from django.db.models.functions import TruncMonth
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from .forms import NuevaLlamadaForm, GestionServicioForm
 
 from .models import (
     Cliente,
@@ -78,7 +79,20 @@ def home(request):
 
     return redirect("/login/")
 
+@login_required
+def nueva_llamada(request):
 
+    if request.method == "POST":
+        form = NuevaLlamadaForm(request.POST)
+
+        if form.is_valid():
+            servicio = form.save()
+            return redirect("/centro-operaciones/")
+
+    else:
+        form = NuevaLlamadaForm()
+
+    return render(request, "nueva_llamada.html", {"form": form})
 # =========================================
 # DASHBOARD GERENCIAL
 # =========================================
@@ -98,6 +112,97 @@ def dashboard(request):
 
     return render(request, "dashboard.html", context)
 
+@login_required
+def centro_operaciones(request):
+
+    ahora = timezone.now()
+    hoy = ahora.date()
+    ayer = hoy - timedelta(days=1)
+
+    inicio_noche = timezone.datetime.combine(
+        ayer,
+        timezone.datetime.min.time()
+    ).replace(hour=17, minute=0)
+
+    fin_noche = timezone.datetime.combine(
+        hoy,
+        timezone.datetime.min.time()
+    ).replace(hour=7, minute=0)
+
+    inicio_noche = timezone.make_aware(inicio_noche)
+    fin_noche = timezone.make_aware(fin_noche)
+
+    servicios = Emergencia.objects.all().order_by("-fecha_llamada")
+
+    servicios_noche = Emergencia.objects.filter(
+        fecha_llamada__gte=inicio_noche,
+        fecha_llamada__lte=fin_noche
+    )
+
+    context = {
+        "total": servicios.count(),
+        "pendientes": servicios.filter(estado="PENDIENTE").count(),
+        "en_proceso": servicios.filter(estado="EN_PROCESO").count(),
+        "atendidas": servicios.filter(estado="ATENDIDA").count(),
+        "cerradas": servicios.filter(estado="CERRADA").count(),
+        "ultimos_servicios": servicios[:20],
+
+        "total_noche": servicios_noche.count(),
+        "solucionados_noche": servicios_noche.filter(estado="ATENDIDA").count(),
+        "pendientes_noche": servicios_noche.filter(estado="PENDIENTE").count(),
+        "cerrados_noche": servicios_noche.filter(estado="CERRADA").count(),
+        "en_proceso_noche": servicios_noche.filter(estado="EN_PROCESO").count(),
+
+        "inicio_noche": inicio_noche,
+        "fin_noche": fin_noche,
+    }
+
+    return render(request, "centro_operaciones.html", context)
+@login_required
+def escritorio_coordinador(request):
+
+    ahora = timezone.now()
+    hoy = ahora.date()
+    ayer = hoy - timedelta(days=1)
+
+    inicio_noche = timezone.datetime.combine(
+        ayer,
+        timezone.datetime.min.time()
+    ).replace(hour=17, minute=0)
+
+    fin_noche = timezone.datetime.combine(
+        hoy,
+        timezone.datetime.min.time()
+    ).replace(hour=7, minute=0)
+
+    inicio_noche = timezone.make_aware(inicio_noche)
+    fin_noche = timezone.make_aware(fin_noche)
+
+    servicios_noche = Emergencia.objects.filter(
+        fecha_llamada__gte=inicio_noche,
+        fecha_llamada__lte=fin_noche
+    )
+
+    total_noche = servicios_noche.count()
+    solucionados = servicios_noche.filter(estado="ATENDIDA").count()
+    pendientes = servicios_noche.filter(estado="PENDIENTE").count()
+    en_proceso = servicios_noche.filter(estado="EN_PROCESO").count()
+    cerrados = servicios_noche.filter(estado="CERRADA").count()
+
+    servicios_revision = servicios_noche.order_by("-fecha_llamada")
+
+    context = {
+        "total_noche": total_noche,
+        "solucionados": solucionados,
+        "pendientes": pendientes,
+        "en_proceso": en_proceso,
+        "cerrados": cerrados,
+        "servicios_revision": servicios_revision,
+        "inicio_noche": inicio_noche,
+        "fin_noche": fin_noche,
+    }
+
+    return render(request, "escritorio_coordinador.html", context)
 
 # =========================================
 # DASHBOARD CLIENTE
@@ -383,7 +488,25 @@ def hoja_vida_pdf(request, cliente_id):
 
     return response
 
+@login_required
+def gestionar_servicio(request, servicio_id):
 
+    servicio = get_object_or_404(Emergencia, id=servicio_id)
+
+    if request.method == "POST":
+        form = GestionServicioForm(request.POST, instance=servicio)
+
+        if form.is_valid():
+            form.save()
+            return redirect("/centro-operaciones/")
+
+    else:
+        form = GestionServicioForm(instance=servicio)
+
+    return render(request, "gestionar_servicio.html", {
+        "servicio": servicio,
+        "form": form,
+    })
 # =========================================
 # EXPORTAR CSV
 # =========================================
@@ -486,7 +609,7 @@ def reporte_pdf(request, cliente_id):
 
     y -= 40
     p.setFont("Helvetica", 9)
-    p.drawString(50, y, "Sistema 7x24 - Reporte generado automáticamente")
+    p.drawString(50, y, "Sistema D&S - Reporte generado automáticamente")
 
     p.save()
     return response

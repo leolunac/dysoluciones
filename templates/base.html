@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Sistema 7x24{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#f4f6f9;
+    color:#222;
+}
+
+.layout{
+    display:flex;
+    min-height:100vh;
+}
+
+.sidebar{
+    width:230px;
+    background:#003366;
+    color:white;
+    padding:18px 14px;
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.logo img{
+    max-width:120px;
+    margin-bottom:8px;
+}
+
+.logo h3{
+    font-size:14px;
+    margin:0;
+}
+
+.menu a{
+    display:block;
+    color:white;
+    text-decoration:none;
+    padding:10px 12px;
+    border-radius:6px;
+    margin-bottom:6px;
+    font-size:14px;
+}
+
+.menu a:hover{
+    background:#00509e;
+}
+
+.content{
+    flex:1;
+    padding:20px;
+}
+
+.topbar{
+    background:white;
+    padding:14px 18px;
+    border-radius:10px;
+    margin-bottom:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.main-card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.btn{
+    background:#003366;
+    color:white;
+    padding:8px 12px;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:13px;
+    border:none;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#001f3f;
+}
+
+@media(max-width:800px){
+    .layout{
+        display:block;
+    }
+
+    .sidebar{
+        width:100%;
+    }
+
+    .content{
+        padding:12px;
+    }
+}
+</style>
+
+{% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="/static/img/logo_dys.png" alt="Logo D&S">
+            <h3>Sistema 7x24</h3>
+        </div>
+
+        <nav class="menu">
+            <a href="/">🏠 Inicio</a>
+            <a href="/gerencia/">📊 Dashboard</a>
+            <a href="/admin/operacion/cliente/">🏢 Clientes</a>
+            <a href="/admin/operacion/emergencia/">🚨 Emergencias</a>
+            <a href="/admin/operacion/equipounidad/">🔧 Equipos</a>
+            <a href="/admin/operacion/lavadotanque/">💧 Lavados</a>
+            <a href="/admin/">⚙ Administración</a>
+            <a href="/logout/">🚪 Cerrar sesión</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <div class="topbar">
+            <div>
+                <strong>D&S Soluciones en Bombeo S.A.S.</strong><br>
+                <small>Gestión operativa 7x24</small>
+            </div>
+
+            <div>
+                {{ request.user.username }}
+            </div>
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+
+</body>
+</html>

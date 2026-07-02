@@ -58,6 +58,7 @@ class Tecnico(models.Model):
 
 class Emergencia(models.Model):
 
+
     ESTADO = [
         ('PENDIENTE', 'Pendiente'),
         ('EN_PROCESO', 'En Proceso'),
@@ -71,8 +72,30 @@ class Emergencia(models.Model):
         ('NORMAL', 'Normal'),
     ]
 
+    TIPO_SERVICIO = [
+        ("EMERGENCIA", "Emergencia"),
+        ("CORRECTIVO", "Correctivo"),
+        ("GARANTIA", "Garantía"),
+        ("REVISION", "Revisión"),
+    ]
+
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     tecnico = models.ForeignKey(Tecnico, on_delete=models.SET_NULL, null=True, blank=True)
+
+    tipo_servicio = models.CharField(
+        max_length=20,
+        choices=TIPO_SERVICIO,
+        default="CORRECTIVO"
+    )
+
+    persona_llama = models.CharField(max_length=150, null=True, blank=True)
+    telefono_llama = models.CharField(max_length=50, null=True, blank=True)
+    recibido_por = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        help_text="Coordinador o técnico de turno que recibió la llamada"
+    )
 
     fecha_llamada = models.DateTimeField(default=timezone.now)
     fecha_atencion = models.DateTimeField(null=True, blank=True)
@@ -86,17 +109,15 @@ class Emergencia(models.Model):
     valor_total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     prioridad = models.CharField(max_length=10, choices=PRIORIDAD, default='NORMAL')
-
     estado = models.CharField(max_length=20, choices=ESTADO, default='PENDIENTE')
-    aprobada_por_gerencia = models.BooleanField(default=False)
 
+    aprobada_por_gerencia = models.BooleanField(default=False)
     observaciones_internas = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
 
         hoy = timezone.now().date()
 
-        # 1️⃣ Asignar técnico automáticamente si no tiene
         if not self.tecnico:
             rotacion = RotacionTecnico.objects.filter(
                 fecha_inicio_semana__lte=hoy,
@@ -107,14 +128,12 @@ class Emergencia(models.Model):
             if rotacion:
                 self.tecnico = rotacion.tecnico
 
-        # 2️⃣ Detectar si es nocturna automáticamente
         hora = self.fecha_llamada.time()
         if hora >= time(21, 0) or hora <= time(6, 0):
             self.es_nocturna = True
         else:
             self.es_nocturna = False
 
-        # 3️⃣ Asignar prioridad automática según contrato
         if self.cliente.tipo_contrato == '7X24':
             self.prioridad = 'ALTA'
         elif self.cliente.tipo_contrato == 'PREVENTIVO':
@@ -122,9 +141,7 @@ class Emergencia(models.Model):
         else:
             self.prioridad = 'NORMAL'
 
-        # 4️⃣ Calcular valor total automáticamente
         if self.horas_trabajadas and self.tecnico:
-
             if self.es_nocturna:
                 tarifa = self.tecnico.valor_hora_nocturna
             else:
@@ -136,7 +153,6 @@ class Emergencia(models.Model):
 
     def __str__(self):
         return f"{self.cliente.nombre} - {self.estado}"
-
 
 # =========================
 # ROTACION

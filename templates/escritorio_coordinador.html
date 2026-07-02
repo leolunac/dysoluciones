@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Escritorio del Coordinador</title>
+
+<style>
+body{
+    font-family:Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+.header{
+    background:#003366;
+    color:white;
+    padding:18px;
+    border-radius:10px;
+    margin-bottom:18px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.card{
+    background:white;
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.kpi{
+    font-size:30px;
+    font-weight:bold;
+    color:#003366;
+}
+
+.red{ border-left:6px solid #dc2626; }
+.yellow{ border-left:6px solid #f59e0b; }
+.blue{ border-left:6px solid #2563eb; }
+.green{ border-left:6px solid #16a34a; }
+.dark{ border-left:6px solid #003366; }
+
+table{
+    width:100%;
+    background:white;
+    border-collapse:collapse;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+th,td{
+    padding:10px;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+}
+
+th{
+    background:#003366;
+    color:white;
+    text-align:left;
+}
+
+.badge{
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.PENDIENTE{ background:#fee2e2; color:#991b1b; }
+.EN_PROCESO{ background:#fef3c7; color:#92400e; }
+.ATENDIDA{ background:#dbeafe; color:#1e40af; }
+.CERRADA{ background:#dcfce7; color:#166534; }
+
+.btn{
+    background:#003366;
+    color:white;
+    padding:8px 12px;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>📋 Escritorio del Coordinador</h1>
+    <p>Resumen operativo de servicios nocturnos y pendientes de seguimiento</p>
+</div>
+
+<div class="grid">
+
+    <div class="card dark">
+        Servicios anoche
+        <div class="kpi">{{ total_noche }}</div>
+    </div>
+
+    <div class="card green">
+        Solucionados
+        <div class="kpi">{{ solucionados }}</div>
+    </div>
+
+    <div class="card red">
+        Pendientes
+        <div class="kpi">{{ pendientes }}</div>
+    </div>
+
+    <div class="card yellow">
+        En proceso
+        <div class="kpi">{{ en_proceso }}</div>
+    </div>
+
+    <div class="card blue">
+        Cerrados
+        <div class="kpi">{{ cerrados }}</div>
+    </div>
+
+</div>
+
+<div class="card">
+    <h2>🔔 Servicios para revisar</h2>
+    <p>
+        Periodo revisado:
+        {{ inicio_noche|date:"d/m/Y H:i" }}
+        -
+        {{ fin_noche|date:"d/m/Y H:i" }}
+    </p>
+</div>
+
+<table>
+<tr>
+    <th>Hora llamada</th>
+    <th>Cliente</th>
+    <th>Técnico</th>
+    <th>Prioridad</th>
+    <th>Estado</th>
+    <th>Falla reportada</th>
+    <th>Acción sugerida</th>
+</tr>
+
+{% for s in servicios_revision %}
+<tr>
+    <td>{{ s.fecha_llamada|date:"d/m/Y H:i" }}</td>
+    <td>{{ s.cliente.nombre }}</td>
+    <td>{{ s.tecnico|default:"Sin asignar" }}</td>
+    <td>{{ s.get_prioridad_display }}</td>
+    <td>
+        <span class="badge {{ s.estado }}">
+            {{ s.get_estado_display }}
+        </span>
+    </td>
+    <td>{{ s.descripcion_falla|truncatechars:70 }}</td>
+    <td>
+        {% if s.estado == "PENDIENTE" %}
+            🔴 Asignar / revisar
+        {% elif s.estado == "EN_PROCESO" %}
+            🟡 Hacer seguimiento
+        {% elif s.estado == "ATENDIDA" %}
+            ☎ Llamar cliente
+        {% elif s.estado == "CERRADA" %}
+            ✅ Sin acción
+        {% endif %}
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="7">No hay servicios registrados en el periodo nocturno.</td>
+</tr>
+{% endfor %}
+</table>
+
+<br>
+
+<a class="btn" href="/centro-operaciones/">🚨 Ir al Centro de Operaciones</a>
+<a class="btn" href="/admin/operacion/emergencia/add/">+ Nuevo servicio</a>
+
+</body>
+</html>
