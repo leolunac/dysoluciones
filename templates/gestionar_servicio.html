@@ -186,30 +186,51 @@ input, select, textarea{
                     {% csrf_token %}
 
                     <label>Estado del servicio</label>
-                    {{ form.estado }}
+{{ form.estado }}
 
-                    <label>Fecha y hora de atención</label>
-                    {{ form.fecha_atencion }}
+<label>Fecha y hora de atención</label>
+{{ form.fecha_atencion }}
 
-                    <label>Solución aplicada / labor realizada</label>
-                    {{ form.solucion_aplicada }}
+<label>Diagnóstico</label>
+{{ form.diagnostico }}
 
-                    <label>Horas trabajadas</label>
-                    {{ form.horas_trabajadas }}
+<label>Solución aplicada / labor realizada</label>
+{{ form.solucion_aplicada }}
 
-                    <label>Observaciones internas</label>
-                    {{ form.observaciones_internas }}
+<label>Materiales utilizados</label>
+{{ form.materiales_usados }}
 
-                    <label>Aprobada por gerencia</label>
-                    {{ form.aprobada_por_gerencia }}
+<label>Horas trabajadas</label>
+{{ form.horas_trabajadas }}
 
-                    <button class="btn" type="submit">
-                        💾 Guardar seguimiento
-                    </button>
+<label>Resultado del servicio</label>
+{{ form.resultado_servicio }}
 
-                    <a class="btn btn-secondary" href="/centro-operaciones/">
-                        ⬅ Volver al Centro de Control
-                    </a>
+<label>¿Requiere regresar?</label>
+{{ form.requiere_regreso }}
+
+<label>¿Requiere cotización?</label>
+{{ form.requiere_cotizacion }}
+
+<label>¿Cliente conforme?</label>
+{{ form.cliente_conforme }}
+
+<label>Observación de cierre</label>
+{{ form.observacion_cierre }}
+
+<label>Observaciones internas</label>
+{{ form.observaciones_internas }}
+
+<label>Aprobada por gerencia</label>
+{{ form.aprobada_por_gerencia }}
+
+<button class="btn" type="submit">
+    💾 Guardar seguimiento
+</button>
+
+<a class="btn btn-secondary" href="/centro-operaciones/">
+    ⬅ Volver al Centro de Control
+</a>
                 </form>
             </div>
 

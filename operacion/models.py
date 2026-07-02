@@ -56,8 +56,12 @@ class Tecnico(models.Model):
 # EMERGENCIA
 # =========================
 
-class Emergencia(models.Model):
 
+# =========================
+# EMERGENCIA / SERVICIO 7X24
+# =========================
+
+class Emergencia(models.Model):
 
     ESTADO = [
         ('PENDIENTE', 'Pendiente'),
@@ -79,8 +83,29 @@ class Emergencia(models.Model):
         ("REVISION", "Revisión"),
     ]
 
+    RESULTADO_SERVICIO = [
+        ("OPERATIVO", "Operativo"),
+        ("OPERATIVO_PROVISIONAL", "Operativo provisional"),
+        ("PENDIENTE_REPUESTO", "Pendiente repuesto"),
+        ("REQUIERE_COTIZACION", "Requiere cotización"),
+        ("REQUIERE_REGRESO", "Requiere regreso"),
+        ("NO_SOLUCIONADO", "No solucionado"),
+    ]
+
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    tecnico = models.ForeignKey(Tecnico, on_delete=models.SET_NULL, null=True, blank=True)
+    tecnico = models.ForeignKey(
+        Tecnico,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    numero_caso = models.CharField(
+        max_length=30,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
     tipo_servicio = models.CharField(
         max_length=20,
@@ -90,6 +115,7 @@ class Emergencia(models.Model):
 
     persona_llama = models.CharField(max_length=150, null=True, blank=True)
     telefono_llama = models.CharField(max_length=50, null=True, blank=True)
+
     recibido_por = models.CharField(
         max_length=150,
         null=True,
@@ -101,15 +127,49 @@ class Emergencia(models.Model):
     fecha_atencion = models.DateTimeField(null=True, blank=True)
 
     descripcion_falla = models.TextField()
+    diagnostico = models.TextField(null=True, blank=True)
     solucion_aplicada = models.TextField(null=True, blank=True)
+    materiales_usados = models.TextField(null=True, blank=True)
 
-    horas_trabajadas = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    horas_trabajadas = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
 
     es_nocturna = models.BooleanField(default=False)
-    valor_total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    valor_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
 
-    prioridad = models.CharField(max_length=10, choices=PRIORIDAD, default='NORMAL')
-    estado = models.CharField(max_length=20, choices=ESTADO, default='PENDIENTE')
+    prioridad = models.CharField(
+        max_length=10,
+        choices=PRIORIDAD,
+        default='NORMAL'
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO,
+        default='PENDIENTE'
+    )
+
+    resultado_servicio = models.CharField(
+        max_length=30,
+        choices=RESULTADO_SERVICIO,
+        null=True,
+        blank=True
+    )
+
+    requiere_regreso = models.BooleanField(default=False)
+    requiere_cotizacion = models.BooleanField(default=False)
+    cliente_conforme = models.BooleanField(null=True, blank=True)
+
+    observacion_cierre = models.TextField(null=True, blank=True)
 
     aprobada_por_gerencia = models.BooleanField(default=False)
     observaciones_internas = models.TextField(null=True, blank=True)
@@ -117,6 +177,23 @@ class Emergencia(models.Model):
     def save(self, *args, **kwargs):
 
         hoy = timezone.now().date()
+
+        if not self.numero_caso:
+            anio = timezone.now().year
+
+            ultimo = Emergencia.objects.filter(
+                numero_caso__startswith=f"EM-{anio}-"
+            ).order_by("id").last()
+
+            if ultimo and ultimo.numero_caso:
+                try:
+                    consecutivo = int(ultimo.numero_caso.split("-")[-1]) + 1
+                except:
+                    consecutivo = 1
+            else:
+                consecutivo = 1
+
+            self.numero_caso = f"EM-{anio}-{consecutivo:06d}"
 
         if not self.tecnico:
             rotacion = RotacionTecnico.objects.filter(
@@ -129,6 +206,7 @@ class Emergencia(models.Model):
                 self.tecnico = rotacion.tecnico
 
         hora = self.fecha_llamada.time()
+
         if hora >= time(21, 0) or hora <= time(6, 0):
             self.es_nocturna = True
         else:
@@ -152,8 +230,7 @@ class Emergencia(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.cliente.nombre} - {self.estado}"
-
+        return f"{self.numero_caso or 'Sin caso'} - {self.cliente.nombre}"
 # =========================
 # ROTACION
 # =========================

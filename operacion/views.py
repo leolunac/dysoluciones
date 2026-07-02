@@ -139,6 +139,11 @@ def centro_operaciones(request):
         fecha_llamada__lte=fin_noche
     )
 
+    bandeja_cotizacion = servicios.filter(requiere_cotizacion=True).exclude(estado="CERRADA")
+    bandeja_regreso = servicios.filter(requiere_regreso=True).exclude(estado="CERRADA")
+    bandeja_llamar_cliente = servicios.filter(estado="ATENDIDA").filter(cliente_conforme__isnull=True)
+    bandeja_no_conforme = servicios.filter(cliente_conforme=False).exclude(estado="CERRADA")
+
     context = {
         "total": servicios.count(),
         "pendientes": servicios.filter(estado="PENDIENTE").count(),
@@ -155,6 +160,18 @@ def centro_operaciones(request):
 
         "inicio_noche": inicio_noche,
         "fin_noche": fin_noche,
+
+        "bandeja_cotizacion": bandeja_cotizacion[:5],
+        "bandeja_regreso": bandeja_regreso[:5],
+        "bandeja_llamar_cliente": bandeja_llamar_cliente[:5],
+        "bandeja_no_conforme": bandeja_no_conforme[:5],
+
+        "total_bandeja": (
+            bandeja_cotizacion.count()
+            + bandeja_regreso.count()
+            + bandeja_llamar_cliente.count()
+            + bandeja_no_conforme.count()
+        ),
     }
 
     return render(request, "centro_operaciones.html", context)

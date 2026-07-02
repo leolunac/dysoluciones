@@ -375,7 +375,64 @@ body{
         verificar tiempos, estado del servicio, novedades pendientes y confirmar cierre con el cliente.
     </p>
 </div>
+<h2 class="section-title">📥 Bandeja del Coordinador</h2>
 
+<div class="panel">
+    <h2 style="margin-top:0;color:#003366;">
+        Tareas pendientes: {{ total_bandeja }}
+    </h2>
+
+    <div class="cards-servicios">
+
+        {% for s in bandeja_no_conforme %}
+        <div class="servicio-card" style="border-top:5px solid #dc2626;">
+            <h3>🔴 Cliente no conforme</h3>
+            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p>Servicio #{{ s.id }}</p>
+            <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
+            <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Abrir caso</a>
+        </div>
+        {% endfor %}
+
+        {% for s in bandeja_regreso %}
+        <div class="servicio-card" style="border-top:5px solid #2563eb;">
+            <h3>🔵 Requiere regreso</h3>
+            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p>Servicio #{{ s.id }}</p>
+            <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
+            <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Programar / revisar</a>
+        </div>
+        {% endfor %}
+
+        {% for s in bandeja_cotizacion %}
+        <div class="servicio-card" style="border-top:5px solid #f59e0b;">
+            <h3>🟡 Requiere cotización</h3>
+            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p>Servicio #{{ s.id }}</p>
+            <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
+            <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Elaborar cotización</a>
+        </div>
+        {% endfor %}
+
+        {% for s in bandeja_llamar_cliente %}
+        <div class="servicio-card" style="border-top:5px solid #16a34a;">
+            <h3>☎ Llamar cliente</h3>
+            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p>Servicio #{{ s.id }}</p>
+            <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
+            <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Registrar validación</a>
+        </div>
+        {% endfor %}
+
+        {% if total_bandeja == 0 %}
+        <div class="empty">
+            <h3>✅ No hay tareas pendientes para el coordinador.</h3>
+            <p>Los servicios registrados no requieren acciones especiales en este momento.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
     <h2 class="section-title">🚨 Últimos servicios registrados</h2>
 
     <div class="cards-servicios">
