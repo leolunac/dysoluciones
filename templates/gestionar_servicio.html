@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Gestionar Servicio</title>
+<title>D&S Control Operativo - Expediente</title>
 
 <style>
 body{
@@ -10,10 +10,11 @@ body{
     background:#eef2f7;
     margin:0;
     padding:20px;
+    color:#1f2937;
 }
 
 .container{
-    max-width:1000px;
+    max-width:1200px;
     margin:auto;
 }
 
@@ -25,6 +26,22 @@ body{
     margin-bottom:18px;
 }
 
+.header h1{
+    margin:0;
+}
+
+.lema{
+    font-size:13px;
+    opacity:.9;
+    margin-top:8px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:18px;
+}
+
 .card{
     background:white;
     padding:20px;
@@ -33,10 +50,36 @@ body{
     margin-bottom:16px;
 }
 
-.grid{
+.card h2{
+    margin-top:0;
+    color:#003366;
+}
+
+.info-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    gap:12px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px;
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.PENDIENTE{ background:#fee2e2; color:#991b1b; }
+.EN_PROCESO{ background:#fef3c7; color:#92400e; }
+.ATENDIDA{ background:#dbeafe; color:#1e40af; }
+.CERRADA{ background:#dcfce7; color:#166534; }
+
+.reporte{
+    background:#f8fafc;
+    border-left:5px solid #003366;
+    padding:14px;
+    border-radius:10px;
+    line-height:1.5;
 }
 
 label{
@@ -48,8 +91,8 @@ label{
 
 input, select, textarea{
     width:100%;
-    padding:9px;
-    border:1px solid #ccc;
+    padding:10px;
+    border:1px solid #cbd5e1;
     border-radius:8px;
     margin-top:5px;
 }
@@ -70,23 +113,28 @@ input, select, textarea{
     background:#64748b;
 }
 
-.badge{
-    padding:6px 10px;
-    border-radius:20px;
-    font-size:13px;
-    font-weight:bold;
+.timeline-item{
+    border-left:4px solid #003366;
+    padding-left:12px;
+    margin-bottom:15px;
+    font-size:14px;
 }
 
-.PENDIENTE{ background:#fee2e2; color:#991b1b; }
-.EN_PROCESO{ background:#fef3c7; color:#92400e; }
-.ATENDIDA{ background:#dbeafe; color:#1e40af; }
-.CERRADA{ background:#dcfce7; color:#166534; }
+.timeline-item strong{
+    color:#003366;
+}
 
 .footer{
     text-align:center;
     color:#6b7280;
     font-size:13px;
     margin-top:25px;
+}
+
+@media(max-width:900px){
+    .grid{
+        grid-template-columns:1fr;
+    }
 }
 </style>
 </head>
@@ -96,56 +144,144 @@ input, select, textarea{
 <div class="container">
 
     <div class="header">
-        <h1>📋 Gestionar Servicio</h1>
-        <p>Control, seguimiento y cierre del servicio 7x24</p>
-    </div>
-
-    <div class="card">
-        <h2 style="color:#003366;">Información del servicio</h2>
-
-        <div class="grid">
-            <p><strong>Servicio:</strong> #{{ servicio.id }}</p>
-            <p><strong>Fecha llamada:</strong> {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}</p>
-            <p><strong>Cliente:</strong> {{ servicio.cliente.nombre }}</p>
-            <p><strong>Contrato:</strong> {{ servicio.cliente.get_tipo_contrato_display }}</p>
-            <p><strong>Persona que llama:</strong> {{ servicio.persona_llama|default:"No registrado" }}</p>
-            <p><strong>Teléfono:</strong> {{ servicio.telefono_llama|default:"No registrado" }}</p>
-            <p><strong>Recibido por:</strong> {{ servicio.recibido_por|default:"No registrado" }}</p>
-            <p><strong>Técnico asignado:</strong> {{ servicio.tecnico|default:"Sin asignar" }}</p>
-            <p><strong>Prioridad:</strong> {{ servicio.get_prioridad_display }}</p>
-            <p>
-                <strong>Estado actual:</strong>
-                <span class="badge {{ servicio.estado }}">{{ servicio.get_estado_display }}</span>
-            </p>
+        <h1>📂 Expediente del Servicio</h1>
+        <p>D&S Control Operativo | Sistema Integral de Gestión de Servicios 7x24</p>
+        <div class="lema">
+            “El sistema no existe para registrar servicios; existe para garantizar que ningún servicio pierda su seguimiento.”
         </div>
     </div>
 
-    <div class="card">
-        <h2 style="color:#003366;">Novedad reportada</h2>
-        <p>{{ servicio.descripcion_falla }}</p>
-    </div>
+    <div class="grid">
 
-    <div class="card">
-        <h2 style="color:#003366;">Seguimiento del servicio</h2>
+        <div>
 
-        <form method="post">
-            {% csrf_token %}
+            <div class="card">
+                <h2>Resumen del servicio</h2>
 
-            {{ form.as_p }}
+                <div class="info-grid">
+                    <p><strong>Servicio:</strong> #{{ servicio.id }}</p>
+                    <p><strong>Estado:</strong> <span class="badge {{ servicio.estado }}">{{ servicio.get_estado_display }}</span></p>
+                    <p><strong>Fecha llamada:</strong> {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Cliente:</strong> {{ servicio.cliente.nombre }}</p>
+                    <p><strong>Contrato:</strong> {{ servicio.cliente.get_tipo_contrato_display }}</p>
+                    <p><strong>Prioridad:</strong> {{ servicio.get_prioridad_display }}</p>
+                    <p><strong>Persona que llama:</strong> {{ servicio.persona_llama|default:"No registrado" }}</p>
+                    <p><strong>Teléfono:</strong> {{ servicio.telefono_llama|default:"No registrado" }}</p>
+                    <p><strong>Recibido por:</strong> {{ servicio.recibido_por|default:"No registrado" }}</p>
+                    <p><strong>Técnico asignado:</strong> {{ servicio.tecnico|default:"Sin asignar" }}</p>
+                </div>
+            </div>
 
-            <button class="btn" type="submit">
-                💾 Guardar seguimiento
-            </button>
+            <div class="card">
+                <h2>📞 Reporte inicial del cliente</h2>
+                <div class="reporte">
+                    {{ servicio.descripcion_falla }}
+                </div>
+            </div>
 
-            <a class="btn btn-secondary" href="/centro-operaciones/">
-                ⬅ Volver
-            </a>
-        </form>
+            <div class="card">
+                <h2>🔧 Seguimiento técnico / cierre</h2>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <label>Estado del servicio</label>
+                    {{ form.estado }}
+
+                    <label>Fecha y hora de atención</label>
+                    {{ form.fecha_atencion }}
+
+                    <label>Solución aplicada / labor realizada</label>
+                    {{ form.solucion_aplicada }}
+
+                    <label>Horas trabajadas</label>
+                    {{ form.horas_trabajadas }}
+
+                    <label>Observaciones internas</label>
+                    {{ form.observaciones_internas }}
+
+                    <label>Aprobada por gerencia</label>
+                    {{ form.aprobada_por_gerencia }}
+
+                    <button class="btn" type="submit">
+                        💾 Guardar seguimiento
+                    </button>
+
+                    <a class="btn btn-secondary" href="/centro-operaciones/">
+                        ⬅ Volver al Centro de Control
+                    </a>
+                </form>
+            </div>
+
+        </div>
+
+        <div>
+
+            <div class="card">
+                <h2>⚡ Acciones sugeridas</h2>
+
+                {% if servicio.estado == "PENDIENTE" %}
+                    <p>🔴 Este servicio requiere asignación o revisión inmediata.</p>
+                {% elif servicio.estado == "EN_PROCESO" %}
+                    <p>🟡 Hacer seguimiento con el técnico asignado.</p>
+                {% elif servicio.estado == "ATENDIDA" %}
+                    <p>☎ Llamar al cliente y validar satisfacción.</p>
+                {% elif servicio.estado == "CERRADA" %}
+                    <p>✅ Servicio cerrado. Sin acciones pendientes.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h2>🕒 Bitácora inicial</h2>
+
+                <div class="timeline-item">
+                    <strong>{{ servicio.fecha_llamada|date:"H:i" }}</strong><br>
+                    Cliente reportó la novedad.
+                </div>
+
+                <div class="timeline-item">
+                    <strong>Recepción</strong><br>
+                    Recibido por: {{ servicio.recibido_por|default:"No registrado" }}
+                </div>
+
+                <div class="timeline-item">
+                    <strong>Asignación</strong><br>
+                    Técnico asignado: {{ servicio.tecnico|default:"Sin asignar" }}
+                </div>
+
+                {% if servicio.fecha_atencion %}
+                <div class="timeline-item">
+                    <strong>{{ servicio.fecha_atencion|date:"H:i" }}</strong><br>
+                    Servicio atendido.
+                </div>
+                {% endif %}
+
+                {% if servicio.estado == "CERRADA" %}
+                <div class="timeline-item">
+                    <strong>Cierre</strong><br>
+                    Servicio cerrado.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h2>📌 Próximas mejoras</h2>
+                <p>Luego agregaremos aquí:</p>
+                <ul>
+                    <li>Materiales utilizados</li>
+                    <li>Programar regreso</li>
+                    <li>Generar cotización</li>
+                    <li>Cliente conforme</li>
+                    <li>Fotos antes/después</li>
+                </ul>
+            </div>
+
+        </div>
+
     </div>
 
     <div class="footer">
-        Sistema 7x24 - D&S Soluciones en Bombeo S.A.S.<br>
-        “El sistema no existe para registrar servicios; existe para garantizar que ningún servicio pierda su seguimiento.”
+        D&S Control Operativo - D&S Soluciones en Bombeo S.A.S.
     </div>
 
 </div>
