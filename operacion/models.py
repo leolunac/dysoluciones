@@ -418,3 +418,26 @@ class DistribucionUnidad(models.Model):
 
     def __str__(self):
         return f"{self.cliente.nombre} - {self.torre}"
+class EventoServicio(models.Model):
+
+    servicio = models.ForeignKey(
+        Emergencia,
+        on_delete=models.CASCADE,
+        related_name="eventos"
+    )
+
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    titulo = models.CharField(max_length=120)
+
+    descripcion = models.TextField(blank=True)
+
+    usuario = models.CharField(max_length=100, blank=True)
+
+    icono = models.CharField(max_length=20, default="📌")
+
+    class Meta:
+        ordering = ["fecha"]
+
+    def __str__(self):
+        return f"{self.servicio.id} - {self.titulo}"

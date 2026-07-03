@@ -226,6 +226,29 @@ input, select, textarea{
 
 <button class="btn" type="submit">
     💾 Guardar seguimiento
+    <hr>
+
+<h3>🚦 Seguimiento del Técnico</h3>
+
+<a class="btn"
+   href="{% url 'accion_servicio' servicio.id 'salida' %}">
+🚗 Salí hacia el sitio
+</a>
+
+<a class="btn"
+   href="{% url 'accion_servicio' servicio.id 'llegada' %}">
+📍 Llegué al sitio
+</a>
+
+<a class="btn"
+   href="{% url 'accion_servicio' servicio.id 'reparando' %}">
+🔧 Reparando
+</a>
+
+<a class="btn"
+   href="{% url 'accion_servicio' servicio.id 'terminado' %}">
+✅ Terminé
+</a>
 </button>
 
 <a class="btn btn-secondary" href="/centro-operaciones/">
@@ -251,39 +274,23 @@ input, select, textarea{
                     <p>✅ Servicio cerrado. Sin acciones pendientes.</p>
                 {% endif %}
             </div>
-
             <div class="card">
-                <h2>🕒 Bitácora inicial</h2>
+    <h2>🕒 Línea de tiempo del servicio</h2>
 
-                <div class="timeline-item">
-                    <strong>{{ servicio.fecha_llamada|date:"H:i" }}</strong><br>
-                    Cliente reportó la novedad.
-                </div>
-
-                <div class="timeline-item">
-                    <strong>Recepción</strong><br>
-                    Recibido por: {{ servicio.recibido_por|default:"No registrado" }}
-                </div>
-
-                <div class="timeline-item">
-                    <strong>Asignación</strong><br>
-                    Técnico asignado: {{ servicio.tecnico|default:"Sin asignar" }}
-                </div>
-
-                {% if servicio.fecha_atencion %}
-                <div class="timeline-item">
-                    <strong>{{ servicio.fecha_atencion|date:"H:i" }}</strong><br>
-                    Servicio atendido.
-                </div>
-                {% endif %}
-
-                {% if servicio.estado == "CERRADA" %}
-                <div class="timeline-item">
-                    <strong>Cierre</strong><br>
-                    Servicio cerrado.
-                </div>
-                {% endif %}
-            </div>
+    {% for evento in eventos %}
+        <div class="timeline-item">
+            <strong>{{ evento.icono }} {{ evento.fecha|date:"H:i" }}</strong><br>
+            <strong>{{ evento.titulo }}</strong><br>
+            {{ evento.descripcion }}
+            {% if evento.usuario %}
+                <br><small>Usuario: {{ evento.usuario }}</small>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No hay eventos registrados para este servicio.</p>
+    {% endfor %}
+</div>
+            
 
             <div class="card">
                 <h2>📌 Próximas mejoras</h2>

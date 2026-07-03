@@ -16,6 +16,7 @@ from .views import (
     escritorio_coordinador,
     nueva_llamada,
     gestionar_servicio,
+    accion_servicio,
 )
 
 urlpatterns = [
@@ -72,9 +73,14 @@ urlpatterns = [
         reporte_pdf,
         name="reporte_pdf"
     ),
-path(
+    path(
     "servicio/<int:servicio_id>/gestionar/",
     gestionar_servicio,
     name="gestionar_servicio"
+    ),
+path(
+    "servicio/<int:servicio_id>/accion/<str:accion>/",
+    accion_servicio,
+    name="accion_servicio",
 ),
 ]

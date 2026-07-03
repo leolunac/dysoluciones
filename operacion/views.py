@@ -16,6 +16,7 @@ from django.db.models.functions import TruncMonth
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from .forms import NuevaLlamadaForm, GestionServicioForm
+from .utils import registrar_evento
 
 from .models import (
     Cliente,
@@ -87,6 +88,13 @@ def nueva_llamada(request):
 
         if form.is_valid():
             servicio = form.save()
+            registrar_evento(
+    servicio,
+    "Llamada recibida",
+    "Se registró una nueva llamada del cliente.",
+    request.user.username,
+    "📞"
+)
             return redirect("/centro-operaciones/")
 
     else:
@@ -165,7 +173,15 @@ def centro_operaciones(request):
         "bandeja_regreso": bandeja_regreso[:5],
         "bandeja_llamar_cliente": bandeja_llamar_cliente[:5],
         "bandeja_no_conforme": bandeja_no_conforme[:5],
+        "clientes_inconformes": bandeja_no_conforme.count(),
 
+        "pendiente_repuesto": servicios.filter(
+            resultado_servicio="PENDIENTE_REPUESTO"
+        ).exclude(estado="CERRADA").count(),
+
+        "cotizaciones": bandeja_cotizacion.count(),
+
+        "regresos": bandeja_regreso.count(),
         "total_bandeja": (
             bandeja_cotizacion.count()
             + bandeja_regreso.count()
@@ -506,15 +522,26 @@ def hoja_vida_pdf(request, cliente_id):
     return response
 
 @login_required
+@login_required
 def gestionar_servicio(request, servicio_id):
 
     servicio = get_object_or_404(Emergencia, id=servicio_id)
+    eventos = servicio.eventos.all()
 
     if request.method == "POST":
         form = GestionServicioForm(request.POST, instance=servicio)
 
         if form.is_valid():
-            form.save()
+            servicio = form.save()
+
+            registrar_evento(
+                servicio,
+                "Seguimiento actualizado",
+                "Se actualizó la información del expediente del servicio.",
+                request.user.username,
+                "📝"
+            )
+
             return redirect("/centro-operaciones/")
 
     else:
@@ -523,6 +550,7 @@ def gestionar_servicio(request, servicio_id):
     return render(request, "gestionar_servicio.html", {
         "servicio": servicio,
         "form": form,
+        "eventos": eventos,
     })
 # =========================================
 # EXPORTAR CSV
@@ -630,3 +658,55 @@ def reporte_pdf(request, cliente_id):
 
     p.save()
     return response
+from django.shortcuts import get_object_or_404, redirect
+from .models import Emergencia
+from .utils import registrar_evento
+
+@login_required
+def accion_servicio(request, servicio_id, accion):
+
+    servicio = get_object_or_404(Emergencia, id=servicio_id)
+
+    acciones = {
+        "salida": (
+            "🚗",
+            "Técnico salió",
+            "El técnico salió hacia el sitio."
+        ),
+        "llegada": (
+            "📍",
+            "Llegó al sitio",
+            "El técnico llegó al sitio."
+        ),
+        "reparando": (
+            "🔧",
+            "Reparación iniciada",
+            "El técnico inició la reparación."
+        ),
+        "terminado": (
+            "✅",
+            "Servicio finalizado",
+            "El técnico informó que terminó la reparación."
+        ),
+    }
+
+    if accion in acciones:
+        icono, titulo, descripcion = acciones[accion]
+
+        registrar_evento(
+            servicio,
+            titulo,
+            descripcion,
+            request.user.username,
+            icono
+        )
+
+        if accion in ["salida", "llegada", "reparando"]:
+            servicio.estado = "EN_PROCESO"
+
+        if accion == "terminado":
+            servicio.estado = "ATENDIDA"
+
+        servicio.save()
+
+    return redirect("gestionar_servicio", servicio_id=servicio.id)

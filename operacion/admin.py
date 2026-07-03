@@ -261,3 +261,23 @@ class CotizacionEquipoAdmin(admin.ModelAdmin):
 @admin.register(UsuarioCliente)
 class UsuarioClienteAdmin(admin.ModelAdmin):
     list_display = ("user", "cliente")
+from .models import EventoServicio
+
+@admin.register(EventoServicio)
+class EventoServicioAdmin(admin.ModelAdmin):
+    list_display = (
+        "servicio",
+        "fecha",
+        "titulo",
+        "usuario",
+    )
+
+    search_fields = (
+        "titulo",
+        "servicio__numero_caso",
+        "usuario",
+    )
+
+    list_filter = (
+        "fecha",
+    )    

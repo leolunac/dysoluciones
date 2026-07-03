@@ -333,7 +333,49 @@ body{
             <div class="kpi">{{ cerradas }}</div>
         </div>
     </div>
+    <!-- ===================================================== -->
+<!-- CENTRO DE INTELIGENCIA OPERATIVA -->
+<!-- ===================================================== -->
 
+<div class="panel">
+
+    <h2 style="margin-top:0;color:#003366;">
+        🧠 Centro de Inteligencia Operativa
+    </h2>
+
+    <p style="font-size:15px;">
+        El sistema analizó la operación y encontró las siguientes prioridades:
+    </p>
+
+    <div class="grid">
+
+        <div class="kpi-card pendiente">
+            <small>Clientes inconformes</small>
+            <div class="kpi">{{ clientes_inconformes }}</div>
+            <p>Requieren llamada inmediata.</p>
+        </div>
+
+        <div class="kpi-card proceso">
+            <small>Pendiente repuesto</small>
+            <div class="kpi">{{ pendiente_repuesto }}</div>
+            <p>Verificar compra de materiales.</p>
+        </div>
+
+        <div class="kpi-card atendida">
+            <small>Cotizaciones</small>
+            <div class="kpi">{{ cotizaciones }}</div>
+            <p>Preparar propuesta para el cliente.</p>
+        </div>
+
+        <div class="kpi-card total">
+            <small>Regresos programados</small>
+            <div class="kpi">{{ regresos }}</div>
+            <p>Asignar técnico nuevamente.</p>
+        </div>
+
+    </div>
+
+</div>
     <div class="panel">
     <h2 style="margin-top:0;color:#003366;">☀️ Buenos días</h2>
 
