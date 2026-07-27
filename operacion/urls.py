@@ -17,6 +17,7 @@ from .views import (
     nueva_llamada,
     gestionar_servicio,
     accion_servicio,
+    levantamiento_equipo,
 )
 
 urlpatterns = [
@@ -29,6 +30,11 @@ urlpatterns = [
     path("nueva-llamada/", nueva_llamada, name="nueva_llamada"),
     # HOME
     path("", home, name="home"),
+    path(
+    "inventario/nuevo/",
+    levantamiento_equipo,
+    name="levantamiento_equipo",
+),
 
     # DASHBOARD GERENCIA
     path("gerencia/", dashboard, name="dashboard"),

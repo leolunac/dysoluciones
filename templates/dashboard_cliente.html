@@ -1,253 +1,677 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Cliente</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>SIGOB 7x24 | Portal del Cliente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-body{
-    font-family:'Segoe UI';
-    margin:0;
-    background:#f4f6f9;
-}
+    <style>
+        :root{
+            --primary:#0b3c5d;
+            --secondary:#1d70a2;
+            --accent:#00a896;
+            --bg:#eef4f8;
+            --card:#ffffff;
+            --text:#1f2937;
+            --muted:#64748b;
+            --border:#d7e3ec;
+            --danger:#dc2626;
+            --warning:#f59e0b;
+            --success:#16a34a;
+            --info:#2563eb;
+            --shadow:0 12px 30px rgba(11,60,93,.10);
+        }
 
-/* HEADER */
-.header{
-    background:#1e3a8a;
-    color:white;
-    padding:10px;
-}
+        *{
+            box-sizing:border-box;
+        }
 
-/* CONTENEDOR */
-.container{
-    padding:15px;
-}
+        body{
+            margin:0;
+            font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+            color:var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(0,168,150,.10), transparent 30%),
+                linear-gradient(180deg,var(--bg),#f8fbfd);
+            min-height:100vh;
+        }
 
-/* KPI GRID */
-.grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
-    gap:10px;
-}
+        a{
+            color:inherit;
+        }
 
-.card{
-    padding:8px;
-    border-radius:8px;
-    color:white;
-    font-size:12px;
-}
+        .page-shell{
+            max-width:1380px;
+            margin:0 auto;
+            padding:22px 16px 42px;
+        }
 
-.blue{ background:#2563eb; }
-.green{ background:#16a34a; }
-.red{ background:#dc2626; }
-.orange{ background:#f59e0b; }
+        .hero{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;
+            border-radius:24px;
+            padding:24px;
+            box-shadow:var(--shadow);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:20px;
+            margin-bottom:20px;
+        }
 
-.kpi{
-    font-size:16px;
-    font-weight:bold;
-}
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:16px;
+        }
 
-/* SECCIONES */
-.section{
-    margin-top:15px;
-    background:white;
-    padding:12px;
-    border-radius:8px;
-}
+        .brand-logo{
+            width:76px;
+            height:76px;
+            object-fit:contain;
+            background:rgba(255,255,255,.12);
+            padding:9px;
+            border-radius:18px;
+        }
 
-/* ALERTAS */
-.alert{
-    padding:8px;
-    border-radius:5px;
-    margin-bottom:10px;
-    font-size:13px;
-}
+        .hero h1{
+            margin:0;
+            font-size:1.65rem;
+        }
 
-.alert-red{ background:#fee2e2; color:#b91c1c; }
-.alert-green{ background:#dcfce7; color:#166534; }
+        .hero p{
+            margin:6px 0 0;
+            opacity:.92;
+        }
 
-/* BOTONES */
-.btn{
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:6px 10px;
-    border-radius:5px;
-    cursor:pointer;
-    font-size:12px;
-}
+        .hero-actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+        }
 
-/* TARJETAS EQUIPOS */
-.cards-equipos{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-    gap:10px;
-}
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            border:none;
+            border-radius:999px;
+            padding:11px 16px;
+            font-weight:700;
+            text-decoration:none;
+            cursor:pointer;
+            font-size:.92rem;
+            transition:transform .15s ease, box-shadow .15s ease;
+        }
 
-.equipo-card{
-    background:white;
-    border-radius:8px;
-    padding:6px;
-    box-shadow:0 1px 5px rgba(0,0,0,0.08);
-    font-size:12px;
-}
+        .btn:hover{
+            transform:translateY(-1px);
+        }
 
-.equipo-header{
-    font-weight:bold;
-    font-size:14px;
-    margin-bottom:6px;
-}
+        .btn-light{
+            background:#fff;
+            color:var(--primary);
+            box-shadow:0 8px 20px rgba(0,0,0,.14);
+        }
 
-.equipo-body div{
-    margin-bottom:4px;
-}
+        .btn-primary{
+            background:linear-gradient(135deg,var(--accent),#47c9bc);
+            color:#fff;
+            box-shadow:0 10px 22px rgba(0,168,150,.24);
+        }
 
-/* COLORES POR ESTADO */
-.estado-operativo{ border-left:5px solid #16a34a; }
-.estado-reparacion{ border-left:5px solid #f59e0b; }
-.estado-fuera{ border-left:5px solid #dc2626; }
+        .btn-secondary{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;
+        }
 
-/* BADGES */
-.badge{
-    padding:2px 6px;
-    border-radius:4px;
-    font-size:11px;
-}
+        .status-banner{
+            border-radius:18px;
+            padding:16px 18px;
+            margin-bottom:18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:14px;
+            box-shadow:var(--shadow);
+        }
 
-.badge-verde{ background:#dcfce7; color:#166534; }
-.badge-amarillo{ background:#fef3c7; color:#92400e; }
-.badge-rojo{ background:#fee2e2; color:#991b1b; }
+        .status-ok{
+            background:#dcfce7;
+            color:#166534;
+            border:1px solid #bbf7d0;
+        }
 
-</style>
+        .status-alert{
+            background:#fee2e2;
+            color:#991b1b;
+            border:1px solid #fecaca;
+        }
+
+        .status-banner strong{
+            font-size:1.05rem;
+        }
+
+        .kpi-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:14px;
+            margin-bottom:18px;
+        }
+
+        .kpi-card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:18px;
+            box-shadow:var(--shadow);
+            position:relative;
+            overflow:hidden;
+        }
+
+        .kpi-card::before{
+            content:"";
+            position:absolute;
+            top:0;
+            left:0;
+            width:6px;
+            height:100%;
+        }
+
+        .kpi-blue::before{background:var(--info);}
+        .kpi-green::before{background:var(--success);}
+        .kpi-red::before{background:var(--danger);}
+        .kpi-orange::before{background:var(--warning);}
+
+        .kpi-label{
+            color:var(--muted);
+            font-weight:700;
+            font-size:.9rem;
+        }
+
+        .kpi-value{
+            margin-top:8px;
+            font-size:2rem;
+            font-weight:800;
+            color:var(--primary);
+        }
+
+        .content-grid{
+            display:grid;
+            grid-template-columns:1.35fr .85fr;
+            gap:18px;
+            margin-bottom:18px;
+        }
+
+        .panel{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:20px;
+            padding:18px;
+            box-shadow:var(--shadow);
+        }
+
+        .panel h2{
+            margin:0 0 6px;
+            color:var(--primary);
+            font-size:1.18rem;
+        }
+
+        .panel-subtitle{
+            margin:0 0 16px;
+            color:var(--muted);
+            font-size:.92rem;
+        }
+
+        .chart-wrap{
+            position:relative;
+            min-height:280px;
+        }
+
+        .equipment-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+            gap:14px;
+        }
+
+        .equipment-card{
+            background:linear-gradient(180deg,#fff,#f8fbfd);
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:16px;
+            position:relative;
+        }
+
+        .equipment-card.operativo{
+            border-left:6px solid var(--success);
+        }
+
+        .equipment-card.reparacion{
+            border-left:6px solid var(--warning);
+        }
+
+        .equipment-card.fuera{
+            border-left:6px solid var(--danger);
+        }
+
+        .equipment-title{
+            font-weight:800;
+            color:var(--primary);
+            margin-bottom:8px;
+        }
+
+        .equipment-meta{
+            font-size:.9rem;
+            margin:5px 0;
+        }
+
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            border-radius:999px;
+            padding:5px 9px;
+            font-size:.78rem;
+            font-weight:800;
+        }
+
+        .badge-green{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        .badge-yellow{
+            background:#fef3c7;
+            color:#92400e;
+        }
+
+        .badge-red{
+            background:#fee2e2;
+            color:#991b1b;
+        }
+
+        .empty{
+            border:1px dashed var(--border);
+            border-radius:16px;
+            padding:22px;
+            text-align:center;
+            color:var(--muted);
+            background:#fbfdfe;
+        }
+
+        .quote-list{
+            display:grid;
+            gap:10px;
+        }
+
+        .quote-item{
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:13px;
+            background:#fbfdfe;
+        }
+
+        .quote-item strong{
+            color:var(--primary);
+        }
+
+        .quote-meta{
+            margin-top:5px;
+            color:var(--muted);
+            font-size:.86rem;
+        }
+
+        .quick-actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+
+        .section-space{
+            margin-top:18px;
+        }
+
+        .footer{
+            margin-top:24px;
+            text-align:center;
+            color:var(--muted);
+            font-size:.86rem;
+        }
+
+        @media(max-width:980px){
+            .content-grid{
+                grid-template-columns:1fr;
+            }
+        }
+
+        @media(max-width:700px){
+            .page-shell{
+                padding:12px 10px 28px;
+            }
+
+            .hero{
+                display:block;
+                border-radius:18px;
+            }
+
+            .brand{
+                align-items:flex-start;
+            }
+
+            .brand-logo{
+                width:64px;
+                height:64px;
+            }
+
+            .hero-actions{
+                justify-content:flex-start;
+                margin-top:16px;
+            }
+
+            .hero-actions .btn{
+                width:100%;
+            }
+
+            .status-banner{
+                display:block;
+            }
+
+            .status-banner .btn{
+                margin-top:12px;
+                width:100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
+<div class="page-shell">
 
-<div class="header">
-    <h2>{{ cliente.nombre }}</h2>
-    <small>{{ cliente.direccion }}</small>
-</div>
+    <header class="hero">
+        <div class="brand">
+            <img src="/static/img/logo_dys.png" alt="D&S" class="brand-logo">
+            <div>
+                <h1>SIGOB 7x24 | Portal del Cliente</h1>
+                <p>
+                    <strong>{{ cliente.nombre }}</strong><br>
+                    {{ cliente.direccion }}
+                </p>
+            </div>
+        </div>
 
-<div class="container">
+        <div class="hero-actions">
+            <a class="btn btn-light" href="{% url 'hoja_vida' cliente.id %}">
+                🧾 Hoja de vida
+            </a>
 
-<!-- BOTONES -->
-<div style="margin-bottom:10px;">
-    <a href="/export/excel/{{ cliente.id }}/"><button class="btn">Excel</button></a>
-    <a href="/export/csv/{{ cliente.id }}/"><button class="btn">CSV</button></a>
-    <a href="/reporte/pdf/{{ cliente.id }}/"><button class="btn">PDF</button></a>
-</div>
+            <a class="btn btn-light" href="{% url 'hoja_vida_pdf' cliente.id %}">
+                📄 Descargar PDF
+            </a>
 
-<!-- ALERTAS -->
-{% if fuera_servicio > 0 %}
-<div class="alert alert-red">
-⚠ Equipos fuera de servicio
-</div>
-{% else %}
-<div class="alert alert-green">
-✔ Todo operativo
-</div>
-{% endif %}
+            <a class="btn btn-light" href="{% url 'logout' %}">
+                Cerrar sesión
+            </a>
+        </div>
+    </header>
 
-<!-- KPIs -->
-<div class="grid">
+    {% if fuera_servicio > 0 %}
+        <div class="status-banner status-alert">
+            <div>
+                <strong>⚠ Atención requerida</strong><br>
+                Hay {{ fuera_servicio }} equipo(s) que no se encuentran plenamente operativos.
+            </div>
+            <a class="btn btn-secondary" href="#equipos-criticos">
+                Ver equipos
+            </a>
+        </div>
+    {% else %}
+        <div class="status-banner status-ok">
+            <div>
+                <strong>✅ Operación estable</strong><br>
+                Todos los equipos registrados se encuentran operativos.
+            </div>
+        </div>
+    {% endif %}
 
-<div class="card blue">
-Total<br>
-<div class="kpi">{{ total_equipos }}</div>
-</div>
+    <section class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-label">Equipos registrados</div>
+            <div class="kpi-value">{{ total_equipos }}</div>
+        </div>
 
-<div class="card green">
-Operativos<br>
-<div class="kpi">{{ operativos }}</div>
-</div>
+        <div class="kpi-card kpi-green">
+            <div class="kpi-label">Operativos</div>
+            <div class="kpi-value">{{ operativos }}</div>
+        </div>
 
-<div class="card red">
-No operativos<br>
-<div class="kpi">{{ fuera_servicio }}</div>
-</div>
+        <div class="kpi-card kpi-red">
+            <div class="kpi-label">No operativos</div>
+            <div class="kpi-value">{{ fuera_servicio }}</div>
+        </div>
 
-<div class="card orange">
-Emergencias<br>
-<div class="kpi">{{ emergencias_mes }}</div>
-</div>
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-label">Emergencias del mes</div>
+            <div class="kpi-value">{{ emergencias_mes }}</div>
+        </div>
+    </section>
 
-</div>
+    <section class="content-grid">
+        <div class="panel">
+            <h2>📈 Emergencias de los últimos 12 meses</h2>
+            <p class="panel-subtitle">
+                Tendencia mensual de atenciones registradas para esta unidad.
+            </p>
+            <div class="chart-wrap">
+                <canvas id="graficaEmergencias"></canvas>
+            </div>
+        </div>
 
-<!-- GRÁFICA -->
-<div class="section">
-<h4>Emergencias (12 meses)</h4>
-<canvas id="grafica" height="80"></canvas>
-</div>
+        <div class="panel">
+            <h2>⚙ Estado actual de los equipos</h2>
+            <p class="panel-subtitle">
+                Distribución entre operativos, en reparación y fuera de servicio.
+            </p>
+            <div class="chart-wrap">
+                <canvas id="graficaEstado"></canvas>
+            </div>
+        </div>
+    </section>
 
-<!-- EQUIPOS -->
-<div class="section">
-<h4>Equipos fuera de servicio</h4>
+    <section class="panel" id="equipos-criticos">
+        <h2>🚨 Equipos que requieren atención</h2>
+        <p class="panel-subtitle">
+            Equipos en reparación o fuera de servicio que requieren seguimiento.
+        </p>
 
-<div class="cards-equipos">
+        <div class="equipment-grid">
+            {% for e in equipos_fuera %}
+                <article class="equipment-card
+                    {% if e.estado == 'OPERATIVO' %}operativo{% endif %}
+                    {% if e.estado == 'EN_REPARACION' %}reparacion{% endif %}
+                    {% if e.estado == 'FUERA_SERVICIO' %}fuera{% endif %}
+                ">
+                    <div class="equipment-title">
+                        {{ e.get_tipo_display }}
+                    </div>
 
-{% for e in equipos_fuera %}
-<div class="equipo-card 
-{% if e.estado == 'OPERATIVO' %}estado-operativo{% endif %}
-{% if e.estado == 'EN_REPARACION' %}estado-reparacion{% endif %}
-{% if e.estado == 'FUERA_SERVICIO' %}estado-fuera{% endif %}
-">
+                    <div class="equipment-meta">
+                        <strong>Cantidad:</strong> {{ e.cantidad }}
+                    </div>
 
-<div class="equipo-header">
-{{ e.get_tipo_display }}
-</div>
+                    {% if e.torre %}
+                        <div class="equipment-meta">
+                            <strong>Torre:</strong> {{ e.torre }}
+                        </div>
+                    {% endif %}
 
-<div class="equipo-body">
+                    {% if e.ubicacion %}
+                        <div class="equipment-meta">
+                            <strong>Ubicación:</strong> {{ e.ubicacion }}
+                        </div>
+                    {% endif %}
 
-<div><strong>Cant:</strong> {{ e.cantidad }}</div>
+                    <div class="equipment-meta">
+                        {% if e.estado == 'OPERATIVO' %}
+                            <span class="badge badge-green">{{ e.get_estado_display }}</span>
+                        {% elif e.estado == 'EN_REPARACION' %}
+                            <span class="badge badge-yellow">{{ e.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge badge-red">{{ e.get_estado_display }}</span>
+                        {% endif %}
+                    </div>
 
-<div>
-<span class="badge
-{% if e.estado == 'OPERATIVO' %}badge-verde{% endif %}
-{% if e.estado == 'EN_REPARACION' %}badge-amarillo{% endif %}
-{% if e.estado == 'FUERA_SERVICIO' %}badge-rojo{% endif %}
-">
-{{ e.get_estado_display }}
-</span>
-</div>
+                    <div class="equipment-meta">
+                        <strong>Causa / novedad:</strong><br>
+                        {{ e.causa_fuera_servicio|default:"Sin observación registrada." }}
+                    </div>
 
-<div style="font-size:12px; color:#555;">
-{{ e.causa_fuera_servicio }}
-</div>
+                    {% if e.ultima_revision %}
+                        <div class="equipment-meta">
+                            <strong>Última revisión:</strong> {{ e.ultima_revision|date:"d/m/Y" }}
+                        </div>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty">
+                    <strong>✅ Sin novedades críticas</strong>
+                    <p>No hay equipos en reparación ni fuera de servicio.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
-</div>
+    <section class="content-grid section-space">
+        <div class="panel">
+            <h2>💰 Cotizaciones recientes</h2>
+            <p class="panel-subtitle">
+                Seguimiento de propuestas relacionadas con los equipos de la unidad.
+            </p>
 
-</div>
-{% empty %}
-<p>✔ Sin novedades</p>
-{% endfor %}
+            <div class="quote-list">
+                {% for c in cotizaciones %}
+                    <div class="quote-item">
+                        <strong>{{ c.equipo.get_tipo_display }}</strong>
+                        <div class="quote-meta">
+                            Estado: {{ c.get_estado_display }}
+                        </div>
 
-</div>
+                        {% if c.valor %}
+                            <div class="quote-meta">
+                                Valor: ${{ c.valor|floatformat:0 }}
+                            </div>
+                        {% endif %}
 
-</div>
+                        {% if c.fecha_envio %}
+                            <div class="quote-meta">
+                                Fecha de envío: {{ c.fecha_envio|date:"d/m/Y" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="empty">
+                        No hay cotizaciones registradas para esta unidad.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
 
+        <div class="panel">
+            <h2>📂 Documentos y exportaciones</h2>
+            <p class="panel-subtitle">
+                Descargue la información actualmente disponible.
+            </p>
+
+            <div class="quick-actions">
+                <a class="btn btn-primary" href="{% url 'hoja_vida_pdf' cliente.id %}">
+                    📄 Hoja de vida PDF
+                </a>
+
+                <a class="btn btn-secondary" href="{% url 'export_excel' cliente.id %}">
+                    📊 Exportar Excel
+                </a>
+
+                <a class="btn btn-secondary" href="{% url 'export_csv' cliente.id %}">
+                    📋 Exportar CSV
+                </a>
+
+                <a class="btn btn-secondary" href="{% url 'reporte_pdf' cliente.id %}">
+                    🧾 Reporte básico
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        SIGOB 7x24 — D&S Soluciones en Bombeo S.A.S.<br>
+        Información técnica y operativa centralizada para su unidad.
+    </footer>
 </div>
 
 <script>
-const labels = {{ labels|safe }};
-const data = {{ values|safe }};
+    const labelsEmergencias = {{ labels|safe }};
+    const datosEmergencias = {{ values|safe }};
 
-new Chart(document.getElementById('grafica'), {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Emergencias',
-            data: data,
-            fill:true
-        }]
-    }
-});
+    new Chart(
+        document.getElementById("graficaEmergencias"),
+        {
+            type: "line",
+            data: {
+                labels: labelsEmergencias,
+                datasets: [{
+                    label: "Emergencias",
+                    data: datosEmergencias,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        }
+    );
+
+    const labelsEstado = {{ labels_estado|safe }};
+    const datosEstado = {{ data_estado|safe }};
+
+    new Chart(
+        document.getElementById("graficaEstado"),
+        {
+            type: "doughnut",
+            data: {
+                labels: labelsEstado,
+                datasets: [{
+                    data: datosEstado
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "65%",
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        }
+    );
 </script>
-<a href="{% url 'hoja_vida_pdf' cliente.id %}" class="btn">
-    📄 Hoja de Vida PDF
-</a>
 </body>
 </html>

@@ -306,47 +306,140 @@ class EquipoUnidad(models.Model):
         ("EN_REPARACION", "En reparación"),
     ]
 
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="equipos")
-    torre = models.CharField(max_length=100, null=True, blank=True)
-    ubicacion = models.CharField(max_length=150, null=True, blank=True)
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name="equipos"
+    )
 
-    tipo = models.CharField(max_length=30, choices=TIPO_EQUIPO)
+    torre = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    ubicacion = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+
+    tipo = models.CharField(
+        max_length=30,
+        choices=TIPO_EQUIPO
+    )
+
     cantidad = models.PositiveIntegerField(default=1)
 
-    marca = models.CharField(max_length=100, null=True, blank=True)
-    modelo = models.CharField(max_length=100, null=True, blank=True)
-    serie = models.CharField(max_length=100, null=True, blank=True)
-    potencia = models.CharField(max_length=100, null=True, blank=True)
-    voltaje = models.CharField(max_length=100, null=True, blank=True)
-    control = models.CharField(max_length=100, null=True, blank=True)
-    valor_comercial = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    codigo_activo = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
-    estado = models.CharField(max_length=20, choices=ESTADO, default="OPERATIVO")
-    causa_fuera_servicio = models.TextField(null=True, blank=True)
-    ultima_revision = models.DateField(null=True, blank=True)
-    observaciones = models.TextField(null=True, blank=True)
+    nombre_equipo = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True,
+        help_text="Ejemplo: Bomba de presión No. 2"
+    )
 
-    def __str__(self):
-        return f"{self.cliente.nombre} - {self.get_tipo_display()}"
+    marca = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    
+    modelo = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    
+    serie = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="equipos")
-    tipo = models.CharField(max_length=30, choices=TIPO_EQUIPO)
-    cantidad = models.PositiveIntegerField(default=1)
+    potencia = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    estado = models.CharField(max_length=20, choices=ESTADO, default="OPERATIVO")
-    causa_fuera_servicio = models.TextField(null=True, blank=True)
+    voltaje = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
 
-    ultima_revision = models.DateField(null=True, blank=True)
+    control = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    valor_comercial = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    fecha_instalacion = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    anio_fabricacion = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    placa_identificada = models.BooleanField(
+        default=False
+    )
+
+    informacion_validada = models.BooleanField(
+        default=False
+    )
+
+    fecha_levantamiento = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO,
+        default="OPERATIVO"
+    )
+
+    causa_fuera_servicio = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    ultima_revision = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    observaciones = models.TextField(
+        null=True,
+        blank=True
+    )
 
     class Meta:
         ordering = ("cliente__nombre", "tipo")
 
     def __str__(self):
-        return f"{self.cliente.nombre} - {self.get_tipo_display()} ({self.cantidad})"
+        nombre = self.nombre_equipo or self.get_tipo_display()
+        return f"{self.cliente.nombre} - {nombre}"
+
+
 class CotizacionEquipo(models.Model):
 
     ESTADO = [
@@ -358,21 +451,44 @@ class CotizacionEquipo(models.Model):
         ("RECHAZADA", "Rechazada"),
     ]
 
-    equipo = models.ForeignKey(EquipoUnidad, on_delete=models.CASCADE, related_name="cotizaciones")
-    estado = models.CharField(max_length=25, choices=ESTADO, default="PENDIENTE_ENVIO")
-    valor = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
-    fecha_envio = models.DateField(null=True, blank=True)
-    observaciones = models.TextField(null=True, blank=True)
+    equipo = models.ForeignKey(
+        EquipoUnidad,
+        on_delete=models.CASCADE,
+        related_name="cotizaciones"
+    )
 
-    creado_en = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(
+        max_length=25,
+        choices=ESTADO,
+        default="PENDIENTE_ENVIO"
+    )
+
+    valor = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    fecha_envio = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    observaciones = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True
+    )
 
     class Meta:
         ordering = ("-creado_en",)
 
     def __str__(self):
-        return f"Cotización - {self.equipo} - {self.estado}"    
-    
-
+        return f"Cotización - {self.equipo} - {self.get_estado_display()}"
 
 from django.contrib.auth.models import User
 
