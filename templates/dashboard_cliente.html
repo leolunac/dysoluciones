@@ -403,18 +403,22 @@
         </div>
 
         <div class="hero-actions">
-            <a class="btn btn-light" href="{% url 'hoja_vida' cliente.id %}">
-                🧾 Hoja de vida
-            </a>
+        <a class="btn btn-light" href="{% url 'hoja_vida' cliente.id %}">
+            🧾 Hoja de vida
+        </a>
 
-            <a class="btn btn-light" href="{% url 'hoja_vida_pdf' cliente.id %}">
-                📄 Descargar Hoja de Vida
-            </a>
+        <a class="btn btn-light" href="{% url 'hoja_vida_pdf' cliente.id %}">
+            📄 Descargar Hoja de Vida
+        </a>
 
-            <a class="btn btn-light" href="{% url 'logout' %}">
-                Cerrar sesión
-            </a>
-        </div>
+        <a class="btn btn-light" href="{% url 'mis_documentos' %}">
+            📁 Mis documentos
+        </a>
+
+        <a class="btn btn-light" href="{% url 'logout' %}">
+        Cerrar sesión
+        </a>
+    </div>
     </header>
 
     {% if fuera_servicio > 0 %}
