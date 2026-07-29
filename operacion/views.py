@@ -147,6 +147,9 @@ def levantamiento_equipo(request):
 # DASHBOARD GERENCIAL
 # =========================================
 @login_required
+def demo_sigob(request):
+    return render(request, "demo_sigob.html")
+@login_required
 def dashboard(request):
     total_emergencias = Emergencia.objects.count()
     pendientes = Emergencia.objects.filter(estado="PENDIENTE").count()

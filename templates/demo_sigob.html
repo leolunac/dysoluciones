@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGOB 7x24 | Demo Ejecutiva</title>
+<style>
+:root{--nav:#0f2742;--nav2:#17395f;--primary:#2563eb;--accent:#14b8a6;--bg:#f4f7fb;--card:#fff;--text:#1f2937;--muted:#64748b;--border:#dbe4ee;--danger:#dc2626;--warning:#f59e0b;--success:#16a34a;--shadow:0 10px 28px rgba(15,39,66,.10)}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,var(--nav),var(--nav2));color:#fff;padding:22px 16px}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 22px;border-bottom:1px solid rgba(255,255,255,.14)}
+.brand img{width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px;padding:6px}
+.brand h1{font-size:18px;margin:0}.brand small{display:block;margin-top:3px;opacity:.78}
+.menu{margin-top:22px;display:grid;gap:7px}.menu a{color:#fff;text-decoration:none;padding:11px 12px;border-radius:10px;display:flex;gap:10px;font-size:14px}.menu a:hover,.menu a.active{background:rgba(255,255,255,.14)}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:15px 24px;display:flex;justify-content:space-between;align-items:center}
+.topbar h2{margin:0;color:var(--nav);font-size:20px}.pill{background:#eef4ff;color:var(--primary);padding:8px 12px;border-radius:999px;font-weight:700;font-size:13px;margin-left:8px}
+.content{padding:24px}.hero{background:linear-gradient(135deg,#fff,#eef5ff);border:1px solid var(--border);border-radius:20px;padding:24px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}
+.hero h3{margin:0;color:var(--nav);font-size:28px}.hero p{color:var(--muted);margin:8px 0 0;max-width:700px;line-height:1.5}.status{min-width:230px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center}.status strong{color:var(--success);font-size:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:17px;box-shadow:var(--shadow);position:relative;overflow:hidden}.kpi:before{content:"";position:absolute;top:0;left:0;width:5px;height:100%;background:var(--primary)}.kpi.danger:before{background:var(--danger)}.kpi.warning:before{background:var(--warning)}.kpi.success:before{background:var(--success)}.kpi.accent:before{background:var(--accent)}.kpi small{color:var(--muted);font-weight:700}.value{font-size:30px;font-weight:800;color:var(--nav);margin-top:7px}
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:20px}.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow)}.panel h4{margin:0 0 14px;color:var(--nav);font-size:17px}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.module{background:linear-gradient(180deg,#fff,#f9fbfd);border:1px solid var(--border);border-radius:15px;padding:16px;text-decoration:none;color:var(--text)}.module:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#eaf1ff;font-size:22px;margin-bottom:10px}.module h5{margin:0 0 5px;color:var(--nav);font-size:15px}.module p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.activity{display:grid;gap:10px}.activity-item{display:grid;grid-template-columns:74px 1fr;gap:12px;border-bottom:1px solid var(--border);padding-bottom:10px}.time{color:var(--primary);font-weight:800;font-size:13px}.activity-item strong{color:var(--nav)}.activity-item p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.quick{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px}.btn-primary{background:var(--primary);color:#fff}.btn-light{background:#eef4ff;color:var(--primary)}
+.footer{color:var(--muted);text-align:center;font-size:12px;padding:18px 0 0}
+@media(max-width:980px){.app{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}@media(max-width:650px){.content{padding:14px}.hero{display:block}.status{margin-top:16px}.topbar{padding:12px 14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><img src="/static/img/logo_dys.png" alt="D&S"><div><h1>SIGOB 7x24</h1><small>D&S Soluciones en Bombeo</small></div></div>
+<nav class="menu">
+<a href="/demo/" class="active">🏠 Inicio</a>
+<a href="/centro-operaciones/">🚨 Centro de Operaciones</a>
+<a href="/inventario/nuevo/">📦 Inventario Técnico</a>
+<a href="#">⚙ Hoja de Vida</a>
+<a href="#">🏢 Portal del Cliente</a>
+<a href="/gerencia/">📊 Dashboard Gerencial</a>
+<a href="#">📄 Informes</a>
+<a href="#">📅 Programación</a>
+<a href="#">👷 Técnicos</a>
+</nav>
+</aside>
+<main>
+<header class="topbar"><h2>Inicio ejecutivo</h2><div><span class="pill">Modo presentación</span><span class="pill">Versión 0.6</span></div></header>
+<section class="content">
+<div class="hero">
+<div><h3>Bienvenido a SIGOB 7x24</h3><p>Plataforma integral para controlar operaciones, activos, mantenimientos, informes y la experiencia del cliente dentro de D&S Soluciones en Bombeo.</p></div>
+<div class="status"><div style="font-size:34px">🟢</div><strong>Operación estable</strong><div style="color:var(--muted);font-size:13px;margin-top:5px">Módulos principales disponibles.</div></div>
+</div>
+<div class="kpis">
+<div class="kpi danger"><small>Emergencias activas</small><div class="value">3</div></div>
+<div class="kpi success"><small>Técnicos disponibles</small><div class="value">7</div></div>
+<div class="kpi warning"><small>Correctivos pendientes</small><div class="value">5</div></div>
+<div class="kpi accent"><small>Inventario documentado</small><div class="value">82%</div></div>
+<div class="kpi"><small>Informes pendientes</small><div class="value">4</div></div>
+</div>
+<div class="grid2">
+<section class="panel"><h4>Módulos principales</h4><div class="module-grid">
+<a class="module" href="/centro-operaciones/"><div class="icon">🚨</div><h5>Centro de Operaciones</h5><p>Seguimiento de emergencias, técnicos y pendientes.</p></a>
+<a class="module" href="/inventario/nuevo/"><div class="icon">📦</div><h5>Inventario Técnico</h5><p>Registro y actualización de activos por unidad.</p></a>
+<a class="module" href="#"><div class="icon">⚙</div><h5>Hoja de Vida</h5><p>Historial técnico, reparaciones, documentos y costos.</p></a>
+<a class="module" href="#"><div class="icon">🏢</div><h5>Portal del Cliente</h5><p>Estado de equipos, informes y cotizaciones.</p></a>
+<a class="module" href="/gerencia/"><div class="icon">📊</div><h5>Dashboard Gerencial</h5><p>Indicadores ejecutivos y control de la operación.</p></a>
+<a class="module" href="#"><div class="icon">📄</div><h5>Informes</h5><p>Revisión, aprobación y publicación al cliente.</p></a>
+</div></section>
+<section class="panel"><h4>Actividad reciente</h4><div class="activity">
+<div class="activity-item"><div class="time">08:05</div><div><strong>📞 Nueva llamada</strong><p>Emergencia registrada en Edificio Almonte.</p></div></div>
+<div class="activity-item"><div class="time">08:18</div><div><strong>🚗 Técnico en camino</strong><p>Yeison Puerta salió hacia la unidad.</p></div></div>
+<div class="activity-item"><div class="time">08:42</div><div><strong>📍 Llegada confirmada</strong><p>El técnico inició la revisión.</p></div></div>
+<div class="activity-item"><div class="time">09:10</div><div><strong>📦 Activo registrado</strong><p>Motobomba de presión No. 2 agregada.</p></div></div>
+</div></section>
+</div>
+<section class="panel"><h4>Acciones rápidas</h4><div class="quick">
+<a class="btn btn-primary" href="/nueva-llamada/">+ Nueva llamada</a>
+<a class="btn btn-primary" href="/inventario/nuevo/">+ Registrar equipo</a>
+<a class="btn btn-light" href="/centro-operaciones/">Ver operación</a>
+<a class="btn btn-light" href="/gerencia/">Ver indicadores</a>
+</div></section>
+<div class="footer">SIGOB 7x24 — Sistema Integral de Gestión de Operaciones en Bombeo</div>
+</section>
+</main>
+</div>
+</body>
+</html>

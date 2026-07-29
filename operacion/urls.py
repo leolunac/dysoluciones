@@ -18,6 +18,7 @@ from .views import (
     gestionar_servicio,
     accion_servicio,
     levantamiento_equipo,
+    demo_sigob,
 )
 
 urlpatterns = [
@@ -30,11 +31,9 @@ urlpatterns = [
     path("nueva-llamada/", nueva_llamada, name="nueva_llamada"),
     # HOME
     path("", home, name="home"),
-    path(
-    "inventario/nuevo/",
-    levantamiento_equipo,
-    name="levantamiento_equipo",
-),
+    path("inventario/nuevo/", levantamiento_equipo, name="levantamiento_equipo"),
+    path("demo/", demo_sigob, name="demo_sigob"),
+   
 
     # DASHBOARD GERENCIA
     path("gerencia/", dashboard, name="dashboard"),

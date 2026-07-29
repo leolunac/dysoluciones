@@ -1,0 +1,753 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .documentos-page {
+        padding: 8px 4px 30px;
+    }
+
+    .documentos-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .documentos-title h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #17324d;
+        font-weight: 700;
+    }
+
+    .documentos-title p {
+        margin: 6px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .btn-nuevo-documento {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #0b4f87;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(11, 79, 135, 0.18);
+        transition: 0.2s ease;
+    }
+
+    .btn-nuevo-documento:hover {
+        background: #083d69;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .documentos-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 18px rgba(31, 41, 55, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .documentos-tools {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) 210px 210px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .documentos-tools input,
+    .documentos-tools select {
+        width: 100%;
+        border: 1px solid #d7dee7;
+        border-radius: 8px;
+        padding: 11px 12px;
+        font-size: 14px;
+        background: white;
+        color: #243447;
+        outline: none;
+    }
+
+    .documentos-tools input:focus,
+    .documentos-tools select:focus {
+        border-color: #0b4f87;
+        box-shadow: 0 0 0 3px rgba(11, 79, 135, 0.1);
+    }
+
+    .documentos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+        gap: 18px;
+    }
+
+    .documento-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e4eaf0;
+        padding: 18px;
+        box-shadow: 0 4px 14px rgba(31, 41, 55, 0.06);
+        transition: 0.2s ease;
+    }
+
+    .documento-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(31, 41, 55, 0.1);
+    }
+
+    .documento-card-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .documento-icono {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        background: #eaf4fb;
+        color: #0b4f87;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 23px;
+        flex-shrink: 0;
+    }
+
+    .documento-info {
+        flex: 1;
+    }
+
+    .documento-info h3 {
+        margin: 0;
+        font-size: 17px;
+        color: #17324d;
+        line-height: 1.35;
+    }
+
+    .documento-tipo {
+        margin-top: 5px;
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .estado {
+        display: inline-block;
+        border-radius: 20px;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .estado-publicado {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .estado-borrador {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .documento-datos {
+        margin-top: 18px;
+        border-top: 1px solid #edf1f5;
+        padding-top: 14px;
+    }
+
+    .documento-dato {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 9px;
+        font-size: 13px;
+    }
+
+    .documento-dato span:first-child {
+        color: #6b7280;
+    }
+
+    .documento-dato span:last-child {
+        color: #26384a;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    .documento-acciones {
+        margin-top: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-accion {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #d6dee7;
+        color: #334155;
+        background: white;
+    }
+
+    .btn-accion:hover {
+        background: #f3f6f9;
+        color: #17324d;
+    }
+
+    .btn-descargar {
+        background: #0b4f87;
+        color: white;
+        border-color: #0b4f87;
+    }
+
+    .btn-descargar:hover {
+        background: #083d69;
+        color: white;
+    }
+
+    .documentos-vacio {
+        background: white;
+        border-radius: 12px;
+        border: 1px dashed #cdd6df;
+        padding: 55px 25px;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(31, 41, 55, 0.04);
+    }
+
+    .documentos-vacio-icono {
+        width: 74px;
+        height: 74px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        background: #eaf4fb;
+        color: #0b4f87;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+    }
+
+    .documentos-vacio h2 {
+        margin: 0 0 8px;
+        color: #17324d;
+        font-size: 22px;
+    }
+
+    .documentos-vacio p {
+        margin: 0 auto 20px;
+        max-width: 520px;
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+
+
+    /* =========================================
+       INDICADORES EJECUTIVOS
+    ========================================= */
+
+    .indicadores-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .indicador-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-height: 112px;
+        padding: 20px;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid #e4eaf0;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(31, 41, 55, 0.07);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .indicador-card:hover {
+        transform: translateY(-3px);
+        border-color: #cbd7e3;
+        box-shadow: 0 10px 26px rgba(31, 41, 55, 0.12);
+    }
+
+    .indicador-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        border-radius: 0 14px 14px 0;
+    }
+
+    .indicador-documentos::after { background: #0b4f87; }
+    .indicador-publicados::after { background: #16a34a; }
+    .indicador-borradores::after { background: #d97706; }
+    .indicador-clientes::after { background: #7c3aed; }
+
+    .indicador-icono {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        flex-shrink: 0;
+        border-radius: 14px;
+        font-size: 27px;
+    }
+
+    .indicador-documentos .indicador-icono { color: #0b4f87; background: #eaf4fb; }
+    .indicador-publicados .indicador-icono { color: #15803d; background: #dcfce7; }
+    .indicador-borradores .indicador-icono { color: #b45309; background: #fef3c7; }
+    .indicador-clientes .indicador-icono { color: #6d28d9; background: #ede9fe; }
+
+    .indicador-contenido { min-width: 0; }
+
+    .indicador-etiqueta {
+        margin: 0 0 5px;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .indicador-valor {
+        margin: 0;
+        color: #17324d;
+        font-size: 32px;
+        line-height: 1;
+        font-weight: 800;
+    }
+
+    .indicador-detalle {
+        margin-top: 7px;
+        color: #8290a0;
+        font-size: 12px;
+    }
+
+    .fecha-publicacion {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 5px;
+        color: #15803d !important;
+        font-weight: 700 !important;
+    }
+
+    .fecha-pendiente { color: #b45309 !important; }
+
+    .resultados-resumen {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin: -8px 0 16px;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .resultados-resumen strong { color: #17324d; }
+
+    @media (max-width: 1100px) {
+        .indicadores-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 900px) {
+        .documentos-tools {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .documentos-header {
+            align-items: stretch;
+        }
+
+        .btn-nuevo-documento {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .documentos-title h1 {
+            font-size: 23px;
+        }
+
+        .indicadores-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .indicador-card {
+            min-height: 96px;
+            padding: 16px;
+        }
+
+        .indicador-icono {
+            width: 52px;
+            height: 52px;
+            font-size: 24px;
+        }
+
+        .indicador-valor {
+            font-size: 28px;
+        }
+
+        .resultados-resumen {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
+        }
+    }
+</style>
+
+<div class="documentos-page">
+
+    <div class="documentos-header">
+        <div class="documentos-title">
+            <h1>📂 Centro Documental</h1>
+            <p>
+                Administre los informes, certificados, cotizaciones y documentos
+                disponibles para los clientes.
+            </p>
+        </div>
+
+        <a href="{% url 'nuevo_documento' %}" class="btn-nuevo-documento">
+            ＋ Nuevo documento
+        </a>
+    </div>
+
+
+
+    <div class="indicadores-grid">
+
+        <div class="indicador-card indicador-documentos">
+            <div class="indicador-icono">📄</div>
+            <div class="indicador-contenido">
+                <p class="indicador-etiqueta">Documentos</p>
+                <p class="indicador-valor">{{ total_documentos }}</p>
+                <div class="indicador-detalle">Total registrado</div>
+            </div>
+        </div>
+
+        <div class="indicador-card indicador-publicados">
+            <div class="indicador-icono">✓</div>
+            <div class="indicador-contenido">
+                <p class="indicador-etiqueta">Publicados</p>
+                <p class="indicador-valor">{{ total_publicados }}</p>
+                <div class="indicador-detalle">Disponibles para clientes</div>
+            </div>
+        </div>
+
+        <div class="indicador-card indicador-borradores">
+            <div class="indicador-icono">✎</div>
+            <div class="indicador-contenido">
+                <p class="indicador-etiqueta">Borradores</p>
+                <p class="indicador-valor">{{ total_borradores }}</p>
+                <div class="indicador-detalle">Pendientes de publicar</div>
+            </div>
+        </div>
+
+        <div class="indicador-card indicador-clientes">
+            <div class="indicador-icono">🏢</div>
+            <div class="indicador-contenido">
+                <p class="indicador-etiqueta">Clientes</p>
+                <p class="indicador-valor">{{ total_clientes }}</p>
+                <div class="indicador-detalle">Con documentos registrados</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="documentos-panel">
+        <div class="documentos-tools">
+
+            <input
+                type="search"
+                id="buscadorDocumentos"
+                placeholder="🔍 Buscar por título o cliente..."
+            >
+
+            <select id="filtroTipo">
+                <option value="">Todos los tipos</option>
+                <option value="preventivo">Informe preventivo</option>
+                <option value="correctivo">Informe correctivo</option>
+                <option value="certificado">Certificado</option>
+                <option value="cotizacion">Cotización</option>
+                <option value="manual">Manual</option>
+                <option value="otro">Otro documento</option>
+            </select>
+
+            <select id="filtroEstado">
+                <option value="">Todos los estados</option>
+                <option value="publicado">Publicado</option>
+                <option value="borrador">Borrador</option>
+            </select>
+
+        </div>
+    </div>
+
+    <div class="resultados-resumen">
+        <span>
+            Mostrando
+            <strong id="cantidadResultados">{{ total_documentos }}</strong>
+            documento{{ total_documentos|pluralize:"s" }}
+        </span>
+        <span>Ordenados del más reciente al más antiguo</span>
+    </div>
+
+    {% if documentos %}
+
+        <div class="documentos-grid" id="contenedorDocumentos">
+
+            {% for documento in documentos %}
+
+                <div
+                    class="documento-card"
+                    data-titulo="{{ documento.titulo|default:''|lower }}"
+                    data-cliente="{{ documento.cliente.nombre|default:''|lower }}"
+                    data-tipo="{{ documento.tipo|default:''|lower }}"
+                    data-estado="{{ documento.estado|default:''|lower }}"
+                >
+
+                    <div class="documento-card-top">
+
+                        <div class="documento-icono">
+                            📄
+                        </div>
+
+                        <div class="documento-info">
+                            <h3>{{ documento.titulo }}</h3>
+
+                            <div class="documento-tipo">
+                                {{ documento.get_tipo_display }}
+                            </div>
+                        </div>
+
+                        {% if documento.estado == "PUBLICADO" or documento.estado == "publicado" %}
+                            <span class="estado estado-publicado">
+                                Publicado
+                            </span>
+                        {% else %}
+                            <span class="estado estado-borrador">
+                                Borrador
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="documento-datos">
+
+                        <div class="documento-dato">
+                            <span>Cliente</span>
+                            <span>{{ documento.cliente }}</span>
+                        </div>
+
+                        <div class="documento-dato">
+                            <span>Fecha</span>
+                            <span>{{ documento.fecha_documento|date:"d/m/Y" }}</span>
+                        </div>
+
+                        <div class="documento-dato">
+                            <span>Publicado</span>
+
+                            {% if documento.fecha_publicacion %}
+                                <span class="fecha-publicacion">
+                                    ✓ {{ documento.fecha_publicacion|date:"d/m/Y H:i" }}
+                                </span>
+                            {% else %}
+                                <span class="fecha-pendiente">Pendiente</span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="documento-acciones">
+
+                        {% if documento.archivo %}
+                            <a
+                                href="{{ documento.archivo.url }}"
+                                target="_blank"
+                                class="btn-accion"
+                            >
+                                👁 Ver
+                            </a>
+
+                            <a
+                                href="{{ documento.archivo.url }}"
+                                download
+                                class="btn-accion btn-descargar"
+                            >
+                                ⬇ Descargar
+                            </a>
+                        {% endif %}
+
+                        <a
+    href="{% url 'editar_documento' documento.id %}"
+    class="btn-accion"
+>
+    ✏ Editar
+</a>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="documentos-vacio">
+
+            <div class="documentos-vacio-icono">
+                📄
+            </div>
+
+            <h2>Aún no hay documentos registrados</h2>
+
+            <p>
+                Cuando cargue el primer informe, certificado o cotización,
+                aparecerá aquí y podrá publicarlo para que el cliente lo consulte
+                desde su portal.
+            </p>
+
+            <a href="{% url 'nuevo_documento' %}" class="btn-nuevo-documento">
+                ＋ Cargar primer documento
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const buscador = document.getElementById("buscadorDocumentos");
+        const filtroTipo = document.getElementById("filtroTipo");
+        const filtroEstado = document.getElementById("filtroEstado");
+        const tarjetas = document.querySelectorAll(".documento-card");
+        const cantidadResultados =
+            document.getElementById("cantidadResultados");
+
+        function normalizarTexto(texto) {
+            return String(texto || "")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .trim();
+        }
+
+        function filtrarDocumentos() {
+            const textoBuscado = normalizarTexto(
+                buscador ? buscador.value : ""
+            );
+
+            const tipoBuscado = normalizarTexto(
+                filtroTipo ? filtroTipo.value : ""
+            );
+
+            const estadoBuscado = normalizarTexto(
+                filtroEstado ? filtroEstado.value : ""
+            );
+
+            let visibles = 0;
+
+            tarjetas.forEach(function (tarjeta) {
+                const titulo = normalizarTexto(
+                    tarjeta.dataset.titulo
+                );
+
+                const cliente = normalizarTexto(
+                    tarjeta.dataset.cliente
+                );
+
+                const tipoDocumento = normalizarTexto(
+                    tarjeta.dataset.tipo
+                );
+
+                const estadoDocumento = normalizarTexto(
+                    tarjeta.dataset.estado
+                );
+
+                const coincideTexto =
+                    textoBuscado === "" ||
+                    titulo.includes(textoBuscado) ||
+                    cliente.includes(textoBuscado);
+
+                const coincideTipo =
+                    tipoBuscado === "" ||
+                    tipoDocumento === tipoBuscado;
+
+                const coincideEstado =
+                    estadoBuscado === "" ||
+                    estadoDocumento === estadoBuscado;
+
+                const mostrar =
+                    coincideTexto &&
+                    coincideTipo &&
+                    coincideEstado;
+
+                tarjeta.hidden = !mostrar;
+
+                if (mostrar) {
+                    visibles++;
+                }
+            });
+
+            if (cantidadResultados) {
+                cantidadResultados.textContent = visibles;
+            }
+        }
+
+        if (buscador) {
+            buscador.addEventListener(
+                "input",
+                filtrarDocumentos
+            );
+        }
+
+        if (filtroTipo) {
+            filtroTipo.addEventListener(
+                "change",
+                filtrarDocumentos
+            );
+        }
+
+        if (filtroEstado) {
+            filtroEstado.addEventListener(
+                "change",
+                filtrarDocumentos
+            );
+        }
+
+        filtrarDocumentos();
+    });
+</script>
+{% endblock %}

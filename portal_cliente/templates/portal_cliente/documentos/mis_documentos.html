@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .portal-wrapper {
+        max-width: 1250px;
+        margin: 0 auto;
+        padding: 28px 18px 50px;
+    }
+
+    .portal-hero {
+        background: linear-gradient(135deg, #0b2f50, #145f86);
+        color: white;
+        border-radius: 22px;
+        padding: 34px;
+        box-shadow: 0 18px 45px rgba(11, 47, 80, 0.22);
+        margin-bottom: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .portal-hero::after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        right: -60px;
+        top: -70px;
+    }
+
+    .portal-label {
+        text-transform: uppercase;
+        letter-spacing: 1.8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        opacity: 0.8;
+        margin-bottom: 8px;
+    }
+
+    .portal-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .portal-client {
+        font-size: 1.1rem;
+        margin: 0;
+        opacity: 0.95;
+    }
+
+    .portal-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 30px;
+    }
+
+    .portal-stat {
+        background: white;
+        border-radius: 18px;
+        padding: 22px;
+        border: 1px solid #e7edf3;
+        box-shadow: 0 10px 30px rgba(20, 55, 80, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .portal-stat:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 35px rgba(20, 55, 80, 0.13);
+    }
+
+    .portal-stat-icon {
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+
+    .portal-stat-value {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: #123b5d;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .portal-stat-label {
+        color: #6b7c8d;
+        font-size: 0.92rem;
+        margin: 0;
+    }
+
+    .portal-section {
+        background: white;
+        border-radius: 20px;
+        padding: 26px;
+        border: 1px solid #e7edf3;
+        box-shadow: 0 10px 30px rgba(20, 55, 80, 0.08);
+    }
+
+    .portal-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .portal-section-title {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #123b5d;
+    }
+
+    .portal-count {
+        background: #eaf4fb;
+        color: #145f86;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .document-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .document-card {
+        border: 1px solid #e5ebf1;
+        border-radius: 18px;
+        padding: 20px;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        min-height: 270px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .document-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 32px rgba(20, 55, 80, 0.12);
+    }
+
+    .document-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #edf6fb;
+        color: #145f86;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        margin-bottom: 16px;
+    }
+
+    .document-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #17354d;
+        margin-bottom: 8px;
+    }
+
+    .document-type {
+        color: #607486;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .document-date {
+        color: #6b7c8d;
+        font-size: 0.88rem;
+        margin-bottom: 6px;
+    }
+
+    .document-published {
+        color: #198754;
+        font-size: 0.86rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .document-observation {
+        color: #536576;
+        font-size: 0.9rem;
+        margin-bottom: 18px;
+        flex-grow: 1;
+    }
+
+    .document-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 11px 16px;
+        border-radius: 12px;
+        background: #145f86;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        border: none;
+    }
+
+    .document-button:hover {
+        background: #0f4c6c;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        border: 2px dashed #dce6ee;
+        border-radius: 18px;
+        background: #f8fbfd;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+
+    .empty-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #17354d;
+        margin-bottom: 8px;
+    }
+
+    .empty-text {
+        color: #6b7c8d;
+        margin: 0;
+    }
+
+    @media (max-width: 992px) {
+        .portal-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .document-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .portal-hero {
+            padding: 26px 22px;
+        }
+
+        .portal-title {
+            font-size: 1.55rem;
+        }
+
+        .portal-grid,
+        .document-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .portal-section-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="portal-wrapper">
+
+    <section class="portal-hero">
+        <div class="portal-label">
+            D&amp;S Soluciones en Bombeo
+        </div>
+
+        <h1 class="portal-title">
+            Portal del Cliente
+        </h1>
+
+        <p class="portal-client">
+            Bienvenido,
+            <strong>{{ cliente.nombre }}</strong>
+        </p>
+    </section>
+
+    <section class="portal-grid">
+
+        <article class="portal-stat">
+            <div class="portal-stat-icon">📄</div>
+            <div class="portal-stat-value">
+                {{ documentos|length }}
+            </div>
+            <p class="portal-stat-label">
+                Documentos disponibles
+            </p>
+        </article>
+
+        <article class="portal-stat">
+            <div class="portal-stat-icon">🚨</div>
+            <div class="portal-stat-value">0</div>
+            <p class="portal-stat-label">
+                Emergencias del mes
+            </p>
+        </article>
+
+        <article class="portal-stat">
+            <div class="portal-stat-icon">⚙️</div>
+            <div class="portal-stat-value">0</div>
+            <p class="portal-stat-label">
+                Equipos registrados
+            </p>
+        </article>
+
+        <article class="portal-stat">
+            <div class="portal-stat-icon">🧼</div>
+            <div class="portal-stat-value">—</div>
+            <p class="portal-stat-label">
+                Próximo mantenimiento
+            </p>
+        </article>
+
+    </section>
+
+    <section class="portal-section">
+
+        <div class="portal-section-header">
+            <div>
+                <h2 class="portal-section-title">
+                    Mis documentos
+                </h2>
+                <small class="text-muted">
+                    Consulta los informes y archivos publicados para tu unidad.
+                </small>
+            </div>
+
+            <span class="portal-count">
+                {{ documentos|length }} disponibles
+            </span>
+        </div>
+
+        {% if documentos %}
+
+            <div class="document-grid">
+
+                {% for documento in documentos %}
+
+                    <article class="document-card">
+
+                        <div class="document-icon">
+                            📄
+                        </div>
+
+                        <h3 class="document-title">
+                            {{ documento.titulo }}
+                        </h3>
+
+                        <div class="document-type">
+                            {{ documento.get_tipo_display }}
+                        </div>
+
+                        <div class="document-date">
+                            Fecha del documento:
+                            <strong>
+                                {{ documento.fecha_documento|date:"d/m/Y" }}
+                            </strong>
+                        </div>
+
+                        {% if documento.fecha_publicacion %}
+                            <div class="document-published">
+                                ✓ Publicado:
+                                {{ documento.fecha_publicacion|date:"d/m/Y H:i" }}
+                            </div>
+                        {% endif %}
+
+                        {% if documento.observaciones %}
+                            <div class="document-observation">
+                                {{ documento.observaciones|truncatechars:150 }}
+                            </div>
+                        {% else %}
+                            <div class="document-observation">
+                                Documento disponible para consulta.
+                            </div>
+                        {% endif %}
+
+                        {% if documento.archivo %}
+                            <a
+                                href="{{ documento.archivo.url }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="document-button"
+                            >
+                                Ver documento
+                            </a>
+                        {% else %}
+                            <button
+                                type="button"
+                                class="document-button"
+                                disabled
+                            >
+                                Archivo no disponible
+                            </button>
+                        {% endif %}
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                <div class="empty-icon">📂</div>
+
+                <div class="empty-title">
+                    No hay documentos publicados
+                </div>
+
+                <p class="empty-text">
+                    Cuando D&amp;S publique un nuevo informe para esta unidad,
+                    aparecerá automáticamente en este espacio.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

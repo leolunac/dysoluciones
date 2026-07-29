@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="row mb-4">
+
+        <div class="col-md-8">
+
+            <h2>
+                ✏ Editar Documento
+            </h2>
+
+            <p class="text-muted">
+                Modifique la información del documento.
+            </p>
+
+        </div>
+
+        <div class="col-md-4 text-end">
+
+            <a href="{% url 'lista_documentos' %}"
+               class="btn btn-secondary">
+
+                ← Volver
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <strong>
+                Información del Documento
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST"
+                  enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                {% if form.errors %}
+
+                <div class="alert alert-danger">
+
+                    Existen errores en el formulario.
+
+                </div>
+
+                {% endif %}
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Cliente
+
+                        </label>
+
+                        {{ form.cliente }}
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Tipo
+
+                        </label>
+
+                        {{ form.tipo }}
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Título
+
+                    </label>
+
+                    {{ form.titulo }}
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Fecha
+
+                        </label>
+
+                        {{ form.fecha_documento }}
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+
+                            Estado
+
+                        </label>
+
+                        {{ form.estado }}
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Archivo Actual
+
+                    </label>
+
+                    {% if documento.archivo %}
+
+                        <div class="alert alert-info">
+
+                            <a href="{{ documento.archivo.url }}"
+                               target="_blank">
+
+                                📄 Ver documento actual
+
+                            </a>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="alert alert-warning">
+
+                            No existe archivo cargado.
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Reemplazar Archivo
+
+                    </label>
+
+                    {{ form.archivo }}
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+
+                        Observaciones
+
+                    </label>
+
+                    {{ form.observaciones }}
+
+                </div>
+
+                <hr>
+
+                <div class="text-end">
+
+                    <a href="{% url 'lista_documentos' %}"
+                       class="btn btn-secondary">
+
+                        Cancelar
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        💾 Guardar Cambios
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

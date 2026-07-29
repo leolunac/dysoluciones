@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Portal del Cliente | SIGOB 7x24</title>
+
+    <style>
+        :root {
+            --azul-oscuro: #0f2742;
+            --azul: #2563eb;
+            --turquesa: #14b8a6;
+            --verde: #16a34a;
+            --amarillo: #f59e0b;
+            --rojo: #dc2626;
+            --fondo: #f4f7fb;
+            --blanco: #ffffff;
+            --texto: #1f2937;
+            --gris: #64748b;
+            --borde: #dbe4ee;
+            --sombra: 0 10px 28px rgba(15, 39, 66, 0.10);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--fondo);
+            color: var(--texto);
+        }
+
+        .contenedor {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 22px;
+        }
+
+        .encabezado {
+            background: linear-gradient(
+                135deg,
+                var(--azul-oscuro),
+                #1d4f7a
+            );
+            color: var(--blanco);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: var(--sombra);
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 74px;
+            height: 74px;
+            object-fit: contain;
+            background: var(--blanco);
+            border-radius: 16px;
+            padding: 8px;
+        }
+
+        .marca h1 {
+            margin: 0;
+            font-size: 1.7rem;
+        }
+
+        .marca p {
+            margin: 6px 0 0;
+            opacity: 0.88;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .boton {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            padding: 10px 15px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .boton-claro {
+            background: var(--blanco);
+            color: var(--azul-oscuro);
+        }
+
+        .resumen-unidad {
+            margin-top: 18px;
+            background: var(--blanco);
+            border: 1px solid var(--borde);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--sombra);
+
+            display: grid;
+            grid-template-columns: 1.4fr repeat(3, 1fr);
+            gap: 15px;
+            align-items: center;
+        }
+
+        .unidad h2 {
+            margin: 0;
+            color: var(--azul-oscuro);
+        }
+
+        .unidad p {
+            margin: 7px 0 0;
+            color: var(--gris);
+        }
+
+        .dato {
+            border-left: 1px solid var(--borde);
+            padding-left: 18px;
+        }
+
+        .dato small {
+            color: var(--gris);
+            font-weight: 700;
+        }
+
+        .dato strong {
+            display: block;
+            margin-top: 6px;
+            color: var(--azul-oscuro);
+            font-size: 1.05rem;
+        }
+
+        .estado-activo {
+            color: var(--verde) !important;
+        }
+
+        .titulo-seccion {
+            margin: 24px 0 12px;
+            color: var(--azul-oscuro);
+        }
+
+        .modulos {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(220px, 1fr)
+            );
+            gap: 14px;
+        }
+
+        .modulo {
+            background: var(--blanco);
+            border: 1px solid var(--borde);
+            border-radius: 17px;
+            padding: 18px;
+            text-decoration: none;
+            color: var(--texto);
+            box-shadow: var(--sombra);
+            transition: transform 0.15s ease;
+        }
+
+        .modulo:hover {
+            transform: translateY(-2px);
+        }
+
+        .icono {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
+            background: #eaf1ff;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .modulo h3 {
+            margin: 0 0 6px;
+            color: var(--azul-oscuro);
+            font-size: 1rem;
+        }
+
+        .modulo p {
+            margin: 0;
+            color: var(--gris);
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .rejilla-inferior {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .panel {
+            background: var(--blanco);
+            border: 1px solid var(--borde);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: var(--sombra);
+        }
+
+        .panel h3 {
+            margin: 0 0 14px;
+            color: var(--azul-oscuro);
+        }
+
+        .documento {
+            display: grid;
+            grid-template-columns: 52px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--borde);
+        }
+
+        .documento:last-child {
+            border-bottom: none;
+        }
+
+        .documento-icono {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: #eef4ff;
+            font-size: 1.25rem;
+        }
+
+        .documento strong {
+            color: var(--azul-oscuro);
+        }
+
+        .documento small {
+            display: block;
+            color: var(--gris);
+            margin-top: 3px;
+        }
+
+        .descargar {
+            color: var(--azul);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        .novedades {
+            display: grid;
+            gap: 11px;
+        }
+
+        .novedad {
+            padding: 12px;
+            border-radius: 13px;
+            background: #f8fbfd;
+            border: 1px solid var(--borde);
+            font-size: 0.9rem;
+        }
+
+        .pie {
+            text-align: center;
+            color: var(--gris);
+            font-size: 0.82rem;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .resumen-unidad {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .dato {
+                border-left: none;
+                padding-left: 0;
+            }
+
+            .rejilla-inferior {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .contenedor {
+                padding: 12px;
+            }
+
+            .encabezado {
+                display: block;
+            }
+
+            .acciones {
+                margin-top: 16px;
+            }
+
+            .acciones .boton {
+                width: 100%;
+            }
+
+            .resumen-unidad {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <header class="encabezado">
+        <div class="marca">
+            <img
+                src="/static/img/logo_dys.png"
+                alt="D&S"
+                class="logo"
+            >
+
+            <div>
+                <h1>SIGOB 7x24</h1>
+                <p>
+                    Portal del Cliente —
+                    D&S Soluciones en Bombeo S.A.S.
+                </p>
+            </div>
+        </div>
+
+        <div class="acciones">
+            <a href="#" class="boton boton-claro">
+                👤 Mi perfil
+            </a>
+
+            <a href="/logout/" class="boton boton-claro">
+                Cerrar sesión
+            </a>
+        </div>
+    </header>
+
+    <section class="resumen-unidad">
+
+        <div class="unidad">
+            <h2>TORRES DEL PARQUE PH</h2>
+            <p>
+                Toda la información técnica de su unidad,
+                disponible cuando la necesite.
+            </p>
+        </div>
+
+        <div class="dato">
+            <small>Contrato</small>
+            <strong>7x24</strong>
+        </div>
+
+        <div class="dato">
+            <small>Estado</small>
+            <strong class="estado-activo">● Activo</strong>
+        </div>
+
+        <div class="dato">
+            <small>Última visita</small>
+            <strong>15/07/2026</strong>
+        </div>
+
+    </section>
+
+    <h2 class="titulo-seccion">Módulos disponibles</h2>
+
+    <section class="modulos">
+
+        <a href="#" class="modulo">
+            <div class="icono">📂</div>
+            <h3>Centro Documental</h3>
+            <p>
+                Consulte y descargue informes,
+                certificados y documentos publicados.
+            </p>
+        </a>
+
+        <a href="#" class="modulo">
+            <div class="icono">📄</div>
+            <h3>Informes técnicos</h3>
+            <p>
+                Revise los informes preventivos,
+                correctivos y de atención.
+            </p>
+        </a>
+
+        <a href="#" class="modulo">
+            <div class="icono">📅</div>
+            <h3>Mantenimientos</h3>
+            <p>
+                Consulte mantenimientos ejecutados,
+                próximos y reprogramados.
+            </p>
+        </a>
+
+        <a href="#" class="modulo">
+            <div class="icono">📦</div>
+            <h3>Inventario técnico</h3>
+            <p>
+                Visualice los equipos registrados
+                en la unidad.
+            </p>
+        </a>
+
+        <a href="#" class="modulo">
+            <div class="icono">⚙</div>
+            <h3>Hojas de vida</h3>
+            <p>
+                Consulte la información técnica y
+                el historial de cada activo.
+            </p>
+        </a>
+
+        <a href="#" class="modulo">
+            <div class="icono">💰</div>
+            <h3>Cotizaciones</h3>
+            <p>
+                Consulte propuestas pendientes,
+                aprobadas o rechazadas.
+            </p>
+        </a>
+
+    </section>
+
+    <section class="rejilla-inferior">
+
+        <div class="panel">
+            <h3>Últimos documentos publicados</h3>
+
+            <div class="documento">
+                <div class="documento-icono">📄</div>
+
+                <div>
+                    <strong>
+                        Informe preventivo — Julio 2026
+                    </strong>
+                    <small>
+                        Publicado el 15/07/2026
+                    </small>
+                </div>
+
+                <a href="#" class="descargar">
+                    Descargar
+                </a>
+            </div>
+
+            <div class="documento">
+                <div class="documento-icono">📄</div>
+
+                <div>
+                    <strong>
+                        Correctivo motobomba de presión
+                    </strong>
+                    <small>
+                        Publicado el 12/07/2026
+                    </small>
+                </div>
+
+                <a href="#" class="descargar">
+                    Descargar
+                </a>
+            </div>
+
+            <div class="documento">
+                <div class="documento-icono">📑</div>
+
+                <div>
+                    <strong>
+                        Certificado de lavado de tanques
+                    </strong>
+                    <small>
+                        Publicado el 05/07/2026
+                    </small>
+                </div>
+
+                <a href="#" class="descargar">
+                    Descargar
+                </a>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Novedades</h3>
+
+            <div class="novedades">
+                <div class="novedad">
+                    ✅ Nuevo informe preventivo disponible.
+                </div>
+
+                <div class="novedad">
+                    📅 Próximo mantenimiento en 18 días.
+                </div>
+
+                <div class="novedad">
+                    ⚠ Una cotización está pendiente
+                    de aprobación.
+                </div>
+
+                <div class="novedad">
+                    📦 Inventario técnico documentado
+                    en un 82 %.
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <footer class="pie">
+        SIGOB 7x24 —
+        Sistema Integral de Gestión de Operaciones en Bombeo
+    </footer>
+
+</div>
+
+</body>
+</html>
