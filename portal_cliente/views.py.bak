@@ -1,37 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
-
-from operacion.models import UsuarioCliente
 
 from .forms import DocumentoClienteForm
 from .models import DocumentoCliente
-
-
-def validar_usuario_interno(request):
-    """
-    Permite administrar documentos únicamente a usuarios internos.
-    """
-    if not request.user.is_staff:
-        raise PermissionDenied(
-            "No tiene permisos para administrar documentos."
-        )
+from operacion.models import UsuarioCliente
 
 
 @login_required
 def inicio_portal(request):
-    validar_usuario_interno(request)
-
-    return render(
-        request,
-        "portal_cliente/inicio.html",
-    )
-
+    return render(request, "portal_cliente/inicio.html")
 
 @login_required
 def lista_documentos(request):
-    validar_usuario_interno(request)
-
     documentos = (
         DocumentoCliente.objects
         .select_related("cliente")
@@ -42,11 +22,11 @@ def lista_documentos(request):
     total_documentos = documentos.count()
 
     total_publicados = documentos.filter(
-        estado="PUBLICADO",
+        estado="PUBLICADO"
     ).count()
 
     total_borradores = documentos.filter(
-        estado="BORRADOR",
+        estado="BORRADOR"
     ).count()
 
     total_clientes = (
@@ -71,15 +51,11 @@ def lista_documentos(request):
     )
 
 
+
 @login_required
 def nuevo_documento(request):
-    validar_usuario_interno(request)
-
     if request.method == "POST":
-        form = DocumentoClienteForm(
-            request.POST,
-            request.FILES,
-        )
+        form = DocumentoClienteForm(request.POST, request.FILES)
 
         if form.is_valid():
             form.save()
@@ -98,8 +74,6 @@ def nuevo_documento(request):
 
 @login_required
 def editar_documento(request, documento_id):
-    validar_usuario_interno(request)
-
     documento = get_object_or_404(
         DocumentoCliente,
         id=documento_id,
@@ -116,9 +90,7 @@ def editar_documento(request, documento_id):
             form.save()
             return redirect("lista_documentos")
     else:
-        form = DocumentoClienteForm(
-            instance=documento,
-        )
+        form = DocumentoClienteForm(instance=documento)
 
     return render(
         request,
@@ -128,10 +100,9 @@ def editar_documento(request, documento_id):
             "documento": documento,
         },
     )
-
-
 @login_required
 def mis_documentos(request):
+
     usuario_cliente = get_object_or_404(
         UsuarioCliente,
         user=request.user,
