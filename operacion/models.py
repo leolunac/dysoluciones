@@ -499,7 +499,28 @@ class UsuarioCliente(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.cliente.nombre}"
-    
+class ClienteAsignado(models.Model):
+    usuario_cliente = models.ForeignKey(
+        UsuarioCliente,
+        on_delete=models.CASCADE,
+        related_name="clientes_asignados"
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name="usuarios_asignados"
+    )
+
+    principal = models.BooleanField(default=False)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("usuario_cliente", "cliente")
+        ordering = ["-principal", "cliente__nombre"]
+
+    def __str__(self):
+        return f"{self.usuario_cliente.user.username} - {self.cliente.nombre}"    
 class TanqueUnidad(models.Model):
 
     TIPO_TANQUE = [

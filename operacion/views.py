@@ -21,7 +21,6 @@ from .forms import (
     GestionServicioForm,
     LevantamientoEquipoForm,
 )
-                    
 from .models import (
     Cliente,
     CotizacionEquipo,
@@ -31,40 +30,47 @@ from .models import (
     TanqueUnidad,
     Tecnico,
     UsuarioCliente,
-)
+    ClienteAsignado,
+)                    
+
 from .utils import registrar_evento
+
 
 
 # =========================================
 # LOGIN
 # =========================================
 def login_view(request):
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(
+            request,
+            username=username,
+            password=password,
+        )
 
         if user is not None:
             login(request, user)
 
+            # Usuario interno: entra al menú principal
             if user.is_staff:
-                return redirect("/gerencia/")
+                return redirect("/")
 
-            uc = UsuarioCliente.objects.filter(user=user).first()
-            if uc:
-                return redirect(f"/cliente/{uc.cliente.id}/")
-
-            return redirect("/")
+            # Usuario cliente: entra al selector de unidades
+            return redirect("/mis-unidades/")
 
         return render(
             request,
             "login.html",
-            {"error": "Usuario o contraseña incorrectos"},
+            {
+                "error": "Usuario o contraseña incorrectos",
+            },
         )
 
     return render(request, "login.html")
-
 
 # =========================================
 # LOGOUT
@@ -73,22 +79,100 @@ def logout_view(request):
     logout(request)
     return redirect("/login/")
 
-
 # =========================================
 # HOME
 # =========================================
 @login_required
 def home(request):
     if request.user.is_staff:
+        return render(request, "menu_principal.html")
+
+    return redirect("/mis-unidades/")
+# =========================================
+# VALIDAR ACCESO DEL CLIENTE
+# =========================================
+def usuario_puede_ver_cliente(user, cliente_id):
+    """
+    Comprueba si el usuario tiene autorización para consultar una unidad.
+    El personal interno puede consultar cualquier cliente.
+    """
+
+    if user.is_staff:
+        return True
+
+    usuario_cliente = UsuarioCliente.objects.filter(user=user).first()
+
+    if not usuario_cliente:
+        return False
+
+    # Mantiene compatibilidad con la unidad original.
+    if usuario_cliente.cliente_id == cliente_id:
+        return True
+
+    # Comprueba las unidades adicionales asignadas.
+    return ClienteAsignado.objects.filter(
+        usuario_cliente=usuario_cliente,
+        cliente_id=cliente_id,
+        activo=True,
+    ).exists()
+
+
+# =========================================
+# PORTAL DE UNIDADES DEL CLIENTE
+# =========================================
+@login_required
+def portal_unidades(request):
+    if request.user.is_staff:
         return redirect("/gerencia/")
 
-    uc = UsuarioCliente.objects.filter(user=request.user).first()
-    if uc:
-        return redirect(f"/cliente/{uc.cliente.id}/")
+    usuario_cliente = UsuarioCliente.objects.filter(
+        user=request.user,
+    ).first()
 
-    return redirect("/login/")
+    if not usuario_cliente:
+        return HttpResponseForbidden(
+            "Este usuario no tiene unidades asignadas."
+        )
 
+    clientes_ids = set()
 
+    # Unidad original, para conservar el funcionamiento actual.
+    if usuario_cliente.cliente_id:
+        clientes_ids.add(usuario_cliente.cliente_id)
+
+    # Unidades adicionales.
+    clientes_asignados = ClienteAsignado.objects.filter(
+        usuario_cliente=usuario_cliente,
+        activo=True,
+    ).values_list(
+        "cliente_id",
+        flat=True,
+    )
+
+    clientes_ids.update(clientes_asignados)
+
+    clientes = Cliente.objects.filter(
+        id__in=clientes_ids,
+        activo=True,
+    ).order_by("nombre")
+
+    # Con una sola unidad entra directamente.
+    if clientes.count() == 1:
+        cliente = clientes.first()
+
+        return redirect(
+            "dashboard_cliente",
+            cliente_id=cliente.id,
+        )
+
+    return render(
+        request,
+        "mis_unidades.html",
+        {
+            "clientes": clientes,
+            "usuario_cliente": usuario_cliente,
+        },
+    )
 # =========================================
 # NUEVA LLAMADA
 # =========================================
@@ -370,13 +454,16 @@ def escritorio_coordinador(request):
 # =========================================
 @login_required
 def dashboard_cliente(request, cliente_id):
-    if not request.user.is_staff:
-        uc = UsuarioCliente.objects.filter(user=request.user).first()
-        if not uc or uc.cliente.id != cliente_id:
-            return HttpResponseForbidden("No autorizado")
+    if not usuario_puede_ver_cliente(request.user, cliente_id):
+        return HttpResponseForbidden(
+            "No está autorizado para consultar esta unidad."
+        )
 
-    cliente = get_object_or_404(Cliente, id=cliente_id)
-
+    cliente = get_object_or_404(
+        Cliente,
+        id=cliente_id,
+        activo=True,
+    )
     equipos = EquipoUnidad.objects.filter(cliente=cliente)
 
     total_equipos = equipos.count()

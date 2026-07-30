@@ -19,6 +19,7 @@ from .views import (
     accion_servicio,
     levantamiento_equipo,
     demo_sigob,
+    portal_unidades,
 )
 
 urlpatterns = [
@@ -33,7 +34,12 @@ urlpatterns = [
     path("", home, name="home"),
     path("inventario/nuevo/", levantamiento_equipo, name="levantamiento_equipo"),
     path("demo/", demo_sigob, name="demo_sigob"),
-   
+   path(
+    "mis-unidades/",
+    portal_unidades,
+    name="portal_unidades",
+
+),
 
     # DASHBOARD GERENCIA
     path("gerencia/", dashboard, name="dashboard"),

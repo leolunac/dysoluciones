@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from .models import (
     Cliente,
     Tecnico,
@@ -9,12 +8,15 @@ from .models import (
     EquipoUnidad,
     CotizacionEquipo,
     UsuarioCliente,
-    ClienteAsignado,
     TanqueUnidad,
     DistribucionUnidad,
-    EventoServicio,
 )
 
+from .models import (
+    Cliente,
+    UsuarioCliente,
+    ClienteAsignado,
+)
 
 # =========================
 # INLINES DEL CLIENTE
@@ -125,12 +127,7 @@ class EmergenciaAdmin(admin.ModelAdmin):
         "fecha_llamada",
     )
     search_fields = ("cliente__nombre", "descripcion_falla")
-    list_filter = (
-        "estado",
-        "prioridad",
-        "es_nocturna",
-        "aprobada_por_gerencia",
-    )
+    list_filter = ("estado", "prioridad", "es_nocturna", "aprobada_por_gerencia")
     ordering = ("-fecha_llamada",)
 
 
@@ -188,12 +185,7 @@ class EquipoUnidadAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("tipo", "estado")
-    search_fields = (
-        "cliente__nombre",
-        "marca",
-        "modelo",
-        "serie",
-    )
+    search_fields = ("cliente__nombre", "marca", "modelo", "serie")
     ordering = ("cliente__nombre", "tipo")
 
     fields = (
@@ -232,11 +224,7 @@ class TanqueUnidadAdmin(admin.ModelAdmin):
         "capacidad",
     )
     list_filter = ("tipo_tanque",)
-    search_fields = (
-        "cliente__nombre",
-        "ubicacion",
-        "material",
-    )
+    search_fields = ("cliente__nombre", "ubicacion", "material")
     ordering = ("cliente__nombre", "tipo_tanque")
 
 
@@ -265,13 +253,7 @@ class DistribucionUnidadAdmin(admin.ModelAdmin):
 
 @admin.register(CotizacionEquipo)
 class CotizacionEquipoAdmin(admin.ModelAdmin):
-    list_display = (
-        "equipo",
-        "estado",
-        "valor",
-        "fecha_envio",
-        "creado_en",
-    )
+    list_display = ("equipo", "estado", "valor", "fecha_envio", "creado_en")
     list_filter = ("estado",)
     search_fields = ("equipo__cliente__nombre",)
     ordering = ("-creado_en",)
@@ -284,53 +266,7 @@ class CotizacionEquipoAdmin(admin.ModelAdmin):
 @admin.register(UsuarioCliente)
 class UsuarioClienteAdmin(admin.ModelAdmin):
     list_display = ("user", "cliente")
-    search_fields = (
-        "user__username",
-        "user__first_name",
-        "user__last_name",
-        "cliente__nombre",
-    )
-
-
-# =========================
-# CLIENTES ASIGNADOS
-# =========================
-
-@admin.register(ClienteAsignado)
-class ClienteAsignadoAdmin(admin.ModelAdmin):
-    list_display = (
-        "usuario_cliente",
-        "cliente",
-        "principal",
-        "activo",
-    )
-
-    list_filter = (
-        "principal",
-        "activo",
-    )
-
-    search_fields = (
-        "usuario_cliente__user__username",
-        "usuario_cliente__user__first_name",
-        "usuario_cliente__user__last_name",
-        "cliente__nombre",
-    )
-
-    raw_id_fields = (
-        "usuario_cliente",
-        "cliente",
-    )
-
-    ordering = (
-        "-principal",
-        "cliente__nombre",
-    )
-
-
-# =========================
-# EVENTOS DE SERVICIO
-# =========================
+from .models import EventoServicio
 
 @admin.register(EventoServicio)
 class EventoServicioAdmin(admin.ModelAdmin):
@@ -349,4 +285,4 @@ class EventoServicioAdmin(admin.ModelAdmin):
 
     list_filter = (
         "fecha",
-    )
+    )    

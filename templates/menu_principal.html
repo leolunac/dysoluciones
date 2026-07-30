@@ -1,0 +1,372 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIGOB 7x24 | Menú Principal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f3f6f9;
+            color: #1f2937;
+        }
+
+        .topbar {
+            background: #073b6f;
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand img {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            background: white;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .brand p {
+            margin: 4px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .user-box {
+            text-align: right;
+        }
+
+        .user-box strong {
+            display: block;
+            font-size: 15px;
+        }
+
+        .user-box span {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 32px auto;
+            padding: 0 20px 40px;
+        }
+
+        .welcome {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+            border-left: 6px solid #0b5fa5;
+        }
+
+        .welcome h2 {
+            margin: 0 0 8px;
+            color: #073b6f;
+        }
+
+        .welcome p {
+            margin: 0;
+            color: #667085;
+        }
+
+        .modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #e7edf3;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.14);
+        }
+
+        .module-icon {
+            font-size: 40px;
+            margin-bottom: 18px;
+        }
+
+        .module-card h3 {
+            margin: 0 0 10px;
+            color: #073b6f;
+            font-size: 19px;
+        }
+
+        .module-card p {
+            margin: 0;
+            color: #667085;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .module-link {
+            margin-top: 18px;
+            color: #0b5fa5;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .footer-actions {
+            margin-top: 28px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .logout-btn {
+            background: #8b1e1e;
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #6f1717;
+        }
+
+        @media (max-width: 700px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .user-box {
+                text-align: left;
+            }
+
+            .brand h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <img
+            src="{% static 'img/logo_dys.png' %}"
+            alt="Logo D&S"
+        >
+
+        <div>
+            <h1>SIGOB 7x24</h1>
+            <p>D&S Soluciones en Bombeo S.A.S.</p>
+        </div>
+
+    </div>
+
+    <div class="user-box">
+        <strong>
+            {{ request.user.get_full_name|default:request.user.username }}
+        </strong>
+
+        <span>Usuario interno</span>
+    </div>
+
+</header>
+
+<main class="container">
+
+    <section class="welcome">
+        <h2>Menú principal</h2>
+
+        <p>
+            Seleccione el módulo que desea gestionar.
+        </p>
+    </section>
+
+    <section class="modules">
+
+        <a href="{% url 'centro_operaciones' %}" class="module-card">
+            <div>
+                <div class="module-icon">🚨</div>
+
+                <h3>Centro de Operaciones</h3>
+
+                <p>
+                    Gestión de llamadas, emergencias, correctivos,
+                    técnicos y seguimiento de servicios.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Ingresar al módulo →
+            </div>
+        </a>
+
+        <a href="/gerencia/" class="module-card">
+            <div>
+                <div class="module-icon">📊</div>
+
+                <h3>Dashboard Gerencial</h3>
+
+                <p>
+                    Indicadores operativos, emergencias del mes,
+                    estados y análisis de la operación.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Ver indicadores →
+            </div>
+        </a>
+
+        <a href="/admin/operacion/cliente/" class="module-card">
+            <div>
+                <div class="module-icon">🏢</div>
+
+                <h3>Clientes</h3>
+
+                <p>
+                    Administración de unidades, contratos,
+                    datos generales y responsables.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Gestionar clientes →
+            </div>
+        </a>
+
+        <a href="/admin/operacion/equipounidad/" class="module-card">
+            <div>
+                <div class="module-icon">🔧</div>
+
+                <h3>Equipos</h3>
+
+                <p>
+                    Consulta y actualización de bombas,
+                    tableros, hidroflow y demás equipos.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Gestionar equipos →
+            </div>
+        </a>
+
+        <a href="/admin/operacion/tanqueunidad/" class="module-card">
+            <div>
+                <div class="module-icon">💧</div>
+
+                <h3>Tanques</h3>
+
+                <p>
+                    Registro de tanques, capacidades,
+                    ubicaciones y características técnicas.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Gestionar tanques →
+            </div>
+        </a>
+
+        <a href="/admin/operacion/lavadotanque/" class="module-card">
+            <div>
+                <div class="module-icon">📅</div>
+
+                <h3>Lavados y Mantenimientos</h3>
+
+                <p>
+                    Programación, ejecución y seguimiento
+                    de lavados y mantenimientos preventivos.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Ver programación →
+            </div>
+        </a>
+
+        <a href="/portal/" class="module-card">
+            <div>
+                <div class="module-icon">📁</div>
+
+                <h3>Documentos</h3>
+
+                <p>
+                    Publicación y administración de informes,
+                    certificados y archivos para clientes.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Gestionar documentos →
+            </div>
+        </a>
+
+        <a href="/admin/" class="module-card">
+            <div>
+                <div class="module-icon">⚙️</div>
+
+                <h3>Administración</h3>
+
+                <p>
+                    Configuración general, usuarios,
+                    permisos y parámetros del sistema.
+                </p>
+            </div>
+
+            <div class="module-link">
+                Abrir administración →
+            </div>
+        </a>
+
+    </section>
+
+    <div class="footer-actions">
+        <a href="{% url 'logout' %}" class="logout-btn">
+            Cerrar sesión
+        </a>
+    </div>
+
+</main>
+
+</body>
+</html>
