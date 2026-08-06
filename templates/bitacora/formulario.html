@@ -1,0 +1,293 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo_pagina }} | Bitácora Operativa</title>
+
+    <style>
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            margin:0;
+            font-family:Arial, Helvetica, sans-serif;
+            background:#eef3f8;
+            color:#1f2937;
+        }
+
+        .container{
+            max-width:1000px;
+            margin:0 auto;
+            padding:24px;
+        }
+
+        .header{
+            background:linear-gradient(135deg,#073b6f,#0b5fa5);
+            color:white;
+            border-radius:18px;
+            padding:22px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            margin-bottom:20px;
+        }
+
+        .header h1{
+            margin:0;
+        }
+
+        .header p{
+            margin:6px 0 0;
+            opacity:.9;
+        }
+
+        .btn{
+            display:inline-block;
+            text-decoration:none;
+            padding:11px 16px;
+            border:none;
+            border-radius:9px;
+            cursor:pointer;
+            font-weight:bold;
+            font-size:14px;
+        }
+
+        .btn-light{
+            background:white;
+            color:#073b6f;
+        }
+
+        .btn-primary{
+            background:#073b6f;
+            color:white;
+        }
+
+        .form-card{
+            background:white;
+            border-radius:16px;
+            padding:22px;
+            box-shadow:0 4px 14px rgba(0,0,0,.08);
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:16px;
+        }
+
+        .field{
+            margin-bottom:16px;
+        }
+
+        .field.full{
+            grid-column:1/-1;
+        }
+
+        label{
+            display:block;
+            font-weight:bold;
+            margin-bottom:7px;
+            color:#334155;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select,
+        textarea{
+            width:100%;
+            padding:11px;
+            border:1px solid #cbd5e1;
+            border-radius:8px;
+            font:inherit;
+            background:white;
+        }
+
+        textarea{
+            resize:vertical;
+        }
+
+        .checkbox-row{
+            display:flex;
+            gap:9px;
+            align-items:center;
+            padding:10px 0;
+        }
+
+        .checkbox-row label{
+            margin:0;
+        }
+
+        .errors{
+            background:#fee2e2;
+            color:#991b1b;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:15px;
+        }
+
+        .actions{
+            margin-top:20px;
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+        }
+
+        @media(max-width:760px){
+            .grid{
+                grid-template-columns:1fr;
+            }
+
+            .field.full{
+                grid-column:auto;
+            }
+
+            .header{
+                display:block;
+                text-align:center;
+            }
+
+            .header a{
+                margin-top:14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header class="header">
+        <div>
+            <h1>{{ titulo_pagina }}</h1>
+            <p>Registre la información necesaria para asegurar el seguimiento.</p>
+        </div>
+
+        <a href="{% url 'lista_bitacora' %}" class="btn btn-light">
+            Volver a la bitácora
+        </a>
+    </header>
+
+    <section class="form-card">
+
+        {% if form.errors %}
+            <div class="errors">
+                <strong>Revise los campos indicados:</strong>
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="grid">
+
+                <div class="field full">
+                    <label for="{{ form.titulo.id_for_label }}">
+                        Título
+                    </label>
+                    {{ form.titulo }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.tipo.id_for_label }}">
+                        Tipo
+                    </label>
+                    {{ form.tipo }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.prioridad.id_for_label }}">
+                        Prioridad
+                    </label>
+                    {{ form.prioridad }}
+                </div>
+
+                <div class="field full">
+                    <label for="{{ form.descripcion.id_for_label }}">
+                        Descripción
+                    </label>
+                    {{ form.descripcion }}
+                </div>
+
+                <div class="field full">
+                    <label for="{{ form.accion_pendiente.id_for_label }}">
+                        Acción pendiente
+                    </label>
+                    {{ form.accion_pendiente }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.cliente.id_for_label }}">
+                        Unidad o cliente
+                    </label>
+                    {{ form.cliente }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.tecnico.id_for_label }}">
+                        Técnico relacionado
+                    </label>
+                    {{ form.tecnico }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.servicio.id_for_label }}">
+                        Servicio relacionado
+                    </label>
+                    {{ form.servicio }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.responsable.id_for_label }}">
+                        Responsable
+                    </label>
+                    {{ form.responsable }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.estado.id_for_label }}">
+                        Estado
+                    </label>
+                    {{ form.estado }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.fecha_compromiso.id_for_label }}">
+                        Fecha y hora del compromiso
+                    </label>
+                    {{ form.fecha_compromiso }}
+                </div>
+
+                <div class="field full checkbox-row">
+                    {{ form.visible_cliente }}
+
+                    <label for="{{ form.visible_cliente.id_for_label }}">
+                        Mostrar esta novedad en el portal del cliente
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'lista_bitacora' %}" class="btn btn-light">
+                    Cancelar
+                </a>
+
+                <button type="submit" class="btn btn-primary">
+                    Guardar novedad
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+</body>
+</html>

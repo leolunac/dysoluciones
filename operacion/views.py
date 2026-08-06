@@ -15,11 +15,12 @@ from django.utils import timezone
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
+from django.db.models import Q
 from .forms import (
     NuevaLlamadaForm,
     GestionServicioForm,
     LevantamientoEquipoForm,
+    BitacoraOperativaForm,
 )
 from .models import (
     Cliente,
@@ -31,6 +32,8 @@ from .models import (
     Tecnico,
     UsuarioCliente,
     ClienteAsignado,
+    BitacoraOperativa,
+    
 )                    
 
 from .utils import registrar_evento
@@ -447,7 +450,161 @@ def escritorio_coordinador(request):
     }
 
     return render(request, "escritorio_coordinador.html", context)
+# =========================================
+# BITÁCORA OPERATIVA
+# =========================================
 
+@login_required
+def lista_bitacora(request):
+
+    registros = (
+        BitacoraOperativa.objects
+        .select_related(
+            "cliente",
+            "tecnico",
+            "servicio",
+            "responsable",
+            "creado_por",
+        )
+        .all()
+    )
+
+    estado = request.GET.get("estado", "").strip()
+    tipo = request.GET.get("tipo", "").strip()
+    prioridad = request.GET.get("prioridad", "").strip()
+    buscar = request.GET.get("buscar", "").strip()
+
+    if estado:
+        registros = registros.filter(estado=estado)
+
+    if tipo:
+        registros = registros.filter(tipo=tipo)
+
+    if prioridad:
+        registros = registros.filter(prioridad=prioridad)
+
+    if buscar:
+        registros = registros.filter(
+            Q(titulo__icontains=buscar)
+            | Q(descripcion__icontains=buscar)
+            | Q(accion_pendiente__icontains=buscar)
+            | Q(cliente__nombre__icontains=buscar)
+            | Q(tecnico__nombre__icontains=buscar)
+        )
+
+    ahora = timezone.now()
+
+    total = registros.count()
+
+    pendientes = registros.filter(
+        estado="PENDIENTE",
+    ).count()
+
+    seguimiento = registros.filter(
+        estado="EN_SEGUIMIENTO",
+    ).count()
+
+    vencidas = registros.filter(
+        estado__in=["PENDIENTE", "EN_SEGUIMIENTO"],
+        fecha_compromiso__lt=ahora,
+    ).count()
+
+    reuniones_hoy = registros.filter(
+        tipo="REUNION",
+        fecha_compromiso__date=ahora.date(),
+    ).exclude(
+        estado="CERRADO",
+    ).count()
+
+    return render(
+        request,
+        "bitacora/lista.html",
+        {
+            "registros": registros,
+            "total": total,
+            "pendientes": pendientes,
+            "seguimiento": seguimiento,
+            "vencidas": vencidas,
+            "reuniones_hoy": reuniones_hoy,
+            "estados": BitacoraOperativa.ESTADO,
+            "tipos": BitacoraOperativa.TIPO,
+            "prioridades": BitacoraOperativa.PRIORIDAD,
+            "filtro_estado": estado,
+            "filtro_tipo": tipo,
+            "filtro_prioridad": prioridad,
+            "buscar": buscar,
+        },
+    )
+
+
+@login_required
+def nueva_bitacora(request):
+
+    if request.method == "POST":
+        form = BitacoraOperativaForm(request.POST)
+
+        if form.is_valid():
+            registro = form.save(commit=False)
+            registro.creado_por = request.user
+
+            if not registro.responsable:
+                registro.responsable = request.user
+
+            registro.save()
+
+            return redirect("lista_bitacora")
+
+    else:
+        form = BitacoraOperativaForm(
+            initial={
+                "responsable": request.user,
+                "prioridad": "MEDIA",
+                "estado": "PENDIENTE",
+            }
+        )
+
+    return render(
+        request,
+        "bitacora/formulario.html",
+        {
+            "form": form,
+            "titulo_pagina": "Nueva novedad",
+        },
+    )
+
+
+@login_required
+def editar_bitacora(request, bitacora_id):
+
+    registro = get_object_or_404(
+        BitacoraOperativa,
+        id=bitacora_id,
+    )
+
+    if request.method == "POST":
+        form = BitacoraOperativaForm(
+            request.POST,
+            instance=registro,
+        )
+
+        if form.is_valid():
+            form.save()
+            return redirect("lista_bitacora")
+
+    else:
+        form = BitacoraOperativaForm(
+            instance=registro,
+        )
+
+    return render(
+        request,
+        "bitacora/formulario.html",
+        {
+            "form": form,
+            "registro": registro,
+            "titulo_pagina": "Editar novedad",
+        },
+    )
 
 # =========================================
 # DASHBOARD CLIENTE

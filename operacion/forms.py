@@ -1,6 +1,9 @@
 from django import forms
 
 from .models import Emergencia, EquipoUnidad
+from django import forms
+
+from .models import BitacoraOperativa
 
 
 class NuevaLlamadaForm(forms.ModelForm):
@@ -178,3 +181,102 @@ class LevantamientoEquipoForm(forms.ModelForm):
                 )
 
         return cleaned_data
+class BitacoraOperativaForm(forms.ModelForm):
+
+    class Meta:
+        model = BitacoraOperativa
+
+        fields = (
+            "titulo",
+            "tipo",
+            "descripcion",
+            "accion_pendiente",
+            "cliente",
+            "tecnico",
+            "servicio",
+            "responsable",
+            "prioridad",
+            "estado",
+            "fecha_compromiso",
+            "visible_cliente",
+        )
+
+        widgets = {
+            "titulo": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ejemplo: Llamar al administrador",
+                }
+            ),
+
+            "tipo": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "descripcion": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Describa la novedad o actividad realizada.",
+                }
+            ),
+
+            "accion_pendiente": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Indique qué acción debe realizarse.",
+                }
+            ),
+
+            "cliente": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "tecnico": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "servicio": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "responsable": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "prioridad": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "estado": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "fecha_compromiso": forms.DateTimeInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                }
+            ),
+
+            "visible_cliente": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+        }

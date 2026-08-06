@@ -13,6 +13,7 @@ from .models import (
     TanqueUnidad,
     DistribucionUnidad,
     EventoServicio,
+    BitacoraOperativa,
 )
 
 
@@ -350,3 +351,109 @@ class EventoServicioAdmin(admin.ModelAdmin):
     list_filter = (
         "fecha",
     )
+# =========================
+# BITÁCORA OPERATIVA
+# =========================
+
+@admin.register(BitacoraOperativa)
+class BitacoraOperativaAdmin(admin.ModelAdmin):
+    list_display = (
+        "titulo",
+        "tipo",
+        "cliente",
+        "tecnico",
+        "responsable",
+        "prioridad",
+        "estado",
+        "fecha_compromiso",
+        "creado",
+    )
+
+    list_filter = (
+        "tipo",
+        "prioridad",
+        "estado",
+        "visible_cliente",
+        "fecha_compromiso",
+    )
+
+    search_fields = (
+        "titulo",
+        "descripcion",
+        "accion_pendiente",
+        "cliente__nombre",
+        "tecnico__nombre",
+        "responsable__username",
+    )
+
+    autocomplete_fields = (
+        "cliente",
+        "tecnico",
+        "servicio",
+        "responsable",
+    )
+
+    readonly_fields = (
+        "creado",
+        "actualizado",
+        "fecha_cierre",
+    )
+
+    ordering = (
+        "estado",
+        "-prioridad",
+        "fecha_compromiso",
+    )
+
+    fieldsets = (
+        (
+            "Información principal",
+            {
+                "fields": (
+                    "titulo",
+                    "tipo",
+                    "descripcion",
+                    "accion_pendiente",
+                )
+            },
+        ),
+        (
+            "Relaciones",
+            {
+                "fields": (
+                    "cliente",
+                    "tecnico",
+                    "servicio",
+                    "responsable",
+                )
+            },
+        ),
+        (
+            "Seguimiento",
+            {
+                "fields": (
+                    "prioridad",
+                    "estado",
+                    "fecha_compromiso",
+                    "fecha_cierre",
+                    "visible_cliente",
+                )
+            },
+        ),
+        (
+            "Auditoría",
+            {
+                "fields": (
+                    "creado_por",
+                    "creado",
+                    "actualizado",
+                )
+            },
+        ),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.creado_por_id:
+            obj.creado_por = request.user
+
+        super().save_model(request, obj, form, change)

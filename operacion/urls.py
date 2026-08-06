@@ -20,6 +20,9 @@ from .views import (
     levantamiento_equipo,
     demo_sigob,
     portal_unidades,
+    lista_bitacora,
+    nueva_bitacora,
+    editar_bitacora,
 )
 
 urlpatterns = [
@@ -34,11 +37,27 @@ urlpatterns = [
     path("", home, name="home"),
     path("inventario/nuevo/", levantamiento_equipo, name="levantamiento_equipo"),
     path("demo/", demo_sigob, name="demo_sigob"),
-   path(
-    "mis-unidades/",
-    portal_unidades,
-    name="portal_unidades",
+    path(
+        "mis-unidades/",
+        portal_unidades,
+        name="portal_unidades",
+    ),
+    path(
+    "bitacora/",
+    lista_bitacora,
+    name="lista_bitacora",
+),
 
+path(
+    "bitacora/nueva/",
+    nueva_bitacora,
+    name="nueva_bitacora",
+),
+
+path(
+    "bitacora/<int:bitacora_id>/editar/",
+    editar_bitacora,
+    name="editar_bitacora",
 ),
 
     # DASHBOARD GERENCIA

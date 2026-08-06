@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import time
 from decimal import Decimal
-
+from django.conf import settings
 
 # =========================
 # CLIENTE
@@ -578,3 +578,156 @@ class EventoServicio(models.Model):
 
     def __str__(self):
         return f"{self.servicio.id} - {self.titulo}"
+# =========================
+# BITÁCORA OPERATIVA
+# =========================
+
+class BitacoraOperativa(models.Model):
+
+    TIPO = [
+        ("ACTIVIDAD_TECNICA", "Actividad técnica"),
+        ("LLAMADA_CLIENTE", "Llamada de cliente"),
+        ("REUNION", "Reunión"),
+        ("REGRESO", "Regreso a unidad"),
+        ("COTIZACION", "Cotización pendiente"),
+        ("COMPROMISO", "Compromiso"),
+        ("MATERIAL", "Material o repuesto pendiente"),
+        ("ENTREGA_TURNO", "Entrega de turno"),
+        ("NOTA_INTERNA", "Nota interna"),
+        ("OTRO", "Otro"),
+    ]
+
+    PRIORIDAD = [
+        ("BAJA", "Baja"),
+        ("MEDIA", "Media"),
+        ("ALTA", "Alta"),
+        ("URGENTE", "Urgente"),
+    ]
+
+    ESTADO = [
+        ("PENDIENTE", "Pendiente"),
+        ("EN_SEGUIMIENTO", "En seguimiento"),
+        ("CERRADO", "Cerrado"),
+    ]
+
+    titulo = models.CharField(
+        max_length=180,
+    )
+
+    tipo = models.CharField(
+        max_length=30,
+        choices=TIPO,
+        default="NOTA_INTERNA",
+    )
+
+    descripcion = models.TextField()
+
+    accion_pendiente = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bitacoras",
+    )
+
+    tecnico = models.ForeignKey(
+        Tecnico,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bitacoras",
+    )
+
+    servicio = models.ForeignKey(
+        Emergencia,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bitacoras",
+    )
+
+    responsable = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bitacoras_asignadas",
+    )
+
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="bitacoras_creadas",
+    )
+
+    prioridad = models.CharField(
+        max_length=15,
+        choices=PRIORIDAD,
+        default="MEDIA",
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO,
+        default="PENDIENTE",
+    )
+
+    fecha_compromiso = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    fecha_cierre = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    visible_cliente = models.BooleanField(
+        default=False,
+        help_text="Permite mostrar esta novedad en el portal del cliente.",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = (
+            "estado",
+            "-prioridad",
+            "fecha_compromiso",
+            "-creado",
+        )
+        verbose_name = "Bitácora operativa"
+        verbose_name_plural = "Bitácoras operativas"
+
+    def save(self, *args, **kwargs):
+        if self.estado == "CERRADO" and self.fecha_cierre is None:
+            self.fecha_cierre = timezone.now()
+
+        if self.estado != "CERRADO":
+            self.fecha_cierre = None
+
+        super().save(*args, **kwargs)
+
+    @property
+    def vencida(self):
+        return (
+            self.estado != "CERRADO"
+            and self.fecha_compromiso
+            and self.fecha_compromiso < timezone.now()
+        )
+
+    def __str__(self):
+        cliente = self.cliente.nombre if self.cliente else "Sin unidad"
+        return f"{self.titulo} - {cliente}"
