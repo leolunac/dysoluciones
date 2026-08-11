@@ -116,3 +116,51 @@ class DetalleLiquidacionForm(forms.ModelForm):
         )
 
         self.fields["catalogo"].required = False
+
+class CatalogoPrecioForm(forms.ModelForm):
+
+    class Meta:
+        model = CatalogoPrecio
+        fields = [
+            "codigo",
+            "descripcion",
+            "valor",
+        ]
+        widgets = {
+            "codigo": forms.TextInput(
+                attrs={
+                    "class": "campo",
+                    "id": "id_nuevo_catalogo_codigo",
+                    "placeholder": "Ej.: A040",
+                    "autocomplete": "off",
+                }
+            ),
+            "descripcion": forms.TextInput(
+                attrs={
+                    "class": "campo",
+                    "id": "id_nuevo_catalogo_descripcion",
+                    "placeholder": "Descripción del accesorio",
+                    "autocomplete": "off",
+                }
+            ),
+            "valor": forms.NumberInput(
+                attrs={
+                    "class": "campo",
+                    "id": "id_nuevo_catalogo_valor",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Valor de catálogo",
+                }
+            ),
+        }
+        labels = {
+            "codigo": "Código",
+            "descripcion": "Descripción",
+            "valor": "Valor de catálogo",
+        }
+
+    def clean_codigo(self):
+        return self.cleaned_data["codigo"].strip().upper()
+
+    def clean_descripcion(self):
+        return self.cleaned_data["descripcion"].strip()

@@ -26,6 +26,12 @@ urlpatterns = [
         name="editar_liquidacion",
     ),
     path(
+        "<int:liquidacion_id>/crear-accesorio/",
+        views.crear_accesorio,
+        name="crear_accesorio",
+    ),
+
+    path(
         "<int:liquidacion_id>/enviar-revision/",
         views.enviar_revision,
         name="enviar_revision",

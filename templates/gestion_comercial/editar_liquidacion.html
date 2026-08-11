@@ -1,4 +1,4 @@
-{% load l10n %}
+﻿{% load l10n %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -206,6 +206,167 @@
             }
         }
     </style>
+
+    <style>
+        /* Presentación compacta SIGOB - conserva toda la lógica original */
+        body { font-size: 13px; }
+
+        .contenedor {
+            width: 96%;
+            max-width: 1500px;
+            margin: 14px auto;
+        }
+
+        .encabezado {
+            padding: 14px 19px;
+            border-radius: 13px;
+            margin-bottom: 12px;
+        }
+
+        .encabezado h1 {
+            margin: 0 0 3px;
+            font-size: 21px;
+            line-height: 1.15;
+        }
+
+        .encabezado p {
+            margin: 2px 0;
+            font-size: 12px;
+        }
+
+        .estado {
+            padding: 4px 8px;
+            border-radius: 15px;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+
+        .grid {
+            grid-template-columns: minmax(0, 2.35fr) minmax(285px, .85fr);
+            gap: 12px;
+        }
+
+        .panel {
+            border-radius: 11px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .panel h2 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .campo-grupo {
+            margin-bottom: 10px;
+        }
+
+        label {
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        input,
+        select,
+        textarea,
+        .campo {
+            width: 100%;
+            border: 1px solid #cbd8e0;
+            border-radius: 6px;
+            padding: 8px 9px;
+            background: white;
+            font-size: 12px;
+        }
+
+        textarea {
+            min-height: 68px;
+            resize: vertical;
+        }
+
+        .fila { gap: 9px; }
+
+        .btn {
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 11px;
+        }
+
+        th {
+            padding: 7px 6px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 7px 6px;
+            font-size: 11px;
+        }
+
+        .total-fila {
+            padding: 6px 0;
+            font-size: 12px;
+        }
+
+        .total-final {
+            font-size: 17px;
+            margin-top: 5px;
+            padding-top: 9px;
+        }
+
+        .ayuda {
+            padding: 8px 10px;
+            margin-bottom: 10px;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .errores {
+            padding: 8px;
+            margin-bottom: 9px;
+            font-size: 11px;
+        }
+
+        .acciones-finales {
+            gap: 7px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Compactar también bloques que originalmente usan estilos inline */
+        #precio_referencia {
+            margin-top: 5px !important;
+            padding: 6px 8px !important;
+            font-size: 11px !important;
+        }
+
+        .panel p {
+            margin: 7px 0;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .panel h3 {
+            margin: 10px 0 7px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1050px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabla-contenedor {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .contenedor { width: 94%; }
+            .fila { grid-template-columns: 1fr; }
+        }
+    </style>
+
 </head>
 
 <body>
@@ -299,6 +460,74 @@
                     </div>
                 {% endif %}
 
+                <div
+                    id="nuevo_accesorio"
+                    style="
+                        display:{% if mostrar_form_catalogo %}block{% else %}none{% endif %};
+                        margin-bottom:18px;
+                        padding:16px;
+                        background:#f4faf6;
+                        border:1px solid #cfe8d7;
+                        border-radius:10px;
+                    "
+                >
+                    <h3 style="margin-top:0;color:#176b3a;">
+                        Crear accesorio nuevo
+                    </h3>
+
+                    <p style="font-size:13px;color:#607785;">
+                        El accesorio quedará guardado en el catálogo y podrá
+                        seleccionarlo inmediatamente después de guardar.
+                    </p>
+
+                    {% if form_catalogo.errors %}
+                    <div class="errores">
+                        {{ form_catalogo.errors }}
+                    </div>
+                    {% endif %}
+
+                    <form
+                        method="post"
+                        action="{% url 'gestion_comercial:crear_accesorio' liquidacion.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <div class="fila">
+                            <div class="campo-grupo">
+                                <label>{{ form_catalogo.codigo.label }}</label>
+                                {{ form_catalogo.codigo }}
+                            </div>
+
+                            <div class="campo-grupo">
+                                <label>{{ form_catalogo.valor.label }}</label>
+                                {{ form_catalogo.valor }}
+                            </div>
+                        </div>
+
+                        <div class="campo-grupo">
+                            <label>{{ form_catalogo.descripcion.label }}</label>
+                            {{ form_catalogo.descripcion }}
+                        </div>
+
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <button
+                                type="submit"
+                                class="btn btn-verde"
+                            >
+                                Guardar accesorio
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-secundario"
+                                onclick="toggleNuevoAccesorio(false)"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
                 <form method="post">
 
                     {% csrf_token %}
@@ -355,6 +584,20 @@
     "
 >
     Precio de catálogo: -
+</div>
+
+<div style="margin-top:10px;">
+    <button
+        type="button"
+        class="btn"
+        style="background:#18864b;color:white;padding:8px 12px;"
+        onclick="toggleNuevoAccesorio()"
+    >
+        + Crear accesorio
+    </button>
+    <span style="font-size:12px;color:#6b7f8d;margin-left:8px;">
+        Úselo solamente si el accesorio no aparece en el catálogo.
+    </span>
 </div>
 
 </div>
@@ -790,6 +1033,24 @@
 
 </div>
 <script>
+function toggleNuevoAccesorio(forzar) {
+    const bloque = document.getElementById("nuevo_accesorio");
+    if (!bloque) return;
+
+    if (forzar === false) {
+        bloque.style.display = "none";
+        return;
+    }
+
+    bloque.style.display =
+        bloque.style.display === "none" ? "block" : "none";
+
+    if (bloque.style.display === "block") {
+        const codigo = document.getElementById("id_codigo");
+        if (codigo) codigo.focus();
+    }
+}
+
 const campoTipo = document.getElementById("id_tipo");
 const bloqueCatalogo = document.getElementById("bloque_catalogo");
 const buscador = document.getElementById("buscador_catalogo");
@@ -876,7 +1137,9 @@ function actualizarEtiquetas() {
     }
 }
 
+buscador.addEventListener("input", seleccionarAccesorio);
 buscador.addEventListener("change", seleccionarAccesorio);
+
 campoTipo.addEventListener("change", function() {
     controlarCatalogo();
     actualizarEtiquetas();

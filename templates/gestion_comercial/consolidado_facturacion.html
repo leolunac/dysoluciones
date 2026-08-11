@@ -227,6 +227,143 @@
             }
         }
     </style>
+
+    <style>
+        /* Presentación compacta SIGOB */
+        body { font-size: 13px; }
+
+        .contenedor {
+            width: 96%;
+            max-width: 1550px;
+            margin: 16px auto;
+        }
+
+        .encabezado {
+            border-radius: 14px;
+            padding: 15px 20px;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .encabezado h1 {
+            margin: 0 0 3px;
+            font-size: 21px;
+        }
+
+        .encabezado p { font-size: 12px; }
+
+        .acciones { gap: 7px; }
+
+        .btn {
+            padding: 8px 12px;
+            border-radius: 7px;
+            font-size: 12px;
+        }
+
+        .filtros {
+            border-radius: 12px;
+            padding: 13px 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .filtros h2 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .filtros-grid {
+            grid-template-columns: 1fr 1fr 2fr auto auto auto;
+            gap: 8px;
+        }
+
+        .campo-grupo label {
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        .campo {
+            padding: 8px 9px;
+            border-radius: 6px;
+            font-size: 12px;
+            min-height: 32px;
+        }
+
+        .indicadores {
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .indicador {
+            border-radius: 11px;
+            padding: 12px 14px;
+            min-height: 76px;
+            border-left-width: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .indicador .titulo {
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .indicador .numero {
+            font-size: 22px;
+            line-height: 1.05;
+        }
+
+        .panel {
+            border-radius: 12px;
+            padding: 13px 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .panel h2 {
+            margin: 0 0 10px;
+            font-size: 17px;
+        }
+
+        th {
+            padding: 8px 7px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 8px 7px;
+            font-size: 12px;
+        }
+
+        .vacio {
+            padding: 26px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .filtros-grid {
+                grid-template-columns: 1fr 1fr 2fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .indicadores {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .encabezado {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .indicadores,
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
 </head>
 
 <body>

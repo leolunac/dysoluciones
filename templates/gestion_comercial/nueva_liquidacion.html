@@ -16,83 +16,92 @@
             font-family: Arial, Helvetica, sans-serif;
             background: #eef4f7;
             color: #12344d;
+            font-size: 13px;
         }
 
         .contenedor {
-            width: 94%;
-            max-width: 1100px;
-            margin: 28px auto;
+            width: 96%;
+            max-width: 900px;
+            margin: 16px auto;
         }
 
         .encabezado {
             background: linear-gradient(110deg, #0b4770, #0873ad);
             color: white;
-            border-radius: 18px;
-            padding: 24px 28px;
-            margin-bottom: 20px;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
         }
 
         .encabezado h1 {
-            margin: 0 0 7px;
+            margin: 0 0 4px;
+            font-size: 22px;
+            line-height: 1.15;
         }
 
         .encabezado p {
             margin: 0;
             opacity: .9;
+            font-size: 12px;
         }
 
         .panel {
             background: white;
-            border-radius: 15px;
-            padding: 28px;
-            box-shadow: 0 3px 12px rgba(0,0,0,.06);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
         }
 
         .campo-grupo {
-            margin-bottom: 22px;
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: #174a6a;
+            font-size: 12px;
         }
 
+        input,
+        select,
+        textarea,
         .campo {
             width: 100%;
-            padding: 12px;
+            padding: 9px 10px;
             border: 1px solid #cbd8e0;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 7px;
+            font-size: 13px;
             background: white;
         }
 
-        textarea.campo {
+        textarea {
+            min-height: 90px;
             resize: vertical;
         }
 
         .errores {
             color: #b42318;
-            margin-top: 6px;
-            font-size: 13px;
+            margin-top: 5px;
+            font-size: 11px;
         }
 
         .acciones {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
-            margin-top: 25px;
+            gap: 8px;
+            margin-top: 16px;
         }
 
         .btn {
             border: none;
-            border-radius: 9px;
-            padding: 12px 20px;
+            border-radius: 7px;
+            padding: 8px 13px;
             text-decoration: none;
             font-weight: bold;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .btn-secundario {
@@ -108,10 +117,26 @@
         .aviso {
             background: #e9f5fb;
             border-left: 4px solid #1685bd;
-            padding: 14px 16px;
-            border-radius: 7px;
-            margin-bottom: 24px;
-            line-height: 1.5;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            font-size: 12px;
+        }
+
+        @media (max-width: 650px) {
+            .contenedor {
+                width: 94%;
+            }
+
+            .acciones {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -121,19 +146,15 @@
 <div class="contenedor">
 
     <div class="encabezado">
-        <h1>💼 Nueva Liquidación</h1>
-        <p>
-            Registre la unidad y el trabajo realizado.
-        </p>
+        <h1>Nueva Liquidación</h1>
+        <p>Registre la unidad y el trabajo realizado.</p>
     </div>
 
     <div class="panel">
 
         <div class="aviso">
-            Primero crearemos la liquidación.
-            En el siguiente paso agregaremos materiales,
-            mano de obra, horas adicionales, transporte
-            y demás conceptos.
+            Primero crearemos la liquidación. En el siguiente paso agregaremos
+            materiales, mano de obra, horas adicionales, transporte y demás conceptos.
         </div>
 
         <form method="post">

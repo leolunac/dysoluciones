@@ -6,6 +6,7 @@ from django.utils import timezone
 from .forms import (
     LiquidacionForm,
     DetalleLiquidacionForm,
+    CatalogoPrecioForm,
 )
 
 from .models import (
@@ -84,21 +85,49 @@ def panel_gestion_comercial(request):
     contexto = {
         "liquidaciones": liquidaciones,
         "total": liquidaciones.count(),
+
         "revision": liquidaciones.filter(
             estado="REVISION",
         ).count(),
+
         "devueltas": liquidaciones.filter(
             estado="DEVUELTA",
         ).count(),
+
         "aprobadas": liquidaciones.filter(
             estado="APROBADA",
         ).count(),
+
         "listas_facturar": liquidaciones.filter(
             estado="LISTA_FACTURAR",
         ).count(),
+
         "facturadas": liquidaciones.filter(
             estado="FACTURADA",
         ).count(),
+
+        # Permisos visuales del panel
+        "puede_elaborar": _puede_elaborar(
+            request.user
+        ),
+
+        "puede_revisar": _puede_revisar(
+            request.user
+        ),
+
+        "puede_facturar": _puede_facturar(
+            request.user
+        ),
+
+        "puede_consultar": _puede_consultar(
+            request.user
+        ),
+
+        "puede_ver_consolidado": _pertenece(
+            request.user,
+            GRUPO_FACTURACION,
+            GRUPO_GERENCIA,
+        ),
     }
 
     return render(
@@ -235,6 +264,81 @@ def editar_liquidacion(request, liquidacion_id):
             "form_detalle": form_detalle,
             "detalles": detalles,
             "catalogos": catalogos,
+            "form_catalogo": CatalogoPrecioForm(),
+            "puede_elaborar": _puede_elaborar(request.user),
+            "puede_revisar": _puede_revisar(request.user),
+            "puede_facturar": _puede_facturar(request.user),
+            "puede_consultar": _puede_consultar(request.user),
+        },
+    )
+
+
+@login_required
+def crear_accesorio(request, liquidacion_id):
+
+    _exigir(request.user, GRUPO_AUXILIAR)
+
+    liquidacion = get_object_or_404(
+        Liquidacion,
+        id=liquidacion_id,
+    )
+
+    if (
+        not request.user.is_superuser
+        and liquidacion.creado_por_id != request.user.id
+    ):
+        raise PermissionDenied
+
+    if liquidacion.estado not in [
+        "BORRADOR",
+        "DEVUELTA",
+    ]:
+        raise PermissionDenied
+
+    if request.method != "POST":
+        return redirect(
+            "gestion_comercial:editar_liquidacion",
+            liquidacion_id=liquidacion.id,
+        )
+
+    form_catalogo = CatalogoPrecioForm(request.POST)
+
+    if form_catalogo.is_valid():
+
+        accesorio = form_catalogo.save(commit=False)
+        accesorio.activo = True
+        accesorio.save()
+
+        return redirect(
+            "gestion_comercial:editar_liquidacion",
+            liquidacion_id=liquidacion.id,
+        )
+
+    form_detalle = DetalleLiquidacionForm()
+
+    detalles = (
+        liquidacion.detalles
+        .select_related("catalogo")
+        .all()
+        .order_by("id")
+    )
+
+    catalogos = (
+        CatalogoPrecio.objects
+        .filter(activo=True)
+        .order_by("descripcion")
+    )
+
+    return render(
+        request,
+        "gestion_comercial/editar_liquidacion.html",
+        {
+            "liquidacion": liquidacion,
+            "form_detalle": form_detalle,
+            "detalles": detalles,
+            "catalogos": catalogos,
+            "form_catalogo": form_catalogo,
+            "mostrar_form_catalogo": True,
             "puede_elaborar": _puede_elaborar(request.user),
             "puede_revisar": _puede_revisar(request.user),
             "puede_facturar": _puede_facturar(request.user),
