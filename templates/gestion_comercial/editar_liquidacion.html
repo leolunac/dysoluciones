@@ -1,4 +1,4 @@
-﻿{% load l10n %}
+﻿﻿{% load l10n %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -938,7 +938,7 @@
                     {% endif %}
 
                 </div>
-            {% if puede_facturar and liquidacion.estado == "LISTA_FACTURAR" %}
+            {% if puede_facturar and liquidacion.estado == "APROBADA" or puede_facturar and liquidacion.estado == "LISTA_FACTURAR" %}
 
 <div
     style="

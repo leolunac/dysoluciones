@@ -650,7 +650,13 @@ def marcar_facturada(request, liquidacion_id):
         id=liquidacion_id,
     )
 
-    if liquidacion.estado != "LISTA_FACTURAR":
+    # Facturación puede registrar una liquidación
+    # aprobada directamente o una que ya estuviera
+    # en el estado intermedio LISTA_FACTURAR.
+    if liquidacion.estado not in [
+        "APROBADA",
+        "LISTA_FACTURAR",
+    ]:
         return redirect(
             "gestion_comercial:editar_liquidacion",
             liquidacion_id=liquidacion.id,
