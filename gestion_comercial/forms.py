@@ -9,6 +9,10 @@ from .models import (
 
 class LiquidacionForm(forms.ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["cliente"].empty_label = "Seleccione una unidad"
+
     class Meta:
         model = Liquidacion
 
@@ -21,6 +25,7 @@ class LiquidacionForm(forms.ModelForm):
             "cliente": forms.Select(
                 attrs={
                     "class": "campo",
+                    "id": "id_cliente",
                 }
             ),
 

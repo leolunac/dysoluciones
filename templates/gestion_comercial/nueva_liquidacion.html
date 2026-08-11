@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -87,6 +87,68 @@
             font-size: 11px;
         }
 
+        .buscador-unidad-wrap {
+            position: relative;
+        }
+
+        .buscador-unidad-fila {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 7px;
+            align-items: center;
+        }
+
+        .btn-limpiar-unidad {
+            border: none;
+            border-radius: 7px;
+            padding: 9px 11px;
+            background: #e7eef2;
+            color: #174a6a;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .resultados-unidad {
+            display: none;
+            position: absolute;
+            z-index: 30;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            max-height: 240px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #cbd8e0;
+            border-radius: 7px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.14);
+        }
+
+        .resultado-unidad {
+            padding: 9px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #edf2f5;
+            color: #174a6a;
+        }
+
+        .resultado-unidad:hover {
+            background: #e9f5fb;
+        }
+
+        .resultado-unidad:last-child {
+            border-bottom: none;
+        }
+
+        .ayuda-busqueda {
+            margin-top: 5px;
+            color: #6b7d89;
+            font-size: 11px;
+        }
+
+        .cliente-real {
+            display: none;
+        }
+
         .acciones {
             display: flex;
             justify-content: space-between;
@@ -162,11 +224,40 @@
             {% csrf_token %}
 
             <div class="campo-grupo">
-                <label>
-                    {{ form.cliente.label }}
-                </label>
+                <label>{{ form.cliente.label }}</label>
 
-                {{ form.cliente }}
+                <div class="buscador-unidad-wrap">
+                    <div class="buscador-unidad-fila">
+                        <input
+                            type="text"
+                            id="buscar_unidad"
+                            class="campo"
+                            placeholder="Escriba mínimo 3 letras: port, gala, prado..."
+                            autocomplete="off"
+                        >
+                        <button
+                            type="button"
+                            id="limpiar_unidad"
+                            class="btn-limpiar-unidad"
+                            title="Quitar unidad seleccionada"
+                        >
+                            Limpiar
+                        </button>
+                    </div>
+
+                    <div
+                        id="resultados_unidad"
+                        class="resultados-unidad"
+                    ></div>
+                </div>
+
+                <div class="cliente-real">
+                    {{ form.cliente }}
+                </div>
+
+                <div id="unidad_seleccionada" class="ayuda-busqueda">
+                    Ninguna unidad seleccionada. Escriba 3 letras para buscar.
+                </div>
 
                 {% if form.cliente.errors %}
                     <div class="errores">
@@ -212,6 +303,131 @@
     </div>
 
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const buscador = document.getElementById("buscar_unidad");
+    const limpiar = document.getElementById("limpiar_unidad");
+    const selectCliente = document.getElementById("id_cliente");
+    const resultados = document.getElementById("resultados_unidad");
+    const seleccionada = document.getElementById("unidad_seleccionada");
+
+    if (!buscador || !selectCliente || !resultados || !seleccionada) {
+        return;
+    }
+
+    const opciones = Array.from(selectCliente.options)
+        .filter(opcion => opcion.value);
+
+    function normalizar(texto) {
+        return (texto || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    }
+
+    function cerrarResultados() {
+        resultados.innerHTML = "";
+        resultados.style.display = "none";
+    }
+
+    function quitarSeleccion() {
+        selectCliente.value = "";
+        buscador.value = "";
+        seleccionada.textContent =
+            "Ninguna unidad seleccionada. Escriba 3 letras para buscar.";
+        cerrarResultados();
+        buscador.focus();
+    }
+
+    // En una liquidación nueva no dejamos una unidad preseleccionada.
+    if (!selectCliente.value) {
+        buscador.value = "";
+    } else {
+        const actual = selectCliente.options[selectCliente.selectedIndex];
+        if (actual && actual.value) {
+            buscador.value = actual.textContent.trim();
+            seleccionada.textContent =
+                "Unidad seleccionada: " + actual.textContent.trim();
+        }
+    }
+
+    buscador.addEventListener("input", function () {
+        // Si el usuario empieza a escribir de nuevo, se elimina la selección anterior.
+        selectCliente.value = "";
+        seleccionada.textContent = "Buscando unidad...";
+
+        const texto = normalizar(buscador.value);
+        cerrarResultados();
+
+        if (texto.length < 3) {
+            seleccionada.textContent =
+                "Escriba al menos 3 letras para mostrar coincidencias.";
+            return;
+        }
+
+        const coincidencias = opciones
+            .filter(opcion =>
+                normalizar(opcion.textContent).includes(texto)
+            )
+            .slice(0, 25);
+
+        if (!coincidencias.length) {
+            const item = document.createElement("div");
+            item.className = "resultado-unidad";
+            item.textContent = "No se encontraron unidades.";
+            item.style.cursor = "default";
+            resultados.appendChild(item);
+            resultados.style.display = "block";
+            seleccionada.textContent = "Ninguna unidad seleccionada.";
+            return;
+        }
+
+        coincidencias.forEach(function (opcion) {
+            const item = document.createElement("div");
+            item.className = "resultado-unidad";
+            item.textContent = opcion.textContent.trim();
+
+            item.addEventListener("click", function () {
+                selectCliente.value = opcion.value;
+                buscador.value = opcion.textContent.trim();
+                seleccionada.textContent =
+                    "Unidad seleccionada: " + opcion.textContent.trim();
+                cerrarResultados();
+            });
+
+            resultados.appendChild(item);
+        });
+
+        resultados.style.display = "block";
+        seleccionada.textContent =
+            coincidencias.length + " coincidencia(s). Seleccione una.";
+    });
+
+    limpiar.addEventListener("click", quitarSeleccion);
+
+    document.addEventListener("click", function (evento) {
+        if (!evento.target.closest(".buscador-unidad-wrap")) {
+            cerrarResultados();
+        }
+    });
+
+    const formulario = buscador.closest("form");
+    if (formulario) {
+        formulario.addEventListener("submit", function (evento) {
+            if (!selectCliente.value) {
+                evento.preventDefault();
+                seleccionada.textContent =
+                    "Debe buscar y seleccionar una unidad antes de continuar.";
+                seleccionada.style.color = "#b42318";
+                buscador.focus();
+            }
+        });
+    }
+});
+</script>
 
 </body>
 </html>
