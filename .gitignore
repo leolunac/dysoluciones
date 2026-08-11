@@ -11,3 +11,12 @@ __pycache__/
 # Configuración del entorno virtual
 venv/
 .env
+.env
+.env.*
+__pycache__/
+
+*.backup
+*.sql
+*_backup.py
+settings copy.py
+*.xlsm

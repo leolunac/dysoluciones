@@ -2,31 +2,218 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIGOB | Acceso al sistema</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #eef4f7;
+            color: #12344d;
+        }
+
+        .login-contenedor {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .cabecera {
+            background: linear-gradient(110deg, #0b4770, #0873ad);
+            color: white;
+            border-radius: 18px 18px 0 0;
+            padding: 28px 30px;
+            text-align: center;
+        }
+
+        .cabecera h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .cabecera p {
+            margin: 0;
+            opacity: .9;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 0 0 18px 18px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.08);
+        }
+
+        .panel h2 {
+            margin: 0 0 22px;
+            color: #064a75;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .campo-grupo {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #31546b;
+            margin-bottom: 7px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #cbd8e0;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #0873ad;
+            box-shadow: 0 0 0 3px rgba(8,115,173,.12);
+        }
+
+        .errores {
+            background: #ffe5e5;
+            color: #9b1c1c;
+            border-left: 4px solid #c62828;
+            padding: 11px 12px;
+            border-radius: 7px;
+            margin-bottom: 18px;
+            font-size: 13px;
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 9px;
+            padding: 12px 18px;
+            background: #075783;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #06496d;
+        }
+
+        .pie {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: #718391;
+            line-height: 1.5;
+        }
+    </style>
 </head>
+
 <body>
 
-<h2>Ingreso al sistema</h2>
+<div class="login-contenedor">
 
-{% if form.errors %}
-<p style="color:red;">Usuario o contraseña incorrectos</p>
-{% endif %}
+    <div class="cabecera">
+        <h1>SIGOB</h1>
+        <p>
+            Sistema de Gestión Operativa y Comercial<br>
+            D&amp;S Soluciones en Bombeo S.A.S.
+        </p>
+    </div>
 
-<form method="post">
-    {% csrf_token %}
-    
-    <p>
-        <label>Usuario:</label>
-        {{ form.username }}
-    </p>
+    <div class="panel">
 
-    <p>
-        <label>Contraseña:</label>
-        {{ form.password }}
-    </p>
+        <h2>Ingreso al sistema</h2>
 
-    <button type="submit">Ingresar</button>
-</form>
+        {% if form.errors %}
+            <div class="errores">
+                Usuario o contraseña incorrectos.
+            </div>
+        {% endif %}
+
+        {% if next %}
+            {% if user.is_authenticated %}
+                <div class="errores">
+                    Su usuario no tiene permiso para acceder a esta sección.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="campo-grupo">
+                <label for="id_username">
+                    Usuario
+                </label>
+
+                <input
+                    type="text"
+                    name="username"
+                    id="id_username"
+                    autocomplete="username"
+                    autofocus
+                    required
+                    value="{{ form.username.value|default:'' }}"
+                >
+            </div>
+
+            <div class="campo-grupo">
+                <label for="id_password">
+                    Contraseña
+                </label>
+
+                <input
+                    type="password"
+                    name="password"
+                    id="id_password"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            {% if next %}
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ next }}"
+                >
+            {% endif %}
+
+            <button
+                type="submit"
+                class="btn"
+            >
+                Ingresar
+            </button>
+
+        </form>
+
+        <div class="pie">
+            Acceso autorizado únicamente para usuarios registrados.
+        </div>
+
+    </div>
+
+</div>
 
 </body>
 </html>

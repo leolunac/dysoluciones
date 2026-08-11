@@ -1,0 +1,889 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIGOB | Liquidación #{{ liquidacion.id }}</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #eef4f7;
+            color: #12344d;
+        }
+
+        .contenedor {
+            width: 96%;
+            max-width: 1450px;
+            margin: 25px auto;
+        }
+
+        .encabezado {
+            background: linear-gradient(110deg, #0b4770, #0873ad);
+            color: white;
+            padding: 24px 28px;
+            border-radius: 18px;
+            margin-bottom: 18px;
+        }
+
+        .encabezado h1 {
+            margin: 0 0 6px;
+        }
+
+        .encabezado p {
+            margin: 4px 0;
+        }
+
+        .estado {
+            display: inline-block;
+            background: rgba(255,255,255,.18);
+            padding: 6px 11px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 18px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.05);
+            margin-bottom: 18px;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            color: #07547e;
+            font-size: 19px;
+        }
+
+        .campo-grupo {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #31546b;
+            font-size: 13px;
+        }
+
+        .campo {
+            width: 100%;
+            border: 1px solid #cbd8e0;
+            border-radius: 7px;
+            padding: 10px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .fila {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 17px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-principal {
+            background: #0873ad;
+            color: white;
+        }
+
+        .btn-secundario {
+            background: #e6eef3;
+            color: #174a6a;
+        }
+
+        .btn-verde {
+            background: #18864b;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #edf4f8;
+            color: #31546b;
+            padding: 11px 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        td {
+            border-bottom: 1px solid #e6edf1;
+            padding: 11px 8px;
+            font-size: 13px;
+        }
+
+        .numero {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .totales {
+            width: 100%;
+        }
+
+        .total-fila {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid #e8eef2;
+        }
+
+        .total-final {
+            font-size: 21px;
+            font-weight: bold;
+            color: #07547e;
+            border-top: 2px solid #07547e;
+            margin-top: 7px;
+            padding-top: 14px;
+        }
+
+        .ayuda {
+            background: #e9f5fb;
+            border-left: 4px solid #1685bd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .errores {
+            background: #ffe5e5;
+            color: #9b1c1c;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .acciones-finales {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 950px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .fila {
+                grid-template-columns: 1fr;
+            }
+
+            .tabla-contenedor {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!-- CABECERA -->
+
+    <div class="encabezado">
+
+        <h1>
+            Liquidación #{{ liquidacion.id }}
+        </h1>
+
+        <p>
+            <strong>Unidad:</strong>
+            {{ liquidacion.cliente.nombre }}
+        </p>
+
+        <p>
+            <strong>Trabajo:</strong>
+            {{ liquidacion.descripcion }}
+        </p>
+
+        <span class="estado">
+            {{ liquidacion.get_estado_display }}
+        </span>
+
+    </div>
+
+
+    {% if liquidacion.estado == "DEVUELTA" and liquidacion.observaciones_revision %}
+    <div
+        style="
+            background:#fff3cd;
+            border-left:5px solid #f0a500;
+            color:#5f4300;
+            border-radius:10px;
+            padding:16px 18px;
+            margin-bottom:18px;
+            box-shadow:0 3px 10px rgba(0,0,0,.04);
+        "
+    >
+        <div style="font-weight:bold; font-size:16px; margin-bottom:8px;">
+            ⚠ Liquidación devuelta para corrección
+        </div>
+
+        <div style="margin-bottom:6px;">
+            <strong>Motivo:</strong>
+            {{ liquidacion.observaciones_revision }}
+        </div>
+
+        {% if liquidacion.revisado_por %}
+        <div style="margin-bottom:4px;">
+            <strong>Revisada por:</strong>
+            {{ liquidacion.revisado_por.username }}
+        </div>
+        {% endif %}
+
+        {% if liquidacion.fecha_revision %}
+        <div>
+            <strong>Fecha de revisión:</strong>
+            {{ liquidacion.fecha_revision|date:"d/m/Y H:i" }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="grid">
+
+        <!-- COLUMNA IZQUIERDA -->
+
+        <div>
+
+            <!-- AGREGAR CONCEPTO -->
+
+            {% if puede_elaborar and liquidacion.estado == "BORRADOR" or puede_elaborar and liquidacion.estado == "DEVUELTA" %}
+            <div class="panel">
+
+                <h2>Agregar concepto</h2>
+
+                <div class="ayuda">
+                    Para materiales seleccione un accesorio del
+                    catálogo. El precio utilizado podrá ser diferente
+                    al precio de referencia.
+                </div>
+
+                {% if form_detalle.errors %}
+                    <div class="errores">
+                        {{ form_detalle.errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    <div class="fila">
+
+                        <div class="campo-grupo">
+                            <label>
+                                Tipo de concepto
+                            </label>
+
+                            {{ form_detalle.tipo }}
+                        </div>
+
+<div id="bloque_catalogo" class="campo-grupo">
+
+    <label>Buscar accesorio</label>
+
+    {{ form_detalle.catalogo }}
+
+    <input
+        type="text"
+        id="buscador_catalogo"
+        class="campo"
+        list="lista_catalogo"
+        autocomplete="off"
+        placeholder="Escriba código o nombre: A040, codo, unión..."
+    >
+
+    <datalist id="lista_catalogo">
+
+        {% for accesorio in catalogos %}
+            <option
+                value="{{ accesorio.codigo }} — {{ accesorio.descripcion }}"
+                data-id="{{ accesorio.id }}"
+                data-descripcion="{{ accesorio.descripcion }}"
+                data-precio="{{ accesorio.valor|unlocalize }}"
+            ></option>
+        {% endfor %}
+
+    </datalist>
+
+    <div
+    id="precio_referencia"
+    style="
+        margin-top:8px;
+        padding:8px 10px;
+        background:#e9f5fb;
+        border-left:4px solid #1685bd;
+        border-radius:5px;
+        color:#07547e;
+        font-size:14px;
+        font-weight:bold;
+    "
+>
+    Precio de catálogo: -
+</div>
+
+</div>
+                    </div>
+
+
+                    <div class="campo-grupo">
+
+                        <label>
+                            Descripción
+                        </label>
+
+                        {{ form_detalle.descripcion }}
+
+                    </div>
+
+
+                    <div class="fila">
+
+                        <div class="campo-grupo">
+
+                            <label id="label_cantidad">
+                                Cantidad
+                            </label>
+
+                            {{ form_detalle.cantidad }}
+
+                        </div>
+
+                        <div class="campo-grupo">
+
+                            <label id="label_precio">
+                                Precio utilizado
+                            </label>
+
+                            {{ form_detalle.valor_unitario }}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="campo-grupo">
+
+                        <label>
+                            Observaciones
+                        </label>
+
+                        {{ form_detalle.observaciones }}
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-principal"
+                    >
+                        + Agregar a la liquidación
+                    </button>
+
+                </form>
+
+            </div>
+            {% endif %}
+
+
+            <!-- DETALLES -->
+
+            <div class="panel">
+
+                <h2>Detalle de la liquidación</h2>
+
+                <div class="tabla-contenedor">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Cantidad</th>
+        <th>Valor unitario</th>
+        <th>Subtotal</th>
+        <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        {% for detalle in detalles %}
+
+                            <tr>
+
+                                <td>
+                                    {{ detalle.get_tipo_display }}
+                                </td>
+
+                                <td>
+                                    {% if detalle.catalogo %}
+                                        {{ detalle.catalogo.codigo }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ detalle.descripcion }}
+                                </td>
+
+                                <td class="numero">
+                                    {{ detalle.cantidad|floatformat:2 }}
+                                </td>
+
+                                <td class="numero">
+                                    ${{ detalle.valor_unitario|floatformat:0 }}
+                                </td>
+
+                                <td class="numero">
+                                    <strong>
+                                        ${{ detalle.subtotal|floatformat:0 }}
+                                    </strong>
+                                </td>
+                                <td>
+    {% if puede_elaborar and liquidacion.estado == "BORRADOR" or puede_elaborar and liquidacion.estado == "DEVUELTA" %}
+
+        <a
+            href="{% url 'gestion_comercial:editar_detalle' detalle.id %}"
+            class="btn"
+            style="
+                background:#f0a500;
+                color:white;
+                padding:7px 10px;
+                margin-right:5px;
+            "
+        >
+            Editar
+        </a>
+
+        <form
+            method="post"
+            action="{% url 'gestion_comercial:eliminar_detalle' detalle.id %}"
+            style="display:inline;"
+            onsubmit="return confirm('¿Está seguro de eliminar este concepto?');"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="btn"
+                style="
+                    background:#c62828;
+                    color:white;
+                    padding:7px 10px;
+                "
+            >
+                Eliminar
+            </button>
+        </form>
+
+    {% else %}
+
+        <span style="color:#8796a3;">
+            Bloqueado
+        </span>
+
+    {% endif %}
+</td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="7"
+                                    style="text-align:center;
+                                           padding:30px;
+                                           color:#718391;">
+                                    Esta liquidación todavía no tiene
+                                    conceptos registrados.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- COLUMNA DERECHA -->
+
+        <div>
+
+            <div class="panel">
+
+                <h2>Resumen económico</h2>
+
+                <div class="totales">
+
+                    <div class="total-fila">
+                        <span>Materiales</span>
+                        <strong>
+                            ${{ liquidacion.subtotal_materiales|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>Mano de obra</span>
+                        <strong>
+                            ${{ liquidacion.mano_obra|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>Horas adicionales</span>
+                        <strong>
+                            ${{ liquidacion.horas_adicionales|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>Transporte</span>
+                        <strong>
+                            ${{ liquidacion.transporte|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>Otros costos</span>
+                        <strong>
+                            ${{ liquidacion.otros_costos|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>Valor sin IVA</span>
+                        <strong>
+                            ${{ liquidacion.valor_sin_iva|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila">
+                        <span>IVA 19%</span>
+                        <strong>
+                            ${{ liquidacion.valor_iva|floatformat:0 }}
+                        </strong>
+                    </div>
+
+                    <div class="total-fila total-final">
+                        <span>TOTAL</span>
+                        <span>
+                            ${{ liquidacion.valor_total|floatformat:0 }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel">
+
+                <h2>Control</h2>
+
+                <p>
+                    <strong>Creada por:</strong><br>
+                    {{ liquidacion.creado_por.username }}
+                </p>
+
+                <p>
+                    <strong>Estado:</strong><br>
+                    {{ liquidacion.get_estado_display }}
+                </p>
+
+                <div class="acciones-finales">
+
+                    <a
+                        href="{% url 'gestion_comercial:panel' %}"
+                        class="btn btn-secundario"
+                    >
+                        ← Volver
+                    </a>
+
+                    {% if puede_elaborar and liquidacion.estado == "BORRADOR" or puede_elaborar and liquidacion.estado == "DEVUELTA" %}
+
+                        <form
+                            method="post"
+                            action="{% url 'gestion_comercial:enviar_revision' liquidacion.id %}"
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-verde"
+                            >
+                                Enviar a revisión
+                            </button>
+                        </form>
+
+                    {% elif puede_revisar and liquidacion.estado == "REVISION" %}
+
+                        <form
+                            method="post"
+                            action="{% url 'gestion_comercial:aprobar_liquidacion' liquidacion.id %}"
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-verde"
+                            >
+                                Aprobar
+                            </button>
+                        </form>
+
+                    {% elif puede_revisar and liquidacion.estado == "APROBADA" %}
+
+                        <form
+                            method="post"
+                            action="{% url 'gestion_comercial:enviar_facturacion' liquidacion.id %}"
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-verde"
+                            >
+                                Enviar a facturación
+                            </button>
+                        </form>
+
+                    {% endif %}
+
+                </div>
+            {% if puede_facturar and liquidacion.estado == "LISTA_FACTURAR" %}
+
+<div
+    style="
+        margin-top:18px;
+        padding-top:18px;
+        border-top:1px solid #dfe8ee;
+    "
+>
+    <h3 style="color:#07547e;">
+        Registrar facturación
+    </h3>
+
+    <form
+        method="post"
+        action="{% url 'gestion_comercial:marcar_facturada' liquidacion.id %}"
+    >
+        {% csrf_token %}
+
+        <label for="numero_factura">
+            Número de factura SIIGO
+        </label>
+
+        <input
+            type="text"
+            id="numero_factura"
+            name="numero_factura"
+            class="campo"
+            required
+            placeholder="Ejemplo: FV-12345"
+        >
+
+        <button
+            type="submit"
+            class="btn btn-verde"
+            style="margin-top:12px;"
+        >
+            Marcar como facturada
+        </button>
+
+    </form>
+</div>
+
+{% endif %}
+                {% if puede_revisar and liquidacion.estado == "REVISION" %}
+
+                    <div
+                        style="
+                            margin-top:18px;
+                            padding-top:18px;
+                            border-top:1px solid #dfe8ee;
+                        "
+                    >
+                        <h3 style="color:#8b1e1e;">
+                            Devolver para corrección
+                        </h3>
+
+                        <form
+                            method="post"
+                            action="{% url 'gestion_comercial:devolver_liquidacion' liquidacion.id %}"
+                        >
+                            {% csrf_token %}
+
+                            <textarea
+                                name="observaciones_revision"
+                                class="campo"
+                                rows="4"
+                                required
+                                placeholder="Explique qué debe corregir la auxiliar..."
+                            ></textarea>
+
+                            <button
+                                type="submit"
+                                class="btn"
+                                style="
+                                    margin-top:10px;
+                                    background:#c62828;
+                                    color:white;
+                                "
+                            >
+                                Devolver para corrección
+                            </button>
+                        </form>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+const campoTipo = document.getElementById("id_tipo");
+const bloqueCatalogo = document.getElementById("bloque_catalogo");
+const buscador = document.getElementById("buscador_catalogo");
+const campoCatalogo = document.getElementById("id_catalogo");
+const campoDescripcion = document.getElementById("id_descripcion");
+const campoPrecio = document.getElementById("id_valor_unitario");
+const precioReferencia = document.getElementById("precio_referencia");
+const labelCantidad = document.getElementById("label_cantidad");
+const labelPrecio = document.getElementById("label_precio");
+
+function seleccionarAccesorio() {
+    const valorBuscado = buscador.value;
+    const opciones = document.querySelectorAll("#lista_catalogo option");
+    let encontrado = null;
+
+    opciones.forEach(function(opcion) {
+        if (opcion.value === valorBuscado) {
+            encontrado = opcion;
+        }
+    });
+
+    if (!encontrado) {
+        campoCatalogo.value = "";
+        precioReferencia.textContent = "Precio de catálogo: -";
+        return;
+    }
+
+    const precio = parseFloat(encontrado.dataset.precio);
+
+    campoCatalogo.value = encontrado.dataset.id;
+    campoDescripcion.value = encontrado.dataset.descripcion;
+
+    if (!Number.isNaN(precio)) {
+        campoPrecio.value = precio;
+        precioReferencia.textContent =
+            "Precio de catálogo: $" + precio.toLocaleString("es-CO");
+    } else {
+        campoPrecio.value = "";
+        precioReferencia.textContent = "Precio de catálogo: -";
+    }
+}
+
+function controlarCatalogo() {
+    const tipo = campoTipo.value;
+
+    if (tipo === "MATERIAL") {
+        bloqueCatalogo.style.display = "block";
+    } else {
+        bloqueCatalogo.style.display = "none";
+        campoCatalogo.value = "";
+        buscador.value = "";
+        precioReferencia.textContent = "Precio de catálogo: -";
+        campoDescripcion.value = "";
+        campoPrecio.value = "";
+
+        const campoCantidad =
+        document.getElementById("id_cantidad");
+
+        campoCantidad.value = 1;
+    }
+}
+
+function actualizarEtiquetas() {
+    const tipo = campoTipo.value;
+
+    if (tipo === "MATERIAL") {
+        labelCantidad.textContent = "Cantidad";
+        labelPrecio.textContent = "Precio utilizado";
+    } else if (tipo === "MANO_OBRA") {
+        labelCantidad.textContent = "Cantidad / horas";
+        labelPrecio.textContent = "Valor mano de obra";
+    } else if (tipo === "HORA_ADICIONAL") {
+        labelCantidad.textContent = "Cantidad de horas";
+        labelPrecio.textContent = "Valor por hora";
+    } else if (tipo === "TRANSPORTE") {
+        labelCantidad.textContent = "Cantidad de traslados";
+        labelPrecio.textContent = "Valor por traslado";
+    } else if (tipo === "AUXILIO") {
+        labelCantidad.textContent = "Cantidad";
+        labelPrecio.textContent = "Valor auxilio";
+    } else {
+        labelCantidad.textContent = "Cantidad";
+        labelPrecio.textContent = "Valor";
+    }
+}
+
+buscador.addEventListener("change", seleccionarAccesorio);
+campoTipo.addEventListener("change", function() {
+    controlarCatalogo();
+    actualizarEtiquetas();
+});
+
+controlarCatalogo();
+actualizarEtiquetas();
+</script>
+</body>
+</html>

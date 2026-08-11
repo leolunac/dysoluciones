@@ -41,8 +41,33 @@ from .utils import registrar_evento
 
 
 # =========================================
-# LOGIN
+# LOGIN / REDIRECCIÓN POR PERFIL
 # =========================================
+
+GRUPOS_GESTION_COMERCIAL = {
+    "GESTION_AUXILIAR",
+    "GESTION_COORDINADOR",
+    "GESTION_FACTURACION",
+    "GESTION_GERENCIA",
+}
+
+
+def es_usuario_gestion_comercial(user):
+    """
+    Devuelve True si el usuario pertenece a uno de los perfiles
+    internos de Gestión Comercial.
+    """
+    if not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    return user.groups.filter(
+        name__in=GRUPOS_GESTION_COMERCIAL
+    ).exists()
+
+
 def login_view(request):
 
     if request.method == "POST":
@@ -58,11 +83,15 @@ def login_view(request):
         if user is not None:
             login(request, user)
 
-            # Usuario interno: entra al menú principal
+            # Perfiles internos de Gestión Comercial.
+            if es_usuario_gestion_comercial(user):
+                return redirect("/gestion-comercial/")
+
+            # Otros usuarios internos/staff conservan el menú principal.
             if user.is_staff:
                 return redirect("/")
 
-            # Usuario cliente: entra al selector de unidades
+            # Usuarios cliente entran al selector de unidades.
             return redirect("/mis-unidades/")
 
         return render(
@@ -75,22 +104,34 @@ def login_view(request):
 
     return render(request, "login.html")
 
+
 # =========================================
 # LOGOUT
 # =========================================
 def logout_view(request):
     logout(request)
-    return redirect("/login/")
+    return redirect("/accounts/login/")
+
 
 # =========================================
 # HOME
 # =========================================
 @login_required
 def home(request):
+
+    # Auxiliar, Coordinador, Facturación y Gerencia
+    # entran directamente a Gestión Comercial.
+    if es_usuario_gestion_comercial(request.user):
+        return redirect("/gestion-comercial/")
+
+    # Otros usuarios internos mantienen su menú general.
     if request.user.is_staff:
         return render(request, "menu_principal.html")
 
+    # Los usuarios cliente continúan con su portal.
     return redirect("/mis-unidades/")
+
+
 # =========================================
 # VALIDAR ACCESO DEL CLIENTE
 # =========================================

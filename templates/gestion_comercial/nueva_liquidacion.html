@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIGOB | Nueva Liquidación</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #eef4f7;
+            color: #12344d;
+        }
+
+        .contenedor {
+            width: 94%;
+            max-width: 1100px;
+            margin: 28px auto;
+        }
+
+        .encabezado {
+            background: linear-gradient(110deg, #0b4770, #0873ad);
+            color: white;
+            border-radius: 18px;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+        }
+
+        .encabezado h1 {
+            margin: 0 0 7px;
+        }
+
+        .encabezado p {
+            margin: 0;
+            opacity: .9;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 28px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.06);
+        }
+
+        .campo-grupo {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #174a6a;
+        }
+
+        .campo {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd8e0;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+        }
+
+        textarea.campo {
+            resize: vertical;
+        }
+
+        .errores {
+            color: #b42318;
+            margin-top: 6px;
+            font-size: 13px;
+        }
+
+        .acciones {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-secundario {
+            background: #e7eef2;
+            color: #174a6a;
+        }
+
+        .btn-principal {
+            background: #086292;
+            color: white;
+        }
+
+        .aviso {
+            background: #e9f5fb;
+            border-left: 4px solid #1685bd;
+            padding: 14px 16px;
+            border-radius: 7px;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <div class="encabezado">
+        <h1>💼 Nueva Liquidación</h1>
+        <p>
+            Registre la unidad y el trabajo realizado.
+        </p>
+    </div>
+
+    <div class="panel">
+
+        <div class="aviso">
+            Primero crearemos la liquidación.
+            En el siguiente paso agregaremos materiales,
+            mano de obra, horas adicionales, transporte
+            y demás conceptos.
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="campo-grupo">
+                <label>
+                    {{ form.cliente.label }}
+                </label>
+
+                {{ form.cliente }}
+
+                {% if form.cliente.errors %}
+                    <div class="errores">
+                        {{ form.cliente.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="campo-grupo">
+                <label>
+                    {{ form.descripcion.label }}
+                </label>
+
+                {{ form.descripcion }}
+
+                {% if form.descripcion.errors %}
+                    <div class="errores">
+                        {{ form.descripcion.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="acciones">
+
+                <a
+                    href="{% url 'gestion_comercial:panel' %}"
+                    class="btn btn-secundario"
+                >
+                    ← Cancelar
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn btn-principal"
+                >
+                    Crear y continuar →
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

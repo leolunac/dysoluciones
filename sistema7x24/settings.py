@@ -9,11 +9,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SEGURIDAD
 # ===============================
 
-SECRET_KEY = 'cambia-esto-por-una-clave-segura'
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "sigob-desarrollo-local-no-usar-en-produccion"
+)
 
-DEBUG = True
+DEBUG = os.environ.get(
+    "DJANGO_DEBUG",
+    "True"
+).lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "127.0.0.1,localhost"
+    ).split(",")
+    if host.strip()
+]
 
 
 # ===============================
@@ -31,6 +44,7 @@ INSTALLED_APPS = [
 
     # App principal del sistema
     'operacion',
+    'gestion_comercial',
 ]
 
 
@@ -89,13 +103,33 @@ WSGI_APPLICATION = 'sistema7x24.wsgi.application'
 # ===============================
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sistema7x24_db',
-        'USER': 'postgres',
-        'PASSWORD': 'Luna2962*',
-        'HOST': 'localhost',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+
+        "NAME": os.environ.get(
+            "POSTGRES_DB",
+            "sistema7x24_db",
+        ),
+
+        "USER": os.environ.get(
+            "POSTGRES_USER",
+            "postgres",
+        ),
+
+        "PASSWORD": os.environ.get(
+            "POSTGRES_PASSWORD",
+            "",
+        ),
+
+        "HOST": os.environ.get(
+            "POSTGRES_HOST",
+            "localhost",
+        ),
+
+        "PORT": os.environ.get(
+            "POSTGRES_PORT",
+            "5432",
+        ),
     }
 }
 
@@ -139,9 +173,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # CONFIGURACIÓN LOGIN
 # ===============================
 
-LOGIN_URL = "/login/"
+LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "home"
-LOGOUT_REDIRECT_URL = "/login/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 
 
