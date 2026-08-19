@@ -45,7 +45,7 @@ from .models import (
 )                    
 
 from .utils import registrar_evento
-
+from gestion_comercial.models import Cotizacion
 
 
 # =========================================
@@ -342,21 +342,134 @@ def levantamiento_equipo(request):
 def demo_sigob(request):
     return render(request, "demo_sigob.html")
 @login_required
+@login_required
 def dashboard(request):
     total_emergencias = Emergencia.objects.count()
-    pendientes = Emergencia.objects.filter(estado="PENDIENTE").count()
-    atendidas = Emergencia.objects.filter(estado="ATENDIDA").count()
+    pendientes = Emergencia.objects.filter(
+        estado="PENDIENTE"
+    ).count()
+    atendidas = Emergencia.objects.filter(
+        estado="ATENDIDA"
+    ).count()
     clientes = Cliente.objects.count()
+
+    # =====================================================
+    # GRÁFICA 1: EMERGENCIAS ÚLTIMOS 12 MESES
+    # =====================================================
+    hoy = timezone.now().date()
+    inicio = (hoy.replace(day=1) - timedelta(days=365)).replace(day=1)
+
+    qs_emergencias = (
+        Emergencia.objects
+        .filter(fecha_llamada__date__gte=inicio)
+        .annotate(mes=TruncMonth("fecha_llamada"))
+        .values("mes")
+        .annotate(total=Count("id"))
+        .order_by("mes")
+    )
+
+    emergencias_dict = {
+        x["mes"].strftime("%Y-%m"): x["total"]
+        for x in qs_emergencias
+    }
+
+    labels_emergencias = []
+    data_emergencias = []
+
+    anio = hoy.year
+    mes = hoy.month
+
+    for i in range(11, -1, -1):
+        m = mes - i
+        y = anio
+
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        key = f"{y:04d}-{m:02d}"
+
+        labels_emergencias.append(key)
+        data_emergencias.append(
+            emergencias_dict.get(key, 0)
+        )
+
+    # =====================================================
+    # GRÁFICA 2: ESTADO GENERAL DE EQUIPOS
+    # =====================================================
+    equipos_operativos = EquipoUnidad.objects.filter(
+        estado="OPERATIVO"
+    ).count()
+
+    equipos_reparacion = EquipoUnidad.objects.filter(
+        estado="EN_REPARACION"
+    ).count()
+
+    equipos_fuera = EquipoUnidad.objects.filter(
+        estado="FUERA_SERVICIO"
+    ).count()
+
+    labels_equipos = [
+        "Operativos",
+        "En reparación",
+        "Fuera de servicio",
+    ]
+
+    data_equipos = [
+        equipos_operativos,
+        equipos_reparacion,
+        equipos_fuera,
+    ]
+
+    # =====================================================
+    # GRÁFICA 3: COTIZACIONES POR ESTADO
+    # =====================================================
+    estados_cotizaciones = [
+        "BORRADOR",
+        "ELABORADA",
+        "ENVIADA",
+        "APROBADA",
+        "RECHAZADA",
+        "ANULADA",
+    ]
+
+    labels_cotizaciones = [
+        "Borrador",
+        "Elaborada",
+        "Enviada",
+        "Aprobada",
+        "Rechazada",
+        "Anulada",
+    ]
+
+    data_cotizaciones = [
+        Cotizacion.objects.filter(
+            estado=estado
+        ).count()
+        for estado in estados_cotizaciones
+    ]
 
     context = {
         "total_emergencias": total_emergencias,
         "pendientes": pendientes,
         "atendidas": atendidas,
         "clientes": clientes,
+
+        "labels_emergencias": labels_emergencias,
+        "data_emergencias": data_emergencias,
+
+        "labels_equipos": labels_equipos,
+        "data_equipos": data_equipos,
+
+        "labels_cotizaciones": labels_cotizaciones,
+        "data_cotizaciones": data_cotizaciones,
     }
 
-    return render(request, "dashboard.html", context)
-
+    return render(
+        request,
+        "dashboard.html",
+        context,
+    )
 
 # =========================================
 # CENTRO DE OPERACIONES
