@@ -20,3 +20,13 @@ __pycache__/
 *_backup.py
 settings copy.py
 *.xlsm
+# Entorno de producción
+.env.production
+
+# Archivos Excel internos
+*.xlsx
+
+# Archivos generados / caché
+__pycache__/
+*.pyc
+* copy.html

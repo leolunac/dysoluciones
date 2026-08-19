@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.venv/
+venv/
+.env
+.env.*
+*.backup
+*.sql
+media/
+staticfiles/

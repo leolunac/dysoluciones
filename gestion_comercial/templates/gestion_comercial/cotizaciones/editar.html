@@ -1,0 +1,752 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB | Cotización #{{ cotizacion.id }}</title>
+
+    <style>
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family:Arial, Helvetica, sans-serif;
+            background:#eef4f7;
+            color:#12344d;
+            font-size:13px;
+        }
+        .contenedor{
+            width:96%;
+            max-width:1500px;
+            margin:14px auto;
+        }
+        .encabezado{
+            background:linear-gradient(110deg,#0b4770,#0873ad);
+            color:white;
+            padding:16px 20px;
+            border-radius:14px;
+            margin-bottom:12px;
+        }
+        .encabezado h1{margin:0 0 5px;font-size:22px}
+        .encabezado p{margin:3px 0;font-size:12px}
+        .estado{
+            display:inline-block;
+            background:rgba(255,255,255,.18);
+            padding:5px 9px;
+            border-radius:16px;
+            margin-top:6px;
+            font-weight:bold;
+            font-size:11px;
+        }
+        .grid{
+            display:grid;
+            grid-template-columns:minmax(0,2.35fr) minmax(290px,.85fr);
+            gap:12px;
+        }
+        .panel{
+            background:white;
+            border-radius:11px;
+            padding:15px;
+            margin-bottom:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,.04);
+        }
+        .panel h2{
+            margin:0 0 11px;
+            color:#07547e;
+            font-size:16px;
+        }
+        .campo-grupo{margin-bottom:11px}
+        label{
+            display:block;
+            font-weight:bold;
+            margin-bottom:4px;
+            color:#31546b;
+            font-size:11px;
+        }
+        input,select,textarea,.campo{
+            width:100%;
+            border:1px solid #cbd8e0;
+            border-radius:6px;
+            padding:8px 9px;
+            background:white;
+            font-size:12px;
+        }
+        textarea{resize:vertical}
+        .fila{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+        }
+        .btn{
+            display:inline-block;
+            border:none;
+            border-radius:6px;
+            padding:8px 11px;
+            text-decoration:none;
+            font-weight:bold;
+            cursor:pointer;
+            font-size:11px;
+        }
+        .btn-principal{background:#0873ad;color:white}
+        .btn-secundario{background:#e6eef3;color:#174a6a}
+        .btn-rojo{background:#c62828;color:white}
+        .ayuda{
+            background:#e9f5fb;
+            border-left:4px solid #1685bd;
+            padding:9px 11px;
+            border-radius:6px;
+            margin-bottom:11px;
+            font-size:11px;
+            line-height:1.4;
+        }
+        .errores{
+            background:#ffe5e5;
+            color:#9b1c1c;
+            padding:9px;
+            border-radius:6px;
+            margin-bottom:10px;
+        }
+        .tabla-contenedor{overflow-x:auto}
+        table{width:100%;border-collapse:collapse}
+        th{
+            background:#edf4f8;
+            color:#31546b;
+            padding:8px 7px;
+            text-align:left;
+            font-size:10px;
+            white-space:nowrap;
+        }
+        td{
+            border-bottom:1px solid #e6edf1;
+            padding:8px 7px;
+            font-size:11px;
+        }
+        .numero{text-align:right;white-space:nowrap}
+        .total-fila{
+            display:flex;
+            justify-content:space-between;
+            padding:8px 0;
+            border-bottom:1px solid #e8eef2;
+            font-size:12px;
+        }
+        .total-final{
+            font-size:18px;
+            font-weight:bold;
+            color:#07547e;
+            border-top:2px solid #07547e;
+            margin-top:6px;
+            padding-top:11px;
+        }
+        .precio-referencia{
+            margin-top:6px;
+            padding:7px 9px;
+            background:#e9f5fb;
+            border-left:4px solid #1685bd;
+            border-radius:5px;
+            color:#07547e;
+            font-size:11px;
+            font-weight:bold;
+        }
+        .acciones{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            margin-top:12px;
+        }
+        .badge-tipo{
+            display:inline-block;
+            padding:4px 7px;
+            border-radius:12px;
+            background:#edf4f8;
+            color:#31546b;
+            font-size:10px;
+            font-weight:bold;
+        }
+        @media(max-width:1050px){
+            .grid{grid-template-columns:1fr}
+        }
+        @media(max-width:700px){
+            .fila{grid-template-columns:1fr}
+        }
+    
+        .commercial-card{
+            background:white;border-radius:16px;padding:22px;
+            box-shadow:0 4px 18px rgba(0,0,0,.08);margin-bottom:22px;
+        }
+        .commercial-card h2{margin-top:0;}
+        .commercial-grid{display:grid;grid-template-columns:1fr 2fr;gap:18px;}
+        .commercial-field label{display:block;font-weight:700;margin-bottom:7px;color:#334155;}
+        .commercial-actions{display:flex;justify-content:flex-end;margin-top:16px;}
+        @media(max-width:760px){.commercial-grid{grid-template-columns:1fr;}}
+
+    </style>
+</head>
+
+<body>
+<div class="contenedor">
+
+    <div class="encabezado">
+        <h1>
+            {% if cotizacion.numero_cotizacion %}
+                {{ cotizacion.numero_cotizacion }}
+            {% else %}
+                Cotización #{{ cotizacion.id }}
+            {% endif %}
+        </h1>
+
+        <p>
+            <strong>Unidad / Cliente:</strong>
+            {{ cotizacion.cliente.nombre }}
+        </p>
+
+        <p>
+            <strong>Asunto:</strong>
+            {{ cotizacion.asunto }}
+        </p>
+
+        <p>
+            <strong>Origen:</strong>
+            {{ cotizacion.get_origen_display }}
+        </p>
+
+        <span class="estado">
+            {{ cotizacion.get_estado_display }}
+        </span>
+    </div>
+
+    <section class="commercial-card">
+        <h2>Datos comerciales para el cliente</h2>
+
+        {% if form_comercial.errors %}
+            <div class="errores">
+                <strong>Revise los datos comerciales:</strong>
+                {{ form_comercial.errors }}
+            </div>
+        {% endif %}
+
+        {% if cotizacion.estado == "BORRADOR" or cotizacion.estado == "ELABORADA" %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="guardar_comercial">
+
+            <div class="ayuda">
+                Esta información corresponde a la presentación que verá el
+                cliente. Los materiales, mano de obra y costos internos se
+                administran por separado y no se desglosarán en el PDF.
+            </div>
+
+            <div class="campo-grupo">
+                <label>{{ form_comercial.descripcion.label }}</label>
+                {{ form_comercial.descripcion }}
+            </div>
+
+            <div class="campo-grupo">
+                <label>{{ form_comercial.concepto_comercial.label }}</label>
+                {{ form_comercial.concepto_comercial }}
+            </div>
+
+            <div class="campo-grupo">
+                <label>{{ form_comercial.alcance_tecnico.label }}</label>
+                {{ form_comercial.alcance_tecnico }}
+                <div style="margin-top:5px;color:#718391;font-size:10px;">
+                    Escriba una actividad por línea.
+                </div>
+            </div>
+
+            <div class="commercial-grid">
+                <div class="commercial-field">
+                    <label>{{ form_comercial.vigencia_dias.label }}</label>
+                    {{ form_comercial.vigencia_dias }}
+                </div>
+
+                <div class="commercial-field">
+                    <label>{{ form_comercial.forma_pago.label }}</label>
+                    {{ form_comercial.forma_pago }}
+                </div>
+            </div>
+
+            <div class="commercial-actions">
+                <button type="submit" class="btn btn-principal">
+                    Guardar datos comerciales
+                </button>
+            </div>
+        </form>
+        {% else %}
+            <div class="ayuda">
+                Los datos comerciales quedan bloqueados después de que la
+                cotización ha sido enviada al cliente.
+            </div>
+
+            {% if cotizacion.concepto_comercial %}
+                <p>
+                    <strong>Concepto comercial:</strong><br>
+                    {{ cotizacion.concepto_comercial|linebreaksbr }}
+                </p>
+            {% endif %}
+
+            {% if cotizacion.alcance_tecnico %}
+                <p>
+                    <strong>Alcance técnico:</strong><br>
+                    {{ cotizacion.alcance_tecnico|linebreaksbr }}
+                </p>
+            {% endif %}
+        {% endif %}
+    </section>
+
+    <div class="grid">
+
+        <div>
+            {% if cotizacion.estado == "BORRADOR" %}
+            <div class="panel">
+                <h2>Agregar artículo o servicio</h2>
+
+                <div class="ayuda">
+                    Seleccione primero el tipo de concepto. Si es material,
+                    puede buscarlo en el catálogo. Al seleccionarlo se cargará
+                    la descripción y el valor de referencia.
+                </div>
+
+                {% if form_detalle.errors %}
+                    <div class="errores">
+                        {{ form_detalle.errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="agregar_detalle">
+
+                    <div class="campo-grupo">
+                        <label>Tipo de concepto</label>
+                        {{ form_detalle.tipo }}
+                    </div>
+
+                    {{ form_detalle.catalogo }}
+
+                    <div class="campo-grupo" id="grupo_catalogo">
+                        <label>Buscar artículo / accesorio</label>
+
+                        <input
+                            type="text"
+                            id="buscador_catalogo"
+                            class="campo"
+                            list="lista_catalogo"
+                            autocomplete="off"
+                            placeholder="Escriba código o descripción..."
+                        >
+
+                        <datalist id="lista_catalogo">
+                            {% for accesorio in catalogos %}
+                                <option
+                                    value="{{ accesorio.codigo }} — {{ accesorio.descripcion }}"
+                                    data-id="{{ accesorio.id }}"
+                                    data-descripcion="{{ accesorio.descripcion }}"
+                                    data-precio="{{ accesorio.valor|unlocalize }}"
+                                ></option>
+                            {% endfor %}
+                        </datalist>
+
+                        <div
+                            id="precio_referencia"
+                            class="precio-referencia"
+                        >
+                            Precio de catálogo: -
+                        </div>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Descripción del artículo o servicio</label>
+                        {{ form_detalle.descripcion }}
+                    </div>
+
+                    <div class="fila">
+                        <div class="campo-grupo">
+                            <label>Cantidad</label>
+                            {{ form_detalle.cantidad }}
+                        </div>
+
+                        <div class="campo-grupo">
+                            <label>Valor unitario / costo</label>
+                            {{ form_detalle.valor_unitario }}
+                        </div>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Observaciones</label>
+                        {{ form_detalle.observaciones }}
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-principal"
+                    >
+                        + Agregar a la cotización
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="panel">
+                <h2>Detalle de la cotización</h2>
+
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th>Cantidad</th>
+                                <th>Valor unitario</th>
+                                <th>Subtotal costo</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for detalle in detalles %}
+                            <tr>
+                                <td>
+                                    <span class="badge-tipo">
+                                        {{ detalle.get_tipo_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {% if detalle.catalogo %}
+                                        {{ detalle.catalogo.codigo }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ detalle.descripcion }}</td>
+
+                                <td class="numero">
+                                    {{ detalle.cantidad|floatformat:2 }}
+                                </td>
+
+                                <td class="numero">
+                                    ${{ detalle.valor_unitario|floatformat:0 }}
+                                </td>
+
+                                <td class="numero">
+                                    <strong>
+                                        ${{ detalle.subtotal|floatformat:0 }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {% if cotizacion.estado == "BORRADOR" %}
+                                    <form
+                                        method="post"
+                                        action="{% url 'gestion_comercial:eliminar_detalle_cotizacion' detalle.id %}"
+                                        onsubmit="return confirm('¿Está seguro de eliminar este artículo?');"
+                                    >
+                                        {% csrf_token %}
+                                        <button
+                                            type="submit"
+                                            class="btn btn-rojo"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr>
+                                <td
+                                    colspan="7"
+                                    style="
+                                        text-align:center;
+                                        padding:28px;
+                                        color:#718391;
+                                    "
+                                >
+                                    Esta cotización todavía no tiene
+                                    artículos registrados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h2>Resumen económico</h2>
+
+                <div class="total-fila">
+                    <span>Subtotal de costos</span>
+                    <strong>
+                        ${{ cotizacion.subtotal_costos|floatformat:0 }}
+                    </strong>
+                </div>
+
+                <div class="total-fila">
+                    <span>
+                        Utilidad {{ cotizacion.porcentaje_utilidad|floatformat:2 }}%
+                    </span>
+                    <strong>
+                        ${{ cotizacion.valor_utilidad|floatformat:0 }}
+                    </strong>
+                </div>
+
+                <div class="total-fila">
+                    <span>Valor sin IVA</span>
+                    <strong>
+                        ${{ cotizacion.valor_sin_iva|floatformat:0 }}
+                    </strong>
+                </div>
+
+                <div class="total-fila">
+                    <span>
+                        IVA {{ cotizacion.porcentaje_iva|floatformat:0 }}%
+                    </span>
+                    <strong>
+                        ${{ cotizacion.valor_iva|floatformat:0 }}
+                    </strong>
+                </div>
+
+                <div class="total-fila total-final">
+                    <span>TOTAL</span>
+                    <span>
+                        ${{ cotizacion.valor_total|floatformat:0 }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Información</h2>
+
+                <p>
+                    <strong>Elaborada por:</strong><br>
+                    {{ cotizacion.elaborado_por.username }}
+                </p>
+
+                <p>
+                    <strong>Fecha:</strong><br>
+                    {{ cotizacion.fecha_creacion|date:"d/m/Y H:i" }}
+                </p>
+
+                <p>
+                    <strong>Número comercial:</strong><br>
+                    {% if cotizacion.numero_cotizacion %}
+                        {{ cotizacion.numero_cotizacion }}
+                    {% else %}
+                        Pendiente de asignación
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Estado:</strong><br>
+                    {{ cotizacion.get_estado_display }}
+                </p>
+
+                <p>
+                    <strong>Vigencia de la oferta:</strong><br>
+                    {{ cotizacion.vigencia_dias }} días
+                </p>
+
+                <p>
+                    <strong>Utilidad:</strong><br>
+                    {{ cotizacion.porcentaje_utilidad|floatformat:2 }}%
+                </p>
+
+                {% if cotizacion.forma_pago %}
+                    <p>
+                        <strong>Forma de pago:</strong><br>
+                        {{ cotizacion.forma_pago|linebreaksbr }}
+                    </p>
+                {% else %}
+                    <p>
+                        <strong>Forma de pago:</strong><br>
+                        <span style="color:#718391;">Pendiente por definir</span>
+                    </p>
+                {% endif %}
+
+                {% if cotizacion.descripcion %}
+                    <p>
+                        <strong>Descripción:</strong><br>
+                        {{ cotizacion.descripcion }}
+                    </p>
+                {% endif %}
+                {% if cotizacion.concepto_comercial %}
+                    <p>
+                        <strong>Concepto comercial:</strong><br>
+                        {{ cotizacion.concepto_comercial|linebreaksbr }}
+                    </p>
+                {% endif %}
+
+                {% if cotizacion.alcance_tecnico %}
+                    <p>
+                        <strong>Alcance técnico:</strong><br>
+                        {{ cotizacion.alcance_tecnico|linebreaksbr }}
+                    </p>
+                {% endif %}
+
+
+                {% if cotizacion.observaciones %}
+                    <p>
+                        <strong>Observaciones:</strong><br>
+                        {{ cotizacion.observaciones }}
+                    </p>
+                {% endif %}
+
+                <div class="acciones">
+
+                    {% if cotizacion.estado == "BORRADOR" %}
+                        <form method="post"
+                              action="{% url 'gestion_comercial:finalizar_elaboracion_cotizacion' cotizacion.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-principal">
+                                ✓ Finalizar elaboración
+                            </button>
+                        </form>
+                    {% elif cotizacion.estado == "ELABORADA" %}
+                        <a
+                            href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
+                            target="_blank"
+                            class="btn btn-secundario"
+                        >
+                            Generar PDF
+                        </a>
+
+                        <form method="post"
+                              action="{% url 'gestion_comercial:marcar_cotizacion_enviada' cotizacion.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-principal">
+                                Marcar como enviada
+                            </button>
+                        </form>
+                    {% elif cotizacion.estado == "ENVIADA" %}
+                        <a
+                            href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
+                            target="_blank"
+                            class="btn btn-secundario"
+                        >
+                            Ver PDF
+                        </a>
+
+                        <form method="post"
+                              action="{% url 'gestion_comercial:aprobar_cotizacion' cotizacion.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-principal">
+                                Marcar aprobada
+                            </button>
+                        </form>
+
+                        <form method="post"
+                              action="{% url 'gestion_comercial:rechazar_cotizacion' cotizacion.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-rojo">
+                                Marcar rechazada
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <a
+                        href="{% url 'gestion_comercial:lista_cotizaciones' %}"
+                        class="btn btn-secundario"
+                    >
+                        Volver a cotizaciones
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const tipo = document.getElementById("id_cotizacion_tipo");
+    const grupoCatalogo = document.getElementById("grupo_catalogo");
+    const buscador = document.getElementById("buscador_catalogo");
+    const datalist = document.getElementById("lista_catalogo");
+    const catalogoId = document.getElementById("id_cotizacion_catalogo");
+    const descripcion = document.getElementById("id_cotizacion_descripcion");
+    const valor = document.getElementById("id_cotizacion_valor_unitario");
+    const precioReferencia = document.getElementById("precio_referencia");
+
+    function actualizarVisibilidadCatalogo() {
+        const esMaterial = tipo && tipo.value === "MATERIAL";
+
+        if (grupoCatalogo) {
+            grupoCatalogo.style.display = esMaterial ? "block" : "none";
+        }
+
+        if (!esMaterial) {
+            if (catalogoId) catalogoId.value = "";
+            if (buscador) buscador.value = "";
+            if (precioReferencia) {
+                precioReferencia.textContent = "Precio de catálogo: -";
+            }
+        }
+    }
+
+    function seleccionarCatalogo() {
+        if (!buscador || !datalist) return;
+
+        const opciones = Array.from(
+            datalist.querySelectorAll("option")
+        );
+
+        const seleccionada = opciones.find(
+            opcion => opcion.value === buscador.value
+        );
+
+        if (!seleccionada) return;
+
+        if (catalogoId) {
+            catalogoId.value = seleccionada.dataset.id || "";
+        }
+
+        if (descripcion) {
+            descripcion.value =
+                seleccionada.dataset.descripcion || "";
+        }
+
+        if (valor) {
+            valor.value =
+                seleccionada.dataset.precio || "";
+        }
+
+        if (precioReferencia) {
+            const precio =
+                seleccionada.dataset.precio || "0";
+
+            precioReferencia.textContent =
+                "Precio de catálogo: $" +
+                Number(precio).toLocaleString("es-CO");
+        }
+    }
+
+    if (tipo) {
+        tipo.addEventListener(
+            "change",
+            actualizarVisibilidadCatalogo
+        );
+    }
+
+    if (buscador) {
+        buscador.addEventListener(
+            "change",
+            seleccionarCatalogo
+        );
+        buscador.addEventListener(
+            "input",
+            seleccionarCatalogo
+        );
+    }
+
+    actualizarVisibilidadCatalogo();
+})();
+</script>
+</body>
+</html>

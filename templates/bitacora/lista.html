@@ -331,11 +331,19 @@
             <small>Compromisos vencidos</small>
             <div class="kpi">{{ vencidas }}</div>
         </div>
+        <div class="kpi-card orange">
+    <small>Compromisos de hoy</small>
+    <div class="kpi">{{ compromisos_hoy }}</div>
+</div>
 
-        <div class="kpi-card green">
+    <div class="kpi-card blue">
+    <small>Próximos compromisos</small>
+    <div class="kpi">{{ proximos_compromisos }}</div>
+    </div>
+    <div class="kpi-card green">
             <small>Reuniones de hoy</small>
             <div class="kpi">{{ reuniones_hoy }}</div>
-        </div>
+    </div>
     </section>
 
     <section class="panel">
@@ -476,14 +484,160 @@
                     </div>
                 {% endif %}
 
-                <div class="card-actions">
-                    <a
-                        href="{% url 'editar_bitacora' registro.id %}"
-                        class="btn btn-primary"
-                    >
-                        Editar / gestionar
-                    </a>
-                </div>
+                <div class="card-actions"
+     style="display:flex; gap:10px; flex-wrap:wrap;">
+
+    <a
+        href="{% url 'editar_bitacora' registro.id %}"
+        class="btn btn-primary"
+    >
+        Editar / gestionar
+    </a>
+
+    {% if registro.actividad %}
+        <button
+            type="button"
+            class="btn btn-light"
+            onclick="toggleActividad('actividad-{{ registro.id }}')"
+            style="
+                border:1px solid #cbd5e1;
+            "
+        >
+            Ver actividad técnica
+        </button>
+    {% endif %}
+
+</div>
+
+
+{% if registro.actividad %}
+
+    <div
+        id="actividad-{{ registro.id }}"
+        style="
+            display:none;
+            margin-top:14px;
+            background:#f8fbff;
+            border:1px solid #cfe0f1;
+            border-left:4px solid #0b5fa5;
+            border-radius:10px;
+            padding:14px;
+        "
+    >
+
+        <div style="
+            font-weight:700;
+            color:#073b6f;
+            margin-bottom:10px;
+        ">
+            Resumen de actividad técnica
+        </div>
+
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:8px;
+            font-size:13px;
+        ">
+
+            <div>
+                <strong>Fecha:</strong><br>
+                {{ registro.actividad.fecha|date:"d/m/Y" }}
+            </div>
+
+            <div>
+                <strong>Llegada:</strong><br>
+                {% if registro.actividad.hora_llegada %}
+                    {{ registro.actividad.hora_llegada|time:"H:i" }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+
+            <div>
+                <strong>Salida:</strong><br>
+                {% if registro.actividad.hora_salida %}
+                    {{ registro.actividad.hora_salida|time:"H:i" }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+
+            <div>
+                <strong>Permanencia:</strong><br>
+                {{ registro.actividad.duracion_en_sitio|default:"—" }}
+            </div>
+
+            <div>
+                <strong>Resultado:</strong><br>
+                {{ registro.actividad.get_resultado_display|default:"—" }}
+            </div>
+
+            <div>
+                <strong>Técnico:</strong><br>
+                {{ registro.actividad.tecnico.nombre }}
+            </div>
+
+        </div>
+
+        <div style="
+            margin-top:12px;
+            background:white;
+            padding:10px;
+            border-radius:8px;
+        ">
+            <strong>Diagnóstico</strong><br>
+            {{ registro.actividad.diagnostico|default:"Sin diagnóstico." }}
+        </div>
+
+        <div style="
+            margin-top:8px;
+            background:white;
+            padding:10px;
+            border-radius:8px;
+        ">
+            <strong>Labor realizada</strong><br>
+            {{ registro.actividad.labor_realizada|default:"Sin labor registrada." }}
+        </div>
+
+        <div style="
+            margin-top:8px;
+            background:white;
+            padding:10px;
+            border-radius:8px;
+        ">
+            <strong>Accesorios utilizados</strong>
+
+            <ul style="margin:7px 0 0; padding-left:20px;">
+
+                {% for uso in registro.actividad.accesorios_utilizados.all %}
+
+                    <li>
+                        {% if uso.es_otro %}
+                            {{ uso.descripcion_otro }} (Otro)
+                        {% elif uso.accesorio %}
+                            {{ uso.accesorio.descripcion }}
+                        {% endif %}
+
+                        × {{ uso.cantidad }}
+
+                        {% if uso.observacion %}
+                            — {{ uso.observacion }}
+                        {% endif %}
+                    </li>
+
+                {% empty %}
+
+                    <li>Sin accesorios registrados.</li>
+
+                {% endfor %}
+
+            </ul>
+        </div>
+
+    </div>
+
+{% endif %}
 
             </article>
 
@@ -503,6 +657,24 @@
     </section>
 
 </div>
+<script>
+function toggleActividad(id) {
 
+    const panel = document.getElementById(id);
+
+    if (!panel) {
+        return;
+    }
+
+    if (
+        panel.style.display === "none" ||
+        panel.style.display === ""
+    ) {
+        panel.style.display = "block";
+    } else {
+        panel.style.display = "none";
+    }
+}
+</script>
 </body>
 </html>

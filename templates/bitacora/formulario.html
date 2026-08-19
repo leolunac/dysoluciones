@@ -2,292 +2,262 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ titulo_pagina }} | Bitácora Operativa</title>
-
-    <style>
-        *{
-            box-sizing:border-box;
-        }
-
-        body{
-            margin:0;
-            font-family:Arial, Helvetica, sans-serif;
-            background:#eef3f8;
-            color:#1f2937;
-        }
-
-        .container{
-            max-width:1000px;
-            margin:0 auto;
-            padding:24px;
-        }
-
-        .header{
-            background:linear-gradient(135deg,#073b6f,#0b5fa5);
-            color:white;
-            border-radius:18px;
-            padding:22px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            margin-bottom:20px;
-        }
-
-        .header h1{
-            margin:0;
-        }
-
-        .header p{
-            margin:6px 0 0;
-            opacity:.9;
-        }
-
-        .btn{
-            display:inline-block;
-            text-decoration:none;
-            padding:11px 16px;
-            border:none;
-            border-radius:9px;
-            cursor:pointer;
-            font-weight:bold;
-            font-size:14px;
-        }
-
-        .btn-light{
-            background:white;
-            color:#073b6f;
-        }
-
-        .btn-primary{
-            background:#073b6f;
-            color:white;
-        }
-
-        .form-card{
-            background:white;
-            border-radius:16px;
-            padding:22px;
-            box-shadow:0 4px 14px rgba(0,0,0,.08);
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns:repeat(2,1fr);
-            gap:16px;
-        }
-
-        .field{
-            margin-bottom:16px;
-        }
-
-        .field.full{
-            grid-column:1/-1;
-        }
-
-        label{
-            display:block;
-            font-weight:bold;
-            margin-bottom:7px;
-            color:#334155;
-        }
-
-        input[type="text"],
-        input[type="datetime-local"],
-        select,
-        textarea{
-            width:100%;
-            padding:11px;
-            border:1px solid #cbd5e1;
-            border-radius:8px;
-            font:inherit;
-            background:white;
-        }
-
-        textarea{
-            resize:vertical;
-        }
-
-        .checkbox-row{
-            display:flex;
-            gap:9px;
-            align-items:center;
-            padding:10px 0;
-        }
-
-        .checkbox-row label{
-            margin:0;
-        }
-
-        .errors{
-            background:#fee2e2;
-            color:#991b1b;
-            padding:12px;
-            border-radius:8px;
-            margin-bottom:15px;
-        }
-
-        .actions{
-            margin-top:20px;
-            display:flex;
-            justify-content:flex-end;
-            gap:10px;
-        }
-
-        @media(max-width:760px){
-            .grid{
-                grid-template-columns:1fr;
-            }
-
-            .field.full{
-                grid-column:auto;
-            }
-
-            .header{
-                display:block;
-                text-align:center;
-            }
-
-            .header a{
-                margin-top:14px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ titulo_pagina }} | Bitácora Operativa</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef3f8;color:#1f2937}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.header{background:linear-gradient(135deg,#073b6f,#0b5fa5);color:white;border-radius:18px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
+.header h1{margin:0}.header p{margin:6px 0 0;opacity:.9}
+.btn{display:inline-block;text-decoration:none;padding:11px 16px;border:none;border-radius:9px;cursor:pointer;font-weight:bold;font-size:14px}
+.btn-light{background:white;color:#073b6f}.btn-primary{background:#073b6f;color:white}
+.form-card{background:white;border-radius:16px;padding:22px;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.section-title{margin:6px 0 18px;color:#073b6f;font-size:18px;border-bottom:1px solid #dbe4ee;padding-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.field{margin-bottom:16px}.field.full{grid-column:1/-1}
+label{display:block;font-weight:bold;margin-bottom:7px;color:#334155}
+input[type="text"],input[type="datetime-local"],select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:white}
+textarea{resize:vertical}
+.checkbox-row{display:flex;gap:9px;align-items:center;padding:10px 0}.checkbox-row label{margin:0}
+.errors{background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:15px}
+.actions{margin-top:20px;display:flex;justify-content:flex-end;gap:10px}
+.hint{display:block;color:#64748b;font-size:12px;margin-top:5px}
+.technical-summary{display:none;grid-column:1/-1;background:#f8fbff;border:1px solid #cfe0f1;border-left:5px solid #0b5fa5;border-radius:12px;padding:18px;margin-bottom:18px}
+.technical-summary h3{margin:0 0 14px;color:#073b6f}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.summary-item,.summary-box{background:white;border:1px solid #e2e8f0;border-radius:9px;padding:10px}
+.summary-item small{display:block;color:#64748b;font-weight:bold;margin-bottom:4px}
+.summary-box{margin-top:10px}.materials-list{margin:8px 0 0;padding-left:18px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.field.full,.technical-summary{grid-column:auto}.summary-grid{grid-template-columns:1fr 1fr}.header{display:block;text-align:center}.header a{margin-top:14px}}
+</style>
 </head>
-
 <body>
-
 <div class="container">
+<header class="header">
+<div>
+<h1>{{ titulo_pagina }}</h1>
+<p>Seguimiento del coordinador conectado con la actividad realizada por el técnico.</p>
+</div>
+<a href="{% url 'lista_bitacora' %}" class="btn btn-light">Volver a la bitácora</a>
+</header>
 
-    <header class="header">
-        <div>
-            <h1>{{ titulo_pagina }}</h1>
-            <p>Registre la información necesaria para asegurar el seguimiento.</p>
-        </div>
+<section class="form-card">
+{% if form.errors %}
+<div class="errors"><strong>Revise los campos indicados:</strong>{{ form.errors }}</div>
+{% endif %}
 
-        <a href="{% url 'lista_bitacora' %}" class="btn btn-light">
-            Volver a la bitácora
-        </a>
-    </header>
+<form method="post">
+{% csrf_token %}
 
-    <section class="form-card">
-
-        {% if form.errors %}
-            <div class="errors">
-                <strong>Revise los campos indicados:</strong>
-                {{ form.errors }}
-            </div>
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="grid">
-
-                <div class="field full">
-                    <label for="{{ form.titulo.id_for_label }}">
-                        Título
-                    </label>
-                    {{ form.titulo }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.tipo.id_for_label }}">
-                        Tipo
-                    </label>
-                    {{ form.tipo }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.prioridad.id_for_label }}">
-                        Prioridad
-                    </label>
-                    {{ form.prioridad }}
-                </div>
-
-                <div class="field full">
-                    <label for="{{ form.descripcion.id_for_label }}">
-                        Descripción
-                    </label>
-                    {{ form.descripcion }}
-                </div>
-
-                <div class="field full">
-                    <label for="{{ form.accion_pendiente.id_for_label }}">
-                        Acción pendiente
-                    </label>
-                    {{ form.accion_pendiente }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.cliente.id_for_label }}">
-                        Unidad o cliente
-                    </label>
-                    {{ form.cliente }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.tecnico.id_for_label }}">
-                        Técnico relacionado
-                    </label>
-                    {{ form.tecnico }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.servicio.id_for_label }}">
-                        Servicio relacionado
-                    </label>
-                    {{ form.servicio }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.responsable.id_for_label }}">
-                        Responsable
-                    </label>
-                    {{ form.responsable }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.estado.id_for_label }}">
-                        Estado
-                    </label>
-                    {{ form.estado }}
-                </div>
-
-                <div class="field">
-                    <label for="{{ form.fecha_compromiso.id_for_label }}">
-                        Fecha y hora del compromiso
-                    </label>
-                    {{ form.fecha_compromiso }}
-                </div>
-
-                <div class="field full checkbox-row">
-                    {{ form.visible_cliente }}
-
-                    <label for="{{ form.visible_cliente.id_for_label }}">
-                        Mostrar esta novedad en el portal del cliente
-                    </label>
-                </div>
-
-            </div>
-
-            <div class="actions">
-                <a href="{% url 'lista_bitacora' %}" class="btn btn-light">
-                    Cancelar
-                </a>
-
-                <button type="submit" class="btn btn-primary">
-                    Guardar novedad
-                </button>
-            </div>
-
-        </form>
-
-    </section>
-
+<h2 class="section-title">1. Seguimiento del coordinador</h2>
+<div class="grid">
+<div class="field full"><label for="{{ form.titulo.id_for_label }}">Título</label>{{ form.titulo }}</div>
+<div class="field"><label for="{{ form.tipo.id_for_label }}">Tipo</label>{{ form.tipo }}</div>
+<div class="field"><label for="{{ form.prioridad.id_for_label }}">Prioridad</label>{{ form.prioridad }}</div>
+<div class="field full"><label for="{{ form.descripcion.id_for_label }}">Descripción / seguimiento</label>{{ form.descripcion }}</div>
+<div class="field full"><label for="{{ form.accion_pendiente.id_for_label }}">Acción pendiente</label>{{ form.accion_pendiente }}</div>
 </div>
 
+<h2 class="section-title">2. Relación con la operación</h2>
+<div class="grid">
+<div class="field"><label for="{{ form.cliente.id_for_label }}">Unidad o cliente</label>{{ form.cliente }}</div>
+<div class="field"><label for="{{ form.servicio.id_for_label }}">Caso 7x24 relacionado</label>{{ form.servicio }}<small class="hint">Puede quedar vacío si no corresponde a un caso 7x24.</small></div>
+<div class="field"><label for="{{ form.actividad.id_for_label }}">Actividad técnica relacionada</label>{{ form.actividad }}<small class="hint">Seleccione una actividad para ver abajo lo que hizo el técnico.</small></div>
+<div class="field"><label for="{{ form.tecnico.id_for_label }}">Técnico relacionado</label>{{ form.tecnico }}<small class="hint">Se completa automáticamente al seleccionar una actividad.</small></div>
+
+<div id="resumen_actividad" class="technical-summary">
+<h3>Resumen de la actividad del técnico</h3>
+<div class="summary-grid">
+<div class="summary-item"><small>Técnico</small><span id="resumen_tecnico">—</span></div>
+<div class="summary-item"><small>Fecha</small><span id="resumen_fecha">—</span></div>
+<div class="summary-item"><small>Llegada</small><span id="resumen_llegada">—</span></div>
+<div class="summary-item"><small>Salida</small><span id="resumen_salida">—</span></div>
+<div class="summary-item"><small>Permanencia</small><span id="resumen_permanencia">—</span></div>
+<div class="summary-item"><small>Resultado</small><span id="resumen_resultado">—</span></div>
+</div>
+<div class="summary-box"><strong>Diagnóstico</strong><div id="resumen_diagnostico" style="margin-top:6px">—</div></div>
+<div class="summary-box"><strong>Labor realizada</strong><div id="resumen_labor" style="margin-top:6px">—</div></div>
+<div class="summary-box"><strong>Accesorios utilizados</strong><ul id="resumen_accesorios" class="materials-list"><li>Sin accesorios registrados.</li></ul></div>
+</div>
+</div>
+
+<h2 class="section-title">3. Control del compromiso</h2>
+<div class="grid">
+<div class="field"><label for="{{ form.responsable.id_for_label }}">Responsable</label>{{ form.responsable }}</div>
+<div class="field"><label for="{{ form.estado.id_for_label }}">Estado</label>{{ form.estado }}</div>
+<div class="field"><label for="{{ form.fecha_compromiso.id_for_label }}">Fecha y hora del compromiso</label>{{ form.fecha_compromiso }}</div>
+<div class="field full checkbox-row">{{ form.visible_cliente }}<label for="{{ form.visible_cliente.id_for_label }}">Mostrar esta novedad en el portal del cliente</label></div>
+</div>
+
+<div class="actions">
+<a href="{% url 'lista_bitacora' %}" class="btn btn-light">Cancelar</a>
+<button type="submit" class="btn btn-primary">Guardar novedad</button>
+</div>
+</form>
+</section>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const clienteSelect = document.getElementById("id_cliente");
+    const servicioSelect = document.getElementById("id_servicio");
+    const actividadSelect = document.getElementById("id_actividad");
+    const tecnicoSelect = document.getElementById("id_tecnico");
+    const resumen = document.getElementById("resumen_actividad");
+
+    function limpiarSelect(select, texto="---------") {
+        if (!select) return;
+        select.innerHTML="";
+        const op=document.createElement("option");
+        op.value="";
+        op.textContent=texto;
+        select.appendChild(op);
+    }
+
+    function ocultarResumen() {
+        if (resumen) resumen.style.display="none";
+    }
+
+    function cargarCasos(clienteId, seleccionado="") {
+        if (!servicioSelect) return;
+        limpiarSelect(servicioSelect);
+        if (!clienteId) return;
+
+        fetch("{% url 'casos_por_cliente' %}?cliente_id="+encodeURIComponent(clienteId))
+        .then(r => {
+            if (!r.ok) throw new Error("Error consultando casos");
+            return r.json();
+        })
+        .then(data => {
+            limpiarSelect(servicioSelect);
+            data.casos.forEach(caso => {
+                const op=document.createElement("option");
+                op.value=caso.id;
+                op.textContent=caso.texto;
+                if (String(caso.id)===String(seleccionado)) op.selected=true;
+                servicioSelect.appendChild(op);
+            });
+        })
+        .catch(e => console.error(e));
+    }
+
+    function cargarActividades(clienteId, servicioId="", seleccionada="") {
+        if (!actividadSelect) return;
+        limpiarSelect(actividadSelect);
+        ocultarResumen();
+        if (!clienteId) return;
+
+        let url="{% url 'actividades_por_cliente' %}?cliente_id="+encodeURIComponent(clienteId);
+        if (servicioId) url += "&servicio_id="+encodeURIComponent(servicioId);
+
+        fetch(url)
+        .then(r => {
+            if (!r.ok) throw new Error("Error consultando actividades");
+            return r.json();
+        })
+        .then(data => {
+            limpiarSelect(actividadSelect);
+            data.actividades.forEach(act => {
+                const op=document.createElement("option");
+                op.value=act.id;
+                op.textContent=act.texto;
+                if (String(act.id)===String(seleccionada)) op.selected=true;
+                actividadSelect.appendChild(op);
+            });
+            if (seleccionada) cargarDetalleActividad(seleccionada);
+        })
+        .catch(e => console.error(e));
+    }
+
+    function cargarDetalleActividad(id) {
+        if (!id) { ocultarResumen(); return; }
+
+        const base="{% url 'detalle_actividad' 0 %}";
+        const url=base.replace("/0/detalle/","/"+id+"/detalle/");
+
+        fetch(url)
+        .then(r => {
+            if (!r.ok) throw new Error("Error consultando detalle");
+            return r.json();
+        })
+        .then(data => {
+            const a=data.actividad;
+
+            document.getElementById("resumen_tecnico").textContent=a.tecnico || "—";
+            document.getElementById("resumen_fecha").textContent=a.fecha || "—";
+            document.getElementById("resumen_llegada").textContent=a.hora_llegada || "—";
+            document.getElementById("resumen_salida").textContent=a.hora_salida || "—";
+            document.getElementById("resumen_permanencia").textContent=a.permanencia || "—";
+            document.getElementById("resumen_resultado").textContent=a.resultado || "—";
+            document.getElementById("resumen_diagnostico").textContent=a.diagnostico || "Sin diagnóstico registrado.";
+            document.getElementById("resumen_labor").textContent=a.labor_realizada || "Sin labor registrada.";
+
+            const ul=document.getElementById("resumen_accesorios");
+            ul.innerHTML="";
+            if (a.accesorios && a.accesorios.length) {
+                a.accesorios.forEach(x => {
+                    const li=document.createElement("li");
+                    let t=x.descripcion+" × "+x.cantidad;
+                    if (x.es_otro) t += " (Otro)";
+                    if (x.observacion) t += " — "+x.observacion;
+                    li.textContent=t;
+                    ul.appendChild(li);
+                });
+            } else {
+                const li=document.createElement("li");
+                li.textContent="Sin accesorios registrados.";
+                ul.appendChild(li);
+            }
+
+            if (tecnicoSelect && a.tecnico_id) {
+                tecnicoSelect.value=String(a.tecnico_id);
+            }
+
+            resumen.style.display="block";
+        })
+        .catch(e => {
+            console.error(e);
+            ocultarResumen();
+        });
+    }
+
+    if (clienteSelect) {
+        clienteSelect.addEventListener("change", function () {
+            const clienteId=this.value;
+            limpiarSelect(servicioSelect);
+            limpiarSelect(actividadSelect);
+            ocultarResumen();
+            cargarCasos(clienteId);
+            cargarActividades(clienteId);
+        });
+    }
+
+    if (servicioSelect) {
+        servicioSelect.addEventListener("change", function () {
+            cargarActividades(
+                clienteSelect ? clienteSelect.value : "",
+                this.value
+            );
+        });
+    }
+
+    if (actividadSelect) {
+        actividadSelect.addEventListener("change", function () {
+            cargarDetalleActividad(this.value);
+        });
+    }
+
+    const clienteInicial=clienteSelect ? clienteSelect.value : "";
+    const servicioInicial=servicioSelect ? servicioSelect.value : "";
+    const actividadInicial=actividadSelect ? actividadSelect.value : "";
+
+    if (clienteInicial) {
+        cargarCasos(clienteInicial, servicioInicial);
+        cargarActividades(clienteInicial, servicioInicial, actividadInicial);
+    }
+});
+</script>
 </body>
 </html>

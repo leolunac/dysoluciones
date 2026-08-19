@@ -1,18 +1,24 @@
+from pathlib import Path
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render, get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponse
 from django.utils import timezone
 
 from .forms import (
     LiquidacionForm,
     DetalleLiquidacionForm,
     CatalogoPrecioForm,
+    CotizacionForm,
+    DatosComercialesCotizacionForm,
+    DetalleCotizacionForm,
 )
-
 from .models import (
     Liquidacion,
     CatalogoPrecio,
     DetalleLiquidacion,
+    Cotizacion,
+    DetalleCotizacion,
 )
 
 
@@ -27,7 +33,6 @@ GRUPO_GERENCIA = "GESTION_GERENCIA"
 
 
 def _pertenece(user, *grupos):
-    """Superusuario tiene acceso total; los demás según grupo."""
     return (
         user.is_superuser
         or user.groups.filter(name__in=grupos).exists()
@@ -63,7 +68,6 @@ def _puede_consultar(user):
 
 @login_required
 def panel_gestion_comercial(request):
-
     _exigir(
         request.user,
         GRUPO_AUXILIAR,
@@ -85,44 +89,17 @@ def panel_gestion_comercial(request):
     contexto = {
         "liquidaciones": liquidaciones,
         "total": liquidaciones.count(),
-
-        "revision": liquidaciones.filter(
-            estado="REVISION",
-        ).count(),
-
-        "devueltas": liquidaciones.filter(
-            estado="DEVUELTA",
-        ).count(),
-
-        "aprobadas": liquidaciones.filter(
-            estado="APROBADA",
-        ).count(),
-
+        "revision": liquidaciones.filter(estado="REVISION").count(),
+        "devueltas": liquidaciones.filter(estado="DEVUELTA").count(),
+        "aprobadas": liquidaciones.filter(estado="APROBADA").count(),
         "listas_facturar": liquidaciones.filter(
-            estado="LISTA_FACTURAR",
+            estado="LISTA_FACTURAR"
         ).count(),
-
-        "facturadas": liquidaciones.filter(
-            estado="FACTURADA",
-        ).count(),
-
-        # Permisos visuales del panel
-        "puede_elaborar": _puede_elaborar(
-            request.user
-        ),
-
-        "puede_revisar": _puede_revisar(
-            request.user
-        ),
-
-        "puede_facturar": _puede_facturar(
-            request.user
-        ),
-
-        "puede_consultar": _puede_consultar(
-            request.user
-        ),
-
+        "facturadas": liquidaciones.filter(estado="FACTURADA").count(),
+        "puede_elaborar": _puede_elaborar(request.user),
+        "puede_revisar": _puede_revisar(request.user),
+        "puede_facturar": _puede_facturar(request.user),
+        "puede_consultar": _puede_consultar(request.user),
         "puede_ver_consolidado": _pertenece(
             request.user,
             GRUPO_FACTURACION,
@@ -139,42 +116,33 @@ def panel_gestion_comercial(request):
 
 @login_required
 def nueva_liquidacion(request):
-
     _exigir(request.user, GRUPO_AUXILIAR)
 
     if request.method == "POST":
-
         form = LiquidacionForm(request.POST)
 
         if form.is_valid():
-
             liquidacion = form.save(commit=False)
-
             liquidacion.creado_por = request.user
             liquidacion.estado = "BORRADOR"
-
             liquidacion.save()
 
             return redirect(
                 "gestion_comercial:editar_liquidacion",
                 liquidacion_id=liquidacion.id,
             )
-
     else:
         form = LiquidacionForm()
 
     return render(
         request,
         "gestion_comercial/nueva_liquidacion.html",
-        {
-            "form": form,
-        },
+        {"form": form},
     )
 
 
 @login_required
 def editar_liquidacion(request, liquidacion_id):
-
     _exigir(
         request.user,
         GRUPO_AUXILIAR,
@@ -193,7 +161,6 @@ def editar_liquidacion(request, liquidacion_id):
     )
 
     if request.method == "POST":
-
         _exigir(request.user, GRUPO_AUXILIAR)
 
         if (
@@ -202,44 +169,28 @@ def editar_liquidacion(request, liquidacion_id):
         ):
             raise PermissionDenied
 
-        if liquidacion.estado not in [
-            "BORRADOR",
-            "DEVUELTA",
-        ]:
+        if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
             raise PermissionDenied
 
-        form_detalle = DetalleLiquidacionForm(
-            request.POST,
-        )
+        form_detalle = DetalleLiquidacionForm(request.POST)
 
         if form_detalle.is_valid():
-
-            detalle = form_detalle.save(
-                commit=False,
-            )
-
+            detalle = form_detalle.save(commit=False)
             detalle.liquidacion = liquidacion
 
-            if (
-                detalle.tipo == "MATERIAL"
-                and detalle.catalogo
-            ):
-                detalle.descripcion = (
-                    detalle.catalogo.descripcion
-                )
+            if detalle.tipo == "MATERIAL" and detalle.catalogo:
+                detalle.descripcion = detalle.catalogo.descripcion
 
             if detalle.tipo != "MATERIAL":
                 detalle.catalogo = None
 
             detalle.save()
-
             liquidacion.recalcular_totales()
 
             return redirect(
                 "gestion_comercial:editar_liquidacion",
                 liquidacion_id=liquidacion.id,
             )
-
     else:
         form_detalle = DetalleLiquidacionForm()
 
@@ -275,7 +226,6 @@ def editar_liquidacion(request, liquidacion_id):
 
 @login_required
 def crear_accesorio(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_AUXILIAR)
 
     liquidacion = get_object_or_404(
@@ -289,10 +239,7 @@ def crear_accesorio(request, liquidacion_id):
     ):
         raise PermissionDenied
 
-    if liquidacion.estado not in [
-        "BORRADOR",
-        "DEVUELTA",
-    ]:
+    if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
         raise PermissionDenied
 
     if request.method != "POST":
@@ -304,7 +251,6 @@ def crear_accesorio(request, liquidacion_id):
     form_catalogo = CatalogoPrecioForm(request.POST)
 
     if form_catalogo.is_valid():
-
         accesorio = form_catalogo.save(commit=False)
         accesorio.activo = True
         accesorio.save()
@@ -315,14 +261,12 @@ def crear_accesorio(request, liquidacion_id):
         )
 
     form_detalle = DetalleLiquidacionForm()
-
     detalles = (
         liquidacion.detalles
         .select_related("catalogo")
         .all()
         .order_by("id")
     )
-
     catalogos = (
         CatalogoPrecio.objects
         .filter(activo=True)
@@ -349,7 +293,6 @@ def crear_accesorio(request, liquidacion_id):
 
 @login_required
 def enviar_revision(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_AUXILIAR)
 
     liquidacion = get_object_or_404(
@@ -363,22 +306,11 @@ def enviar_revision(request, liquidacion_id):
     ):
         raise PermissionDenied
 
-    if liquidacion.estado not in [
-        "BORRADOR",
-        "DEVUELTA",
-    ]:
+    if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
         raise PermissionDenied
 
-    if request.method == "POST":
-
-        if not liquidacion.detalles.exists():
-            return redirect(
-                "gestion_comercial:editar_liquidacion",
-                liquidacion_id=liquidacion.id,
-            )
-
+    if request.method == "POST" and liquidacion.detalles.exists():
         liquidacion.estado = "REVISION"
-
         liquidacion.save(
             update_fields=[
                 "estado",
@@ -386,21 +318,17 @@ def enviar_revision(request, liquidacion_id):
             ]
         )
 
-    return redirect(
-        "gestion_comercial:panel",
-    )
+    return redirect("gestion_comercial:panel")
 
 
 @login_required
 def eliminar_detalle(request, detalle_id):
-
     _exigir(request.user, GRUPO_AUXILIAR)
 
     detalle = get_object_or_404(
         DetalleLiquidacion,
         id=detalle_id,
     )
-
     liquidacion = detalle.liquidacion
 
     if (
@@ -409,10 +337,7 @@ def eliminar_detalle(request, detalle_id):
     ):
         raise PermissionDenied
 
-    if liquidacion.estado not in [
-        "BORRADOR",
-        "DEVUELTA",
-    ]:
+    if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
         return redirect(
             "gestion_comercial:editar_liquidacion",
             liquidacion_id=liquidacion.id,
@@ -429,14 +354,12 @@ def eliminar_detalle(request, detalle_id):
 
 @login_required
 def editar_detalle(request, detalle_id):
-
     _exigir(request.user, GRUPO_AUXILIAR)
 
     detalle = get_object_or_404(
         DetalleLiquidacion,
         id=detalle_id,
     )
-
     liquidacion = detalle.liquidacion
 
     if (
@@ -445,27 +368,20 @@ def editar_detalle(request, detalle_id):
     ):
         raise PermissionDenied
 
-    if liquidacion.estado not in [
-        "BORRADOR",
-        "DEVUELTA",
-    ]:
+    if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
         return redirect(
             "gestion_comercial:editar_liquidacion",
             liquidacion_id=liquidacion.id,
         )
 
     if request.method == "POST":
-
         form = DetalleLiquidacionForm(
             request.POST,
             instance=detalle,
         )
 
         if form.is_valid():
-
-            detalle_editado = form.save(
-                commit=False
-            )
+            detalle_editado = form.save(commit=False)
 
             if (
                 detalle_editado.tipo == "MATERIAL"
@@ -479,18 +395,14 @@ def editar_detalle(request, detalle_id):
                 detalle_editado.catalogo = None
 
             detalle_editado.save()
-
             liquidacion.recalcular_totales()
 
             return redirect(
                 "gestion_comercial:editar_liquidacion",
                 liquidacion_id=liquidacion.id,
             )
-
     else:
-        form = DetalleLiquidacionForm(
-            instance=detalle,
-        )
+        form = DetalleLiquidacionForm(instance=detalle)
 
     catalogos = (
         CatalogoPrecio.objects
@@ -512,7 +424,6 @@ def editar_detalle(request, detalle_id):
 
 @login_required
 def aprobar_liquidacion(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_COORDINADOR)
 
     liquidacion = get_object_or_404(
@@ -533,11 +444,9 @@ def aprobar_liquidacion(request, liquidacion_id):
         )
 
     if request.method == "POST":
-
         liquidacion.estado = "APROBADA"
         liquidacion.revisado_por = request.user
         liquidacion.fecha_revision = timezone.now()
-
         liquidacion.save(
             update_fields=[
                 "estado",
@@ -555,7 +464,6 @@ def aprobar_liquidacion(request, liquidacion_id):
 
 @login_required
 def devolver_liquidacion(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_COORDINADOR)
 
     liquidacion = get_object_or_404(
@@ -576,7 +484,6 @@ def devolver_liquidacion(request, liquidacion_id):
         )
 
     if request.method == "POST":
-
         observacion = request.POST.get(
             "observaciones_revision",
             ""
@@ -592,7 +499,6 @@ def devolver_liquidacion(request, liquidacion_id):
         liquidacion.revisado_por = request.user
         liquidacion.fecha_revision = timezone.now()
         liquidacion.observaciones_revision = observacion
-
         liquidacion.save(
             update_fields=[
                 "estado",
@@ -607,9 +513,10 @@ def devolver_liquidacion(request, liquidacion_id):
         "gestion_comercial:editar_liquidacion",
         liquidacion_id=liquidacion.id,
     )
+
+
 @login_required
 def enviar_facturacion(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_COORDINADOR)
 
     liquidacion = get_object_or_404(
@@ -617,8 +524,6 @@ def enviar_facturacion(request, liquidacion_id):
         id=liquidacion_id,
     )
 
-    # Solo una liquidación APROBADA puede
-    # enviarse al área de facturación.
     if liquidacion.estado != "APROBADA":
         return redirect(
             "gestion_comercial:editar_liquidacion",
@@ -626,9 +531,7 @@ def enviar_facturacion(request, liquidacion_id):
         )
 
     if request.method == "POST":
-
         liquidacion.estado = "LISTA_FACTURAR"
-
         liquidacion.save(
             update_fields=[
                 "estado",
@@ -640,9 +543,10 @@ def enviar_facturacion(request, liquidacion_id):
         "gestion_comercial:editar_liquidacion",
         liquidacion_id=liquidacion.id,
     )
+
+
 @login_required
 def marcar_facturada(request, liquidacion_id):
-
     _exigir(request.user, GRUPO_FACTURACION)
 
     liquidacion = get_object_or_404(
@@ -650,9 +554,6 @@ def marcar_facturada(request, liquidacion_id):
         id=liquidacion_id,
     )
 
-    # Facturación puede registrar una liquidación
-    # aprobada directamente o una que ya estuviera
-    # en el estado intermedio LISTA_FACTURAR.
     if liquidacion.estado not in [
         "APROBADA",
         "LISTA_FACTURAR",
@@ -663,7 +564,6 @@ def marcar_facturada(request, liquidacion_id):
         )
 
     if request.method == "POST":
-
         numero_factura = request.POST.get(
             "numero_factura",
             ""
@@ -678,7 +578,6 @@ def marcar_facturada(request, liquidacion_id):
         liquidacion.numero_factura = numero_factura
         liquidacion.fecha_facturacion = timezone.now()
         liquidacion.estado = "FACTURADA"
-
         liquidacion.save(
             update_fields=[
                 "numero_factura",
@@ -692,9 +591,10 @@ def marcar_facturada(request, liquidacion_id):
         "gestion_comercial:editar_liquidacion",
         liquidacion_id=liquidacion.id,
     )
+
+
 @login_required
 def consolidado_facturacion(request):
-
     _exigir(
         request.user,
         GRUPO_FACTURACION,
@@ -721,20 +621,16 @@ def consolidado_facturacion(request):
         facturadas = facturadas.filter(
             fecha_facturacion__date__gte=fecha_desde
         )
-
     if fecha_hasta:
         facturadas = facturadas.filter(
             fecha_facturacion__date__lte=fecha_hasta
         )
-
     if cliente_id:
         facturadas = facturadas.filter(
             cliente_id=cliente_id
         )
 
-    facturadas = facturadas.order_by(
-        "-fecha_facturacion"
-    )
+    facturadas = facturadas.order_by("-fecha_facturacion")
 
     totales = facturadas.aggregate(
         total_sin_iva=Sum("valor_sin_iva"),
@@ -766,9 +662,9 @@ def consolidado_facturacion(request):
         contexto,
     )
 
+
 @login_required
 def exportar_facturacion_excel(request):
-
     _exigir(
         request.user,
         GRUPO_FACTURACION,
@@ -796,12 +692,10 @@ def exportar_facturacion_excel(request):
         facturadas = facturadas.filter(
             fecha_facturacion__date__gte=fecha_desde
         )
-
     if fecha_hasta:
         facturadas = facturadas.filter(
             fecha_facturacion__date__lte=fecha_hasta
         )
-
     if cliente_id:
         facturadas = facturadas.filter(
             cliente_id=cliente_id
@@ -860,8 +754,11 @@ def exportar_facturacion_excel(request):
         ws.cell(
             fila,
             2,
-            liquidacion.fecha_facturacion.replace(tzinfo=None)
-            if liquidacion.fecha_facturacion else None,
+            (
+                liquidacion.fecha_facturacion.replace(tzinfo=None)
+                if liquidacion.fecha_facturacion
+                else None
+            ),
         )
         ws.cell(fila, 3, liquidacion.cliente.nombre)
         ws.cell(fila, 4, liquidacion.descripcion or "")
@@ -915,3 +812,811 @@ def exportar_facturacion_excel(request):
     )
 
     return response
+
+
+# =========================================================
+# COTIZACIONES
+# =========================================================
+
+@login_required
+def lista_cotizaciones(request):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    cotizaciones = (
+        Cotizacion.objects
+        .select_related(
+            "cliente",
+            "elaborado_por",
+            "servicio",
+            "actividad",
+            "bitacora",
+        )
+        .all()
+    )
+
+    return render(
+        request,
+        "gestion_comercial/cotizaciones/lista.html",
+        {
+            "cotizaciones": cotizaciones,
+        },
+    )
+
+
+@login_required
+def nueva_cotizacion(request):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    if request.method == "POST":
+        form = CotizacionForm(request.POST)
+
+        if form.is_valid():
+            cotizacion = form.save(commit=False)
+            cotizacion.elaborado_por = request.user
+            cotizacion.estado = "BORRADOR"
+            cotizacion.save()
+
+            return redirect(
+                "gestion_comercial:editar_cotizacion",
+                cotizacion_id=cotizacion.id,
+            )
+    else:
+        form = CotizacionForm()
+
+    return render(
+        request,
+        "gestion_comercial/cotizaciones/nueva.html",
+        {
+            "form": form,
+        },
+    )
+
+
+@login_required
+def editar_cotizacion(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion.objects.select_related(
+            "cliente",
+            "elaborado_por",
+        ),
+        id=cotizacion_id,
+    )
+
+    form_comercial = DatosComercialesCotizacionForm(instance=cotizacion)
+    form_detalle = DetalleCotizacionForm()
+
+    if request.method == "POST":
+        accion = request.POST.get("accion", "agregar_detalle")
+
+        if accion == "guardar_comercial":
+            form_comercial = DatosComercialesCotizacionForm(
+                request.POST,
+                instance=cotizacion,
+            )
+
+            if form_comercial.is_valid():
+                form_comercial.save()
+                cotizacion.recalcular_totales()
+
+                return redirect(
+                    "gestion_comercial:editar_cotizacion",
+                    cotizacion_id=cotizacion.id,
+                )
+
+        elif accion == "agregar_detalle":
+            form_detalle = DetalleCotizacionForm(request.POST)
+
+            if form_detalle.is_valid():
+                detalle = form_detalle.save(commit=False)
+                detalle.cotizacion = cotizacion
+
+                if detalle.tipo == "MATERIAL" and detalle.catalogo:
+                    detalle.descripcion = detalle.catalogo.descripcion
+
+                if detalle.tipo != "MATERIAL":
+                    detalle.catalogo = None
+
+                detalle.save()
+                cotizacion.recalcular_totales()
+
+                return redirect(
+                    "gestion_comercial:editar_cotizacion",
+                    cotizacion_id=cotizacion.id,
+                )
+
+    detalles = (
+        cotizacion.detalles
+        .select_related("catalogo")
+        .all()
+        .order_by("id")
+    )
+
+    catalogos = (
+        CatalogoPrecio.objects
+        .filter(activo=True)
+        .order_by("descripcion")
+    )
+
+    return render(
+        request,
+        "gestion_comercial/cotizaciones/editar.html",
+        {
+            "cotizacion": cotizacion,
+            "form_comercial": form_comercial,
+            "form_detalle": form_detalle,
+            "detalles": detalles,
+            "catalogos": catalogos,
+        },
+    )
+
+
+
+
+@login_required
+def finalizar_elaboracion_cotizacion(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion,
+        id=cotizacion_id,
+    )
+
+    if request.method == "POST":
+        if cotizacion.estado == "BORRADOR" and cotizacion.detalles.exists():
+            cotizacion.estado = "ELABORADA"
+
+            if not cotizacion.fecha_emision:
+                cotizacion.fecha_emision = timezone.localdate()
+
+            cotizacion.save(
+                update_fields=[
+                    "estado",
+                    "fecha_emision",
+                    "fecha_actualizacion",
+                ]
+            )
+
+    return redirect(
+        "gestion_comercial:editar_cotizacion",
+        cotizacion_id=cotizacion.id,
+    )
+
+
+
+@login_required
+def generar_pdf_cotizacion(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    from io import BytesIO
+
+    from django.conf import settings
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_RIGHT
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+        Image,
+        PageBreak,
+        KeepTogether,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion.objects.select_related(
+            "cliente",
+            "elaborado_por",
+        ),
+        id=cotizacion_id,
+    )
+
+    if cotizacion.estado == "BORRADOR":
+        return redirect(
+            "gestion_comercial:editar_cotizacion",
+            cotizacion_id=cotizacion.id,
+        )
+
+    buffer = BytesIO()
+
+    nombre = (
+        cotizacion.numero_cotizacion
+        or f"COT-{cotizacion.id}"
+    )
+
+    azul = colors.HexColor("#1F4E78")
+    azul_claro = colors.HexColor("#5B9BD5")
+    gris = colors.HexColor("#4B5563")
+    gris_borde = colors.HexColor("#B8C4CE")
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=15 * mm,
+        leftMargin=15 * mm,
+        topMargin=13 * mm,
+        bottomMargin=15 * mm,
+        title=nombre,
+        author="D&S SOLUCIONES EN BOMBEO S.A.S.",
+    )
+
+    styles = getSampleStyleSheet()
+
+    normal = ParagraphStyle(
+        "NormalPropuesta",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9.4,
+        leading=12.8,
+        textColor=colors.HexColor("#1F2937"),
+        alignment=TA_JUSTIFY,
+    )
+
+    normal_left = ParagraphStyle(
+        "NormalLeft",
+        parent=normal,
+        alignment=0,
+    )
+
+    small = ParagraphStyle(
+        "Small",
+        parent=normal,
+        fontSize=8.5,
+        leading=11,
+    )
+
+    small_right = ParagraphStyle(
+        "SmallRight",
+        parent=small,
+        alignment=TA_RIGHT,
+    )
+
+    section = ParagraphStyle(
+        "Section",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=10.8,
+        leading=13,
+        textColor=colors.black,
+        spaceBefore=8,
+        spaceAfter=5,
+    )
+
+    title_right = ParagraphStyle(
+        "TitleRight",
+        parent=styles["Heading1"],
+        fontName="Helvetica-Bold",
+        fontSize=15.5,
+        leading=17,
+        textColor=azul,
+        alignment=TA_RIGHT,
+        spaceAfter=2,
+    )
+
+    number_right = ParagraphStyle(
+        "NumberRight",
+        parent=normal,
+        fontName="Helvetica-Bold",
+        fontSize=10.5,
+        textColor=azul,
+        alignment=TA_RIGHT,
+    )
+
+    footer_style = ParagraphStyle(
+        "Footer",
+        parent=small,
+        alignment=TA_CENTER,
+        textColor=gris,
+    )
+
+    meses = {
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre",
+    }
+
+    fecha = cotizacion.fecha_emision or cotizacion.fecha_creacion.date()
+    fecha_larga = (
+        f"{fecha.day} de {meses[fecha.month]} de {fecha.year}"
+    )
+
+    def money(value):
+        return f"$ {value:,.0f}".replace(",", ".")
+
+    def limpiar_lineas(texto):
+        if not texto:
+            return []
+        return [
+            linea.strip(" •-\t")
+            for linea in str(texto).splitlines()
+            if linea.strip()
+        ]
+
+    story = []
+
+    # =====================================================
+    # ENCABEZADO CORPORATIVO
+    # =====================================================
+
+    logo_path = (
+        Path(settings.BASE_DIR)
+        / "static"
+        / "img"
+        / "logo_dys.png"
+    )
+
+    logo = ""
+    if logo_path.exists():
+        logo = Image(
+            str(logo_path),
+            width=44 * mm,
+            height=21 * mm,
+            kind="proportional",
+        )
+
+    encabezado_derecha = [
+        Paragraph("PROPUESTA COMERCIAL", title_right),
+        Paragraph(nombre, number_right),
+    ]
+
+    header = Table(
+        [[logo, encabezado_derecha]],
+        colWidths=[84 * mm, 96 * mm],
+    )
+    header.setStyle(
+        TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LINEBELOW", (0, 0), (-1, -1), 2.2, azul),
+        ])
+    )
+    story.append(header)
+    story.append(Spacer(1, 7))
+
+    # =====================================================
+    # DESTINATARIO
+    # =====================================================
+
+    story.append(
+        Paragraph(
+            f"Envigado, {fecha_larga}",
+            normal_left,
+        )
+    )
+    story.append(Spacer(1, 6))
+
+    contacto = (
+        getattr(cotizacion.cliente, "administrador", "")
+        or getattr(cotizacion.cliente, "contacto", "")
+        or ""
+    )
+    telefono = (
+        getattr(cotizacion.cliente, "telefono", "")
+        or getattr(cotizacion.cliente, "telefono_porteria", "")
+        or ""
+    )
+
+    if contacto and str(contacto).strip().lower() not in {
+        "pendiente",
+        "por definir",
+        "n/a",
+        "na",
+        "-",
+    }:
+        story.append(
+            Paragraph(f"<b>Contacto:</b> {contacto}", normal_left)
+        )
+
+    story.append(
+        Paragraph(
+            f"<b>{cotizacion.cliente.nombre}</b>",
+            normal_left,
+        )
+    )
+
+    if telefono:
+        story.append(
+            Paragraph(f"<b>Tel:</b> {telefono}", normal_left)
+        )
+
+    story.append(
+        Paragraph(
+            f"<b>Asunto:</b> {cotizacion.asunto}",
+            normal_left,
+        )
+    )
+    story.append(Spacer(1, 6))
+
+    story.append(Paragraph("Respetados Señores:", normal_left))
+    story.append(Spacer(1, 6))
+
+    introduccion = (
+        "En atención a su gentil invitación, adjunto remitimos la "
+        "propuesta técnica y económica relacionada con el desarrollo "
+        "de las actividades descritas en el asunto. Quedamos dispuestos "
+        "a aclarar y/o complementar la información suministrada."
+    )
+    story.append(Paragraph(introduccion, normal))
+    story.append(Spacer(1, 6))
+
+    # =====================================================
+    # 1. OBJETO
+    # =====================================================
+
+    story.append(Paragraph("1. OBJETO DE LA PROPUESTA", section))
+
+    objeto = (
+        cotizacion.descripcion.strip()
+        if cotizacion.descripcion
+        else cotizacion.asunto
+    )
+
+    story.append(
+        Paragraph(
+            str(objeto).replace("\n", "<br/>"),
+            normal,
+        )
+    )
+    story.append(Spacer(1, 6))
+
+    # =====================================================
+    # 2. ALCANCE
+    # =====================================================
+
+    story.append(Paragraph("2. ALCANCE TÉCNICO.", section))
+
+    actividades = limpiar_lineas(cotizacion.alcance_tecnico)
+
+    if actividades:
+        for actividad in actividades:
+            story.append(
+                Paragraph(
+                    f"• {actividad}",
+                    normal_left,
+                )
+            )
+    else:
+        story.append(
+            Paragraph(
+                "Alcance técnico pendiente por definir.",
+                normal_left,
+            )
+        )
+
+    story.append(Spacer(1, 5))
+
+    # =====================================================
+    # 3. OFERTA ECONÓMICA
+    # =====================================================
+
+    story.append(Paragraph("3. OFERTA ECONÓMICA.", section))
+
+    concepto = (
+        cotizacion.concepto_comercial.strip()
+        if cotizacion.concepto_comercial
+        else cotizacion.asunto
+    )
+
+    oferta = [
+        [
+            Paragraph("<b>DESCRIPCIÓN</b>", small),
+            Paragraph("<b>CANTIDAD</b>", small),
+            Paragraph("<b>VALOR<br/>UNITARIO</b>", small),
+            Paragraph("<b>VALOR<br/>TOTAL</b>", small),
+        ],
+        [
+            Paragraph(
+                str(concepto).replace("\n", "<br/>"),
+                normal_left,
+            ),
+            Paragraph("1", small),
+            Paragraph(
+                money(cotizacion.valor_sin_iva),
+                small_right,
+            ),
+            Paragraph(
+                money(cotizacion.valor_sin_iva),
+                small_right,
+            ),
+        ],
+    ]
+
+    tabla_oferta = Table(
+        oferta,
+        colWidths=[92 * mm, 22 * mm, 33 * mm, 33 * mm],
+    )
+    tabla_oferta.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), azul_claro),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+            ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("GRID", (0, 0), (-1, -1), 0.75, colors.black),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ])
+    )
+    story.append(tabla_oferta)
+
+    resumen = [
+        [
+            "",
+            Paragraph("<b>SUBTOTAL</b>", small_right),
+            Paragraph(
+                f"<b>{money(cotizacion.valor_sin_iva)}</b>",
+                small_right,
+            ),
+        ],
+        [
+            "",
+            Paragraph(
+                f"<b>IVA ({cotizacion.porcentaje_iva:.0f}%)</b>",
+                small_right,
+            ),
+            Paragraph(
+                f"<b>{money(cotizacion.valor_iva)}</b>",
+                small_right,
+            ),
+        ],
+        [
+            "",
+            Paragraph("<b>TOTAL</b>", small_right),
+            Paragraph(
+                f"<b>{money(cotizacion.valor_total)}</b>",
+                small_right,
+            ),
+        ],
+    ]
+
+    tabla_resumen = Table(
+        resumen,
+        colWidths=[92 * mm, 55 * mm, 33 * mm],
+    )
+    tabla_resumen.setStyle(
+        TableStyle([
+            ("SPAN", (0, 0), (0, -1)),
+            ("GRID", (1, 0), (-1, -1), 0.75, colors.black),
+            ("BACKGROUND", (1, -1), (-1, -1), azul_claro),
+            ("TOPPADDING", (1, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (1, 0), (-1, -1), 4),
+        ])
+    )
+    story.append(tabla_resumen)
+    story.append(Spacer(1, 8))
+
+    # =====================================================
+    # 4. CONSIDERACIONES
+    # =====================================================
+
+    story.append(
+        Paragraph(
+            "4. CONSIDERACIONES A TENER EN CUENTA EN ESTA OFERTA ECONÓMICA.",
+            section,
+        )
+    )
+
+    consideraciones = limpiar_lineas(cotizacion.observaciones)
+
+    for item in consideraciones:
+        story.append(
+            Paragraph(
+                f"• {item}",
+                normal_left,
+            )
+        )
+
+    story.append(
+        Paragraph(
+            f"• La propuesta tiene validez por "
+            f"{cotizacion.vigencia_dias} días calendario.",
+            normal_left,
+        )
+    )
+
+    if cotizacion.forma_pago:
+        story.append(
+            Paragraph(
+                f"• <b>Forma de pago:</b> "
+                f"{str(cotizacion.forma_pago).replace(chr(10), '<br/>')}",
+                normal_left,
+            )
+        )
+
+    story.append(Spacer(1, 12))
+
+    # =====================================================
+    # CIERRE
+    # =====================================================
+
+    story.append(Paragraph("Cordialmente,", normal_left))
+    story.append(Spacer(1, 18))
+
+    story.append(
+        Paragraph(
+            "<b>D&amp;S SOLUCIONES EN BOMBEO S.A.S.</b>",
+            normal_left,
+        )
+    )
+
+    story.append(Spacer(1, 10))
+    story.append(
+        Paragraph(
+            f"D&amp;S SOLUCIONES EN BOMBEO S.A.S. · {nombre}",
+            footer_style,
+        )
+    )
+
+    doc.build(story)
+
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        f'inline; filename="{nombre}.pdf"'
+    )
+
+    return response
+
+
+@login_required
+def marcar_cotizacion_enviada(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion,
+        id=cotizacion_id,
+    )
+
+    if request.method == "POST" and cotizacion.estado == "ELABORADA":
+        cotizacion.estado = "ENVIADA"
+        cotizacion.fecha_envio = timezone.now()
+        cotizacion.save(
+            update_fields=[
+                "estado",
+                "fecha_envio",
+                "fecha_actualizacion",
+            ]
+        )
+
+    return redirect(
+        "gestion_comercial:editar_cotizacion",
+        cotizacion_id=cotizacion.id,
+    )
+
+
+@login_required
+def aprobar_cotizacion(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_COORDINADOR,
+        GRUPO_GERENCIA,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion,
+        id=cotizacion_id,
+    )
+
+    if request.method == "POST" and cotizacion.estado == "ENVIADA":
+        cotizacion.estado = "APROBADA"
+        cotizacion.fecha_respuesta = timezone.now()
+        cotizacion.save(
+            update_fields=[
+                "estado",
+                "fecha_respuesta",
+                "fecha_actualizacion",
+            ]
+        )
+
+    return redirect(
+        "gestion_comercial:editar_cotizacion",
+        cotizacion_id=cotizacion.id,
+    )
+
+
+@login_required
+def rechazar_cotizacion(request, cotizacion_id):
+    _exigir(
+        request.user,
+        GRUPO_COORDINADOR,
+        GRUPO_GERENCIA,
+    )
+
+    cotizacion = get_object_or_404(
+        Cotizacion,
+        id=cotizacion_id,
+    )
+
+    if request.method == "POST" and cotizacion.estado == "ENVIADA":
+        cotizacion.estado = "RECHAZADA"
+        cotizacion.fecha_respuesta = timezone.now()
+        cotizacion.save(
+            update_fields=[
+                "estado",
+                "fecha_respuesta",
+                "fecha_actualizacion",
+            ]
+        )
+
+    return redirect(
+        "gestion_comercial:editar_cotizacion",
+        cotizacion_id=cotizacion.id,
+    )
+
+
+@login_required
+def eliminar_detalle_cotizacion(request, detalle_id):
+    _exigir(
+        request.user,
+        GRUPO_AUXILIAR,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    detalle = get_object_or_404(
+        DetalleCotizacion,
+        id=detalle_id,
+    )
+    cotizacion = detalle.cotizacion
+
+    if request.method == "POST":
+        detalle.delete()
+
+    return redirect(
+        "gestion_comercial:editar_cotizacion",
+        cotizacion_id=cotizacion.id,
+    )

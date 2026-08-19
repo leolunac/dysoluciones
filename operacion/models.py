@@ -634,7 +634,15 @@ class BitacoraOperativa(models.Model):
         blank=True,
         related_name="bitacoras",
     )
-
+    actividad = models.ForeignKey(
+        "ActividadTecnico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bitacoras",
+        verbose_name="Actividad técnica relacionada",
+        help_text="Actividad realizada por el técnico relacionada con esta novedad.",
+    )
     tecnico = models.ForeignKey(
         Tecnico,
         on_delete=models.SET_NULL,
@@ -731,3 +739,412 @@ class BitacoraOperativa(models.Model):
     def __str__(self):
         cliente = self.cliente.nombre if self.cliente else "Sin unidad"
         return f"{self.titulo} - {cliente}"
+
+# =========================================================
+# CATÁLOGO MAESTRO DE ACCESORIOS
+# =========================================================
+
+class Accesorio(models.Model):
+
+    codigo = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+
+    descripcion = models.CharField(
+        max_length=250,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["descripcion"]
+        verbose_name = "Accesorio"
+        verbose_name_plural = "Accesorios"
+
+    def __str__(self):
+        # Al usuario solo le mostramos la descripción.
+        return self.descripcion
+    # =========================================================
+# REMISIONES DE ACCESORIOS A TÉCNICOS
+# =========================================================
+
+class RemisionTecnico(models.Model):
+
+    ESTADO = [
+        ("PENDIENTE", "Pendiente de conciliar"),
+        ("CONCILIADA", "Conciliada"),
+    ]
+
+    numero_remision = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Número de remisión física",
+    )
+
+    fecha = models.DateTimeField(
+        default=timezone.now,
+    )
+
+    tecnico = models.ForeignKey(
+        Tecnico,
+        on_delete=models.PROTECT,
+        related_name="remisiones",
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name="remisiones_tecnicas",
+    )
+
+    servicio = models.ForeignKey(
+        Emergencia,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="remisiones",
+        help_text="Caso 7x24 relacionado, si existe.",
+    )
+
+    entregado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="remisiones_entregadas",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO,
+        default="PENDIENTE",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-fecha", "-id"]
+        verbose_name = "Remisión de técnico"
+        verbose_name_plural = "Remisiones de técnicos"
+
+    @property
+    def esta_conciliada(self):
+        detalles = self.detalles.all()
+
+        if not detalles.exists():
+            return False
+
+        return all(detalle.esta_conciliado for detalle in detalles)
+
+    def __str__(self):
+        return (
+            f"Remisión {self.numero_remision} - "
+            f"{self.tecnico.nombre} - {self.cliente.nombre}"
+        )
+
+
+class DetalleRemision(models.Model):
+
+    remision = models.ForeignKey(
+        RemisionTecnico,
+        on_delete=models.CASCADE,
+        related_name="detalles",
+    )
+
+    codigo_accesorio = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    descripcion_accesorio = models.CharField(
+        max_length=250,
+    )
+
+    cantidad_entregada = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    cantidad_utilizada = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    cantidad_devuelta = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    @property
+    def cantidad_pendiente(self):
+        return (
+            self.cantidad_entregada
+            - self.cantidad_utilizada
+            - self.cantidad_devuelta
+        )
+
+    @property
+    def esta_conciliado(self):
+        return self.cantidad_pendiente == Decimal("0.00")
+
+    def __str__(self):
+        return (
+            f"{self.descripcion_accesorio} - "
+            f"Remisión {self.remision.numero_remision}"
+        )
+   # =========================================================
+# ACTIVIDADES / VISITAS DE TÉCNICOS
+# =========================================================
+
+class ActividadTecnico(models.Model):
+
+    TIPO_ACTIVIDAD = [
+        ("CORRECTIVO", "Correctivo"),
+        ("DIAGNOSTICO", "Visita de diagnóstico"),
+        ("REGRESO", "Regreso a unidad"),
+        ("GARANTIA", "Garantía"),
+        ("PREVENTIVO", "Mantenimiento preventivo"),
+        ("INSTALACION", "Instalación"),
+        ("OTRO", "Otro"),
+    ]
+
+    RESULTADO = [
+        ("OPERATIVO", "Equipo operativo"),
+        ("OPERATIVO_PROVISIONAL", "Operativo provisional"),
+        ("PENDIENTE_REPUESTO", "Pendiente repuesto"),
+        ("REQUIERE_COTIZACION", "Requiere cotización"),
+        ("REQUIERE_REGRESO", "Requiere regreso"),
+        ("NO_SOLUCIONADO", "No solucionado"),
+    ]
+
+    tecnico = models.ForeignKey(
+        Tecnico,
+        on_delete=models.PROTECT,
+        related_name="actividades",
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name="actividades_tecnicas",
+    )
+
+    servicio = models.ForeignKey(
+        Emergencia,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actividades_tecnicas",
+    )
+
+    remision = models.ForeignKey(
+        "RemisionTecnico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actividades",
+        help_text="Remisión de accesorios relacionada con esta actividad.",
+    )
+
+    tipo_actividad = models.CharField(
+        max_length=30,
+        choices=TIPO_ACTIVIDAD,
+        default="CORRECTIVO",
+    )
+
+    fecha = models.DateField(
+        default=timezone.localdate,
+    )
+
+    hora_llegada = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="Hora de llegada a la unidad",
+    )
+
+    hora_salida = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="Hora de salida de la unidad",
+    )
+
+    diagnostico = models.TextField(
+        blank=True,
+    )
+
+    labor_realizada = models.TextField()
+
+    resultado = models.CharField(
+        max_length=30,
+        choices=RESULTADO,
+        null=True,
+        blank=True,
+    )
+
+    requiere_regreso = models.BooleanField(
+        default=False,
+    )
+
+    requiere_cotizacion = models.BooleanField(
+        default=False,
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actividades_tecnicas_registradas",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    @property
+    def duracion_en_sitio(self):
+        if not self.hora_llegada or not self.hora_salida:
+            return None
+
+        from datetime import datetime, timedelta
+
+        llegada = datetime.combine(
+            self.fecha,
+            self.hora_llegada,
+        )
+
+        salida = datetime.combine(
+            self.fecha,
+            self.hora_salida,
+        )
+
+        # Si la atención termina después de medianoche.
+        if salida < llegada:
+            salida += timedelta(days=1)
+
+        diferencia = salida - llegada
+        minutos_totales = int(
+            diferencia.total_seconds() // 60
+        )
+
+        horas = minutos_totales // 60
+        minutos = minutos_totales % 60
+
+        if horas and minutos:
+            return f"{horas} h {minutos} min"
+
+        if horas:
+            return f"{horas} h"
+
+        return f"{minutos} min"
+
+    class Meta:
+        ordering = [
+            "-fecha",
+            "-hora_llegada",
+            "-id",
+        ]
+        verbose_name = "Actividad de técnico"
+        verbose_name_plural = "Actividades de técnicos"
+
+    def __str__(self):
+        return (
+            f"{self.fecha} - "
+            f"{self.tecnico.nombre} - "
+            f"{self.cliente.nombre}"
+        )
+
+    # =========================================================
+# ACCESORIOS UTILIZADOS EN UNA ACTIVIDAD
+# =========================================================
+
+class AccesorioActividad(models.Model):
+
+    actividad = models.ForeignKey(
+        ActividadTecnico,
+        on_delete=models.CASCADE,
+        related_name="accesorios_utilizados",
+    )
+
+    accesorio = models.ForeignKey(
+        Accesorio,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="usos_en_actividades",
+    )
+
+    es_otro = models.BooleanField(
+        default=False,
+    )
+
+    descripcion_otro = models.CharField(
+        max_length=250,
+        blank=True,
+    )
+
+    cantidad = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1,
+    )
+
+    observacion = models.TextField(
+        blank=True,
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Accesorio utilizado"
+        verbose_name_plural = "Accesorios utilizados"
+
+    def __str__(self):
+
+        if self.es_otro:
+            descripcion = self.descripcion_otro or "Otro accesorio"
+        elif self.accesorio:
+            descripcion = self.accesorio.descripcion
+        else:
+            descripcion = "Accesorio sin identificar"
+
+        return f"{descripcion} x {self.cantidad}"

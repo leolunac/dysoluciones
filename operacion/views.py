@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -21,6 +21,10 @@ from .forms import (
     GestionServicioForm,
     LevantamientoEquipoForm,
     BitacoraOperativaForm,
+    RemisionTecnicoForm,
+    DetalleRemisionFormSet,
+    DetalleConciliacionFormSet,
+    ActividadTecnicoForm,
 )
 from .models import (
     Cliente,
@@ -33,7 +37,11 @@ from .models import (
     UsuarioCliente,
     ClienteAsignado,
     BitacoraOperativa,
-    
+    RemisionTecnico,
+    DetalleRemision,
+    ActividadTecnico,
+    Accesorio,
+    AccesorioActividad,
 )                    
 
 from .utils import registrar_evento
@@ -166,8 +174,22 @@ def usuario_puede_ver_cliente(user, cliente_id):
 # =========================================
 @login_required
 def portal_unidades(request):
+
+    # Personal interno:
+    # puede consultar todas las unidades activas.
     if request.user.is_staff:
-        return redirect("/gerencia/")
+        clientes = Cliente.objects.filter(
+            activo=True
+        ).order_by("nombre")
+
+        return render(
+            request,
+            "mis_unidades.html",
+            {
+                "clientes": clientes,
+                "usuario_cliente": None,
+            }
+        )
 
     usuario_cliente = UsuarioCliente.objects.filter(
         user=request.user,
@@ -180,7 +202,7 @@ def portal_unidades(request):
 
     clientes_ids = set()
 
-    # Unidad original, para conservar el funcionamiento actual.
+    # Unidad original.
     if usuario_cliente.cliente_id:
         clientes_ids.add(usuario_cliente.cliente_id)
 
@@ -200,6 +222,24 @@ def portal_unidades(request):
         activo=True,
     ).order_by("nombre")
 
+    # Cliente con una sola unidad:
+    # entra directamente a su dashboard.
+    if clientes.count() == 1:
+        cliente = clientes.first()
+
+        return redirect(
+            "dashboard_cliente",
+            cliente_id=cliente.id,
+        )
+
+    return render(
+        request,
+        "mis_unidades.html",
+        {
+            "clientes": clientes,
+            "usuario_cliente": usuario_cliente,
+        }
+    )
     # Con una sola unidad entra directamente.
     if clientes.count() == 1:
         cliente = clientes.first()
@@ -504,8 +544,12 @@ def lista_bitacora(request):
             "cliente",
             "tecnico",
             "servicio",
+            "actividad",
             "responsable",
             "creado_por",
+        )
+        .prefetch_related(
+            "actividad__accesorios_utilizados__accesorio",
         )
         .all()
     )
@@ -516,13 +560,19 @@ def lista_bitacora(request):
     buscar = request.GET.get("buscar", "").strip()
 
     if estado:
-        registros = registros.filter(estado=estado)
+        registros = registros.filter(
+            estado=estado
+        )
 
     if tipo:
-        registros = registros.filter(tipo=tipo)
+        registros = registros.filter(
+            tipo=tipo
+        )
 
     if prioridad:
-        registros = registros.filter(prioridad=prioridad)
+        registros = registros.filter(
+            prioridad=prioridad
+        )
 
     if buscar:
         registros = registros.filter(
@@ -534,6 +584,7 @@ def lista_bitacora(request):
         )
 
     ahora = timezone.now()
+    hoy = timezone.localdate()
 
     total = registros.count()
 
@@ -545,14 +596,49 @@ def lista_bitacora(request):
         estado="EN_SEGUIMIENTO",
     ).count()
 
+    # =========================================
+    # COMPROMISOS VENCIDOS
+    # =========================================
+
     vencidas = registros.filter(
-        estado__in=["PENDIENTE", "EN_SEGUIMIENTO"],
+        estado__in=[
+            "PENDIENTE",
+            "EN_SEGUIMIENTO",
+        ],
         fecha_compromiso__lt=ahora,
     ).count()
 
+    # =========================================
+    # COMPROMISOS DE HOY
+    # =========================================
+
+    compromisos_hoy = registros.filter(
+        estado__in=[
+            "PENDIENTE",
+            "EN_SEGUIMIENTO",
+        ],
+        fecha_compromiso__date=hoy,
+    ).count()
+
+    # =========================================
+    # PRÓXIMOS COMPROMISOS
+    # =========================================
+
+    proximos_compromisos = registros.filter(
+        estado__in=[
+            "PENDIENTE",
+            "EN_SEGUIMIENTO",
+        ],
+        fecha_compromiso__date__gt=hoy,
+    ).count()
+
+    # =========================================
+    # REUNIONES DE HOY
+    # =========================================
+
     reuniones_hoy = registros.filter(
         tipo="REUNION",
-        fecha_compromiso__date=ahora.date(),
+        fecha_compromiso__date=hoy,
     ).exclude(
         estado="CERRADO",
     ).count()
@@ -566,17 +652,20 @@ def lista_bitacora(request):
             "pendientes": pendientes,
             "seguimiento": seguimiento,
             "vencidas": vencidas,
+            "compromisos_hoy": compromisos_hoy,
+            "proximos_compromisos": proximos_compromisos,
             "reuniones_hoy": reuniones_hoy,
+
             "estados": BitacoraOperativa.ESTADO,
             "tipos": BitacoraOperativa.TIPO,
             "prioridades": BitacoraOperativa.PRIORIDAD,
+
             "filtro_estado": estado,
             "filtro_tipo": tipo,
             "filtro_prioridad": prioridad,
             "buscar": buscar,
         },
     )
-
 
 @login_required
 def nueva_bitacora(request):
@@ -646,7 +735,156 @@ def editar_bitacora(request, bitacora_id):
             "titulo_pagina": "Editar novedad",
         },
     )
+# =========================================
+# REMISIONES DE TÉCNICOS
+# =========================================
 
+@login_required
+def lista_remisiones(request):
+
+    remisiones = (
+        RemisionTecnico.objects
+        .select_related(
+            "tecnico",
+            "cliente",
+            "servicio",
+            "entregado_por",
+        )
+        .prefetch_related("detalles")
+        .order_by("-fecha", "-id")
+    )
+
+    buscar = request.GET.get("buscar", "").strip()
+    estado = request.GET.get("estado", "").strip()
+
+    if buscar:
+        remisiones = remisiones.filter(
+            Q(numero_remision__icontains=buscar)
+            | Q(tecnico__nombre__icontains=buscar)
+            | Q(cliente__nombre__icontains=buscar)
+        )
+
+    if estado == "PENDIENTE":
+        remisiones = [
+            remision
+            for remision in remisiones
+            if not remision.esta_conciliada
+        ]
+
+    elif estado == "CONCILIADA":
+        remisiones = [
+            remision
+            for remision in remisiones
+            if remision.esta_conciliada
+        ]
+
+    return render(
+        request,
+        "remisiones/lista.html",
+        {
+            "remisiones": remisiones,
+            "buscar": buscar,
+            "filtro_estado": estado,
+        },
+    )
+
+
+@login_required
+def nueva_remision(request):
+
+    if request.method == "POST":
+
+        form = RemisionTecnicoForm(request.POST)
+        formset = DetalleRemisionFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+
+            remision = form.save(commit=False)
+            remision.entregado_por = request.user
+            remision.estado = "PENDIENTE"
+            remision.save()
+
+            formset.instance = remision
+            formset.save()
+
+            return redirect("lista_remisiones")
+
+    else:
+
+        form = RemisionTecnicoForm(
+            initial={
+                "fecha": timezone.localtime(),
+            }
+        )
+
+        formset = DetalleRemisionFormSet()
+
+    return render(
+        request,
+        "remisiones/formulario.html",
+        {
+            "form": form,
+            "formset": formset,
+            "titulo_pagina": "Nueva remisión",
+        },
+    )
+
+
+@login_required
+def conciliar_remision(request, remision_id):
+
+    remision = get_object_or_404(
+        RemisionTecnico,
+        id=remision_id,
+    )
+
+    if request.method == "POST":
+
+        formset = DetalleConciliacionFormSet(
+            request.POST,
+            instance=remision,
+        )
+        
+
+        if formset.is_valid():
+
+            formset.save()
+        if formset.is_valid():
+
+            formset.save()
+
+            # Volvemos a leer la remisión desde la base de datos
+            # para validar con los valores realmente guardados.
+            remision.refresh_from_db()
+
+            if remision.esta_conciliada:
+                remision.estado = "CONCILIADA"
+            else:
+                remision.estado = "PENDIENTE"
+
+            remision.save(
+                update_fields=[
+                    "estado",
+                    "actualizado",
+                ]
+            )
+
+            return redirect("lista_remisiones")
+
+    else:
+
+        formset = DetalleConciliacionFormSet(
+            instance=remision,
+        )
+
+    return render(
+        request,
+        "remisiones/conciliar.html",
+        {
+            "remision": remision,
+            "formset": formset,
+        },
+    )
 # =========================================
 # DASHBOARD CLIENTE
 # =========================================
@@ -1318,4 +1556,399 @@ def accion_servicio(request, servicio_id, accion):
     return redirect(
         "gestionar_servicio",
         servicio_id=servicio.id,
+    )
+# =========================================================
+# ACTIVIDADES DE TÉCNICOS
+# =========================================================
+@login_required
+def casos_por_cliente(request):
+    cliente_id = request.GET.get("cliente_id")
+
+    if not cliente_id:
+        return JsonResponse({"casos": []})
+
+    casos = (
+        Emergencia.objects
+        .filter(
+            cliente_id=cliente_id,
+            numero_caso__isnull=False,
+        )
+        .exclude(numero_caso="")
+        .order_by("-fecha_llamada")
+    )
+
+    datos = []
+
+    for caso in casos:
+        datos.append({
+            "id": caso.id,
+            "texto": (
+                f"{caso.numero_caso} - "
+                f"{caso.get_tipo_servicio_display()} - "
+                f"{caso.get_estado_display()}"
+            ),
+        })
+
+    return JsonResponse({"casos": datos})
+@login_required
+def remisiones_por_cliente(request):
+    cliente_id = request.GET.get("cliente_id")
+    servicio_id = request.GET.get("servicio_id")
+
+    if not cliente_id:
+        return JsonResponse({"remisiones": []})
+
+    remisiones = RemisionTecnico.objects.filter(
+        cliente_id=cliente_id
+    )
+
+    # Si además se seleccionó un caso 7x24,
+    # mostramos las remisiones relacionadas con ese caso.
+    if servicio_id:
+        remisiones = remisiones.filter(
+            servicio_id=servicio_id
+        )
+
+    remisiones = remisiones.order_by("-fecha", "-id")
+
+    datos = []
+
+    for remision in remisiones:
+        datos.append({
+            "id": remision.id,
+            "texto": (
+                f"{remision.numero_remision} - "
+                f"{remision.tecnico.nombre} - "
+                f"{remision.get_estado_display()}"
+            ),
+        })
+
+    return JsonResponse({"remisiones": datos})        
+
+    return JsonResponse({"casos": datos})
+
+@login_required
+def buscar_accesorios(request):
+    texto = request.GET.get("q", "").strip()
+
+    if len(texto) < 2:
+        return JsonResponse({"resultados": []})
+
+    accesorios = (
+        Accesorio.objects
+        .filter(
+            descripcion__icontains=texto,
+            activo=True,
+        )
+        .order_by("descripcion")[:20]
+    )
+
+    resultados = [
+        {
+            "id": accesorio.id,
+            "descripcion": accesorio.descripcion,
+        }
+        for accesorio in accesorios
+    ]
+
+    return JsonResponse({
+        "resultados": resultados,
+    })
+@login_required
+def actividades_por_cliente(request):
+    cliente_id = request.GET.get("cliente_id")
+    servicio_id = request.GET.get("servicio_id")
+
+    if not cliente_id:
+        return JsonResponse({"actividades": []})
+
+    actividades = (
+        ActividadTecnico.objects
+        .filter(cliente_id=cliente_id)
+        .select_related(
+            "tecnico",
+            "cliente",
+            "servicio",
+        )
+        .order_by(
+            "-fecha",
+            "-hora_llegada",
+            "-id",
+        )
+    )
+
+    if servicio_id:
+        actividades = actividades.filter(
+            servicio_id=servicio_id
+        )
+
+    datos = []
+
+    for actividad in actividades:
+        datos.append({
+            "id": actividad.id,
+            "texto": (
+                f"{actividad.fecha.strftime('%d/%m/%Y')} - "
+                f"{actividad.tecnico.nombre} - "
+                f"{actividad.get_tipo_actividad_display()}"
+            ),
+        })
+
+    return JsonResponse({
+        "actividades": datos,
+    })
+
+
+@login_required
+def detalle_actividad(request, actividad_id):
+
+    actividad = get_object_or_404(
+        ActividadTecnico.objects
+        .select_related(
+            "tecnico",
+            "cliente",
+            "servicio",
+        )
+        .prefetch_related(
+            "accesorios_utilizados__accesorio",
+        ),
+        id=actividad_id,
+    )
+
+    accesorios = []
+
+    for uso in actividad.accesorios_utilizados.all():
+
+        if uso.es_otro:
+            descripcion = uso.descripcion_otro
+        elif uso.accesorio:
+            descripcion = uso.accesorio.descripcion
+        else:
+            descripcion = "Accesorio sin identificar"
+
+        accesorios.append({
+            "descripcion": descripcion,
+            "cantidad": str(uso.cantidad),
+            "observacion": uso.observacion or "",
+            "es_otro": uso.es_otro,
+        })
+
+    return JsonResponse({
+        "actividad": {
+            "id": actividad.id,
+            "tecnico_id": actividad.tecnico_id,
+            "tecnico": actividad.tecnico.nombre,
+            "cliente": actividad.cliente.nombre,
+            "fecha": actividad.fecha.strftime("%d/%m/%Y"),
+
+            "hora_llegada": (
+                actividad.hora_llegada.strftime("%H:%M")
+                if actividad.hora_llegada
+                else ""
+            ),
+
+            "hora_salida": (
+                actividad.hora_salida.strftime("%H:%M")
+                if actividad.hora_salida
+                else ""
+            ),
+
+            "permanencia": actividad.duracion_en_sitio or "",
+            "diagnostico": actividad.diagnostico or "",
+            "labor_realizada": actividad.labor_realizada or "",
+
+            "resultado": (
+                actividad.get_resultado_display()
+                if actividad.resultado
+                else ""
+            ),
+
+            "accesorios": accesorios,
+        }
+    })
+
+
+
+@login_required
+
+def lista_actividades(request):
+
+    actividades = (
+        ActividadTecnico.objects
+        .select_related(
+            "tecnico",
+            "cliente",
+            "servicio",
+            "remision",
+            "registrado_por",
+        )
+        .prefetch_related(
+            "remision__detalles",
+            "accesorios_utilizados__accesorio",
+)
+        .all()
+    )
+
+    # ==============================
+    # FILTROS
+    # ==============================
+
+    fecha = request.GET.get("fecha", "").strip()
+    tecnico_id = request.GET.get("tecnico", "").strip()
+    cliente_id = request.GET.get("cliente", "").strip()
+    tipo = request.GET.get("tipo", "").strip()
+
+    if fecha:
+        actividades = actividades.filter(
+            fecha=fecha
+        )
+
+    if tecnico_id:
+        actividades = actividades.filter(
+            tecnico_id=tecnico_id
+        )
+
+    if cliente_id:
+        actividades = actividades.filter(
+            cliente_id=cliente_id
+        )
+
+    if tipo:
+        actividades = actividades.filter(
+            tipo_actividad=tipo
+        )
+
+    tecnicos = Tecnico.objects.filter(
+        activo=True
+    ).order_by("nombre")
+
+    clientes = Cliente.objects.filter(
+        activo=True
+    ).order_by("nombre")
+
+    return render(
+        request,
+        "actividades/lista.html",
+        {
+            "actividades": actividades,
+
+            # Opciones para los filtros
+            "tecnicos": tecnicos,
+            "clientes": clientes,
+            "tipos_actividad": ActividadTecnico.TIPO_ACTIVIDAD,
+
+            # Valores seleccionados
+            "filtro_fecha": fecha,
+            "filtro_tecnico": tecnico_id,
+            "filtro_cliente": cliente_id,
+            "filtro_tipo": tipo,
+        },
+    )
+
+@login_required
+def nueva_actividad(request):
+
+    if request.method == "POST":
+        form = ActividadTecnicoForm(request.POST)
+
+        if form.is_valid():
+            actividad = form.save(commit=False)
+            actividad.registrado_por = request.user
+            actividad.save()
+
+            # ==============================
+            # ACCESORIOS UTILIZADOS
+            # ==============================
+
+            accesorios_ids = request.POST.getlist("accesorio_id[]")
+            cantidades = request.POST.getlist("cantidad[]")
+            es_otro_lista = request.POST.getlist("es_otro[]")
+            descripciones_otro = request.POST.getlist("descripcion_otro[]")
+            observaciones = request.POST.getlist("observacion[]")
+
+            total_filas = max(
+                len(accesorios_ids),
+                len(cantidades),
+                len(es_otro_lista),
+                len(descripciones_otro),
+                len(observaciones),
+                0,
+            )
+
+            for i in range(total_filas):
+
+                accesorio_id = (
+                    accesorios_ids[i]
+                    if i < len(accesorios_ids)
+                    else ""
+                )
+
+                cantidad = (
+                    cantidades[i]
+                    if i < len(cantidades)
+                    else ""
+                )
+
+                es_otro = (
+                    es_otro_lista[i] == "1"
+                    if i < len(es_otro_lista)
+                    else False
+                )
+
+                descripcion_otro = (
+                    descripciones_otro[i].strip()
+                    if i < len(descripciones_otro)
+                    else ""
+                )
+
+                observacion = (
+                    observaciones[i].strip()
+                    if i < len(observaciones)
+                    else ""
+                )
+
+                # Si la fila está completamente vacía, no hacemos nada.
+                if not accesorio_id and not descripcion_otro:
+                    continue
+
+                # Si no hay cantidad, usamos 1.
+                if not cantidad:
+                    cantidad = 1
+
+                if es_otro:
+                    AccesorioActividad.objects.create(
+                        actividad=actividad,
+                        accesorio=None,
+                        es_otro=True,
+                        descripcion_otro=descripcion_otro,
+                        cantidad=cantidad,
+                        observacion=observacion,
+                    )
+
+                else:
+                    accesorio = get_object_or_404(
+                        Accesorio,
+                        id=accesorio_id,
+                    )
+
+                    AccesorioActividad.objects.create(
+                        actividad=actividad,
+                        accesorio=accesorio,
+                        es_otro=False,
+                        descripcion_otro="",
+                        cantidad=cantidad,
+                        observacion=observacion,
+                    )
+
+            return redirect("lista_actividades")
+
+    else:
+        form = ActividadTecnicoForm()
+
+    return render(
+        request,
+        "actividades/nueva.html",
+        {
+            "form": form,
+        },
     )

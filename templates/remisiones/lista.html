@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="max-width: 1400px; margin: 30px auto; padding: 0 20px;">
+
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:20px;
+        margin-bottom:25px;
+    ">
+        <div>
+            <h1 style="margin:0; color:#16324f;">
+                Remisiones de Técnicos
+            </h1>
+
+            <p style="margin-top:6px; color:#6b7280;">
+                Control de accesorios entregados, utilizados y devueltos
+            </p>
+        </div>
+
+        <a href="{% url 'nueva_remision' %}"
+           style="
+               background:#16324f;
+               color:white;
+               padding:12px 20px;
+               border-radius:8px;
+               text-decoration:none;
+               font-weight:600;
+           ">
+            + Nueva remisión
+        </a>
+    </div>
+
+
+    <!-- FILTROS -->
+
+    <form method="get"
+          style="
+              background:white;
+              border:1px solid #e5e7eb;
+              border-radius:10px;
+              padding:18px;
+              margin-bottom:22px;
+              display:flex;
+              gap:12px;
+              flex-wrap:wrap;
+          ">
+
+        <input
+            type="text"
+            name="buscar"
+            value="{{ buscar }}"
+            placeholder="Remisión, técnico o unidad..."
+            style="
+                flex:1;
+                min-width:280px;
+                padding:10px;
+                border:1px solid #d1d5db;
+                border-radius:6px;
+            "
+        >
+
+        <select name="estado"
+                style="
+                    padding:10px;
+                    border:1px solid #d1d5db;
+                    border-radius:6px;
+                ">
+
+            <option value="">Todos los estados</option>
+
+            <option value="PENDIENTE"
+                {% if filtro_estado == "PENDIENTE" %}selected{% endif %}>
+                Pendientes
+            </option>
+
+            <option value="CONCILIADA"
+                {% if filtro_estado == "CONCILIADA" %}selected{% endif %}>
+                Conciliadas
+            </option>
+
+        </select>
+
+        <button type="submit"
+                style="
+                    padding:10px 18px;
+                    background:#374151;
+                    color:white;
+                    border:0;
+                    border-radius:6px;
+                    cursor:pointer;
+                ">
+            Buscar
+        </button>
+
+    </form>
+
+
+    <!-- TABLA -->
+
+    <div style="
+        background:white;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        overflow-x:auto;
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            min-width:1000px;
+        ">
+
+            <thead style="background:#f3f4f6;">
+                <tr>
+                    <th style="padding:12px; text-align:left;">Remisión</th>
+                    <th style="padding:12px; text-align:left;">Fecha</th>
+                    <th style="padding:12px; text-align:left;">Técnico</th>
+                    <th style="padding:12px; text-align:left;">Unidad</th>
+                    <th style="padding:12px; text-align:left;">Caso 7x24</th>
+                    <th style="padding:12px; text-align:center;">Estado</th>
+                    <th style="padding:12px; text-align:center;">Acción</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for remision in remisiones %}
+
+                <tr style="border-top:1px solid #e5e7eb;">
+
+                    <td style="padding:12px;">
+                        <strong>{{ remision.numero_remision }}</strong>
+                    </td>
+
+                    <td style="padding:12px;">
+                        {{ remision.fecha|date:"d/m/Y H:i" }}
+                    </td>
+
+                    <td style="padding:12px;">
+                        {{ remision.tecnico }}
+                    </td>
+
+                    <td style="padding:12px;">
+                        {{ remision.cliente.nombre }}
+                    </td>
+
+                    <td style="padding:12px;">
+                        {% if remision.servicio %}
+                            #{{ remision.servicio.id }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td style="padding:12px; text-align:center;">
+
+                        {% if remision.esta_conciliada %}
+
+                            <span style="
+                                background:#dcfce7;
+                                color:#166534;
+                                padding:6px 10px;
+                                border-radius:20px;
+                                font-size:13px;
+                                font-weight:600;
+                            ">
+                                ✓ Conciliada
+                            </span>
+
+                        {% else %}
+
+                            <span style="
+                                background:#fef3c7;
+                                color:#92400e;
+                                padding:6px 10px;
+                                border-radius:20px;
+                                font-size:13px;
+                                font-weight:600;
+                            ">
+                                Pendiente
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td style="padding:12px; text-align:center;">
+
+                        <a href="{% url 'conciliar_remision' remision.id %}"
+                           style="
+                               background:#2563eb;
+                               color:white;
+                               padding:7px 12px;
+                               border-radius:6px;
+                               text-decoration:none;
+                               font-size:13px;
+                           ">
+                            Conciliar
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="7"
+                        style="
+                            padding:35px;
+                            text-align:center;
+                            color:#6b7280;
+                        ">
+                        No existen remisiones registradas.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

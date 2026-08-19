@@ -1,0 +1,873 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="max-width:1180px; margin:28px auto; padding:0 18px;">
+
+    <div style="
+        background:linear-gradient(135deg,#0b4778,#1478ad);
+        color:white;
+        border-radius:16px;
+        padding:24px 28px;
+        margin-bottom:22px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:20px;
+        box-shadow:0 6px 18px rgba(15,76,117,.15);
+    ">
+        <div>
+            <div style="
+                font-size:12px;
+                font-weight:700;
+                letter-spacing:.08em;
+                text-transform:uppercase;
+                opacity:.85;
+                margin-bottom:6px;
+            ">
+                Operación 7x24
+            </div>
+
+            <h2 style="margin:0; font-size:28px;">
+                Nueva actividad del técnico
+            </h2>
+
+            <p style="margin:7px 0 0; opacity:.92;">
+                Registre de forma sencilla la visita, tiempos, trabajo realizado y resultado.
+            </p>
+        </div>
+
+        <a href="{% url 'lista_actividades' %}"
+           style="
+               background:white;
+               color:#0b5c92;
+               padding:11px 18px;
+               border-radius:9px;
+               text-decoration:none;
+               font-weight:700;
+               white-space:nowrap;
+           ">
+            ← Volver
+        </a>
+    </div>
+
+    {% if form.errors %}
+        <div style="
+            background:#fff1f2;
+            border:1px solid #fecaca;
+            color:#991b1b;
+            padding:16px 18px;
+            border-radius:12px;
+            margin-bottom:20px;
+        ">
+            <strong>Revise la información ingresada.</strong>
+            <div style="margin-top:8px;">
+                {{ form.errors }}
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <section style="
+            background:white;
+            border:1px solid #dfe5eb;
+            border-radius:14px;
+            padding:24px;
+            margin-bottom:18px;
+            box-shadow:0 3px 12px rgba(0,0,0,.04);
+        ">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+                <div style="
+                    width:34px;height:34px;border-radius:10px;
+                    background:#eaf3fb;color:#0b5c92;
+                    display:flex;align-items:center;justify-content:center;font-weight:800;">
+                    1
+                </div>
+                <div>
+                    <h3 style="margin:0; color:#17324d;">¿Dónde y qué servicio?</h3>
+                    <small style="color:#64748b;">
+                        Seleccione técnico, unidad y relación con el caso o remisión.
+                    </small>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:18px 22px;">
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.tecnico.label }}
+                    </label>
+                    {{ form.tecnico }}
+                </div>
+
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.cliente.label }}
+                    </label>
+                    {{ form.cliente }}
+                </div>
+
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.servicio.label }}
+                    </label>
+                    {{ form.servicio }}
+                    <small style="color:#64748b;display:block;margin-top:5px;">
+                        Déjelo vacío si la actividad no corresponde a un caso 7x24.
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.remision.label }}
+                    </label>
+                    {{ form.remision }}
+                    <small style="color:#64748b;display:block;margin-top:5px;">
+                        Remisión de accesorios relacionada con esta actividad.
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.tipo_actividad.label }}
+                    </label>
+                    {{ form.tipo_actividad }}
+                </div>
+            </div>
+        </section>
+
+        <section style="
+            background:white;
+            border:1px solid #dfe5eb;
+            border-radius:14px;
+            padding:24px;
+            margin-bottom:18px;
+            box-shadow:0 3px 12px rgba(0,0,0,.04);
+        ">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="
+                    width:34px;height:34px;border-radius:10px;
+                    background:#eaf8ef;color:#177245;
+                    display:flex;align-items:center;justify-content:center;font-weight:800;">
+                    2
+                </div>
+                <div>
+                    <h3 style="margin:0; color:#17324d;">Tiempo en la unidad</h3>
+                    <small style="color:#64748b;">
+                        Solo registre llegada y salida. SIGOB calcula la permanencia.
+                    </small>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px;">
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.fecha.label }}
+                    </label>
+                    {{ form.fecha }}
+                </div>
+
+                <div style="background:#f0f8ff;border:1px solid #cfe4f5;border-radius:12px;padding:14px;">
+                    <label style="display:block;font-weight:700;margin-bottom:6px;color:#0b5c92;">
+                        {{ form.hora_llegada.label }}
+                    </label>
+                    {{ form.hora_llegada }}
+                    <small style="color:#64748b;display:block;margin-top:5px;">
+                        Hora en que el técnico llega a la unidad.
+                    </small>
+                </div>
+
+                <div style="background:#f3fbf6;border:1px solid #d4ecd9;border-radius:12px;padding:14px;">
+                    <label style="display:block;font-weight:700;margin-bottom:6px;color:#177245;">
+                        {{ form.hora_salida.label }}
+                    </label>
+                    {{ form.hora_salida }}
+                    <small style="color:#64748b;display:block;margin-top:5px;">
+                        Hora en que termina la atención y sale de la unidad.
+                    </small>
+                </div>
+            </div>
+        </section>
+
+        <section style="
+            background:white;
+            border:1px solid #dfe5eb;
+            border-radius:14px;
+            padding:24px;
+            margin-bottom:18px;
+            box-shadow:0 3px 12px rgba(0,0,0,.04);
+        ">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="
+                    width:34px;height:34px;border-radius:10px;
+                    background:#fff5e8;color:#a65311;
+                    display:flex;align-items:center;justify-content:center;font-weight:800;">
+                    3
+                </div>
+                <div>
+                    <h3 style="margin:0; color:#17324d;">¿Qué encontró y qué hizo?</h3>
+                    <small style="color:#64748b;">
+                        Registre el diagnóstico y la labor realizada.
+                    </small>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.diagnostico.label }}
+                    </label>
+                    {{ form.diagnostico }}
+                </div>
+
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.labor_realizada.label }}
+                    </label>
+                    {{ form.labor_realizada }}
+                </div>
+            </div>
+        </section>
+
+        <section style="
+            background:white;
+            border:1px solid #dfe5eb;
+            border-radius:14px;
+            padding:24px;
+            margin-bottom:18px;
+            box-shadow:0 3px 12px rgba(0,0,0,.04);
+        ">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="
+                    width:34px;height:34px;border-radius:10px;
+                    background:#f3efff;color:#6140a4;
+                    display:flex;align-items:center;justify-content:center;font-weight:800;">
+                    4
+                </div>
+                <div>
+                    <h3 style="margin:0; color:#17324d;">¿Cómo quedó?</h3>
+                    <small style="color:#64748b;">
+                        Resultado del servicio y acciones posteriores.
+                    </small>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div>
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.resultado.label }}
+                    </label>
+                    {{ form.resultado }}
+                </div>
+
+                <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding-top:24px;">
+                    <label style="
+                        display:flex;align-items:center;gap:8px;
+                        background:#fff7ed;border:1px solid #fed7aa;
+                        padding:9px 12px;border-radius:10px;font-weight:600;">
+                        {{ form.requiere_regreso }}
+                        {{ form.requiere_regreso.label }}
+                    </label>
+
+                    <label style="
+                        display:flex;align-items:center;gap:8px;
+                        background:#fffbea;border:1px solid #fde68a;
+                        padding:9px 12px;border-radius:10px;font-weight:600;">
+                        {{ form.requiere_cotizacion }}
+                        {{ form.requiere_cotizacion.label }}
+                    </label>
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label style="display:block;font-weight:700;margin-bottom:6px;">
+                        {{ form.observaciones.label }}
+                    </label>
+                    {{ form.observaciones }}
+                </div>
+            </div>
+        </section>
+
+<!-- =====================================================
+     5. ACCESORIOS UTILIZADOS
+===================================================== -->
+
+<section style="
+    background:white;
+    border:1px solid #dfe5eb;
+    border-radius:14px;
+    padding:24px;
+    margin-bottom:18px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="
+            width:34px;height:34px;border-radius:10px;
+            background:#eaf3fb;color:#0b5c92;
+            display:flex;align-items:center;justify-content:center;
+            font-weight:800;">
+            5
+        </div>
+
+        <div>
+            <h3 style="margin:0;color:#17324d;">
+                Accesorios utilizados
+            </h3>
+
+            <small style="color:#64748b;">
+                Busque y registre únicamente los accesorios utilizados durante el servicio.
+            </small>
+        </div>
+    </div>
+
+
+    <!-- BUSCADOR -->
+
+    <div style="
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        border-radius:12px;
+        padding:18px;
+    ">
+
+        <label style="display:block;font-weight:700;margin-bottom:7px;">
+            Buscar accesorio
+        </label>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+
+            <input
+                type="text"
+                id="buscar_accesorio"
+                placeholder="Ejemplo: hembra, unión, cheque..."
+                autocomplete="off"
+                style="
+                    flex:1;
+                    padding:11px 12px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                    font-size:15px;
+                "
+            >
+
+            <input
+                type="number"
+                id="cantidad_accesorio"
+                min="0.01"
+                step="0.01"
+                value="1"
+                title="Cantidad"
+                style="
+                    width:100px;
+                    padding:11px 10px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                "
+            >
+
+        </div>
+
+        <!-- RESULTADOS DE BÚSQUEDA -->
+
+        <div
+            id="resultados_accesorios"
+            style="
+                display:none;
+                margin-top:6px;
+                background:white;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                max-height:220px;
+                overflow-y:auto;
+            ">
+        </div>
+
+        <div style="margin-top:14px;">
+            <button
+                type="button"
+                id="btn_otro_accesorio"
+                style="
+                    background:white;
+                    border:1px solid #94a3b8;
+                    color:#475569;
+                    padding:9px 13px;
+                    border-radius:8px;
+                    cursor:pointer;
+                    font-weight:700;
+                ">
+                + Otro / No encontrado
+            </button>
+        </div>
+
+    </div>
+
+
+    <!-- OTRO ACCESORIO -->
+
+    <div
+        id="panel_otro_accesorio"
+        style="
+            display:none;
+            margin-top:15px;
+            background:#fffbea;
+            border:1px solid #fde68a;
+            border-radius:12px;
+            padding:18px;
+        ">
+
+        <div style="
+            display:grid;
+            grid-template-columns:2fr 110px;
+            gap:15px;
+        ">
+
+            <div>
+                <label style="display:block;font-weight:700;margin-bottom:6px;">
+                    Descripción del accesorio
+                </label>
+
+                <input
+                    type="text"
+                    id="otro_descripcion"
+                    placeholder="Escriba qué accesorio utilizó"
+                    style="
+                        width:100%;
+                        box-sizing:border-box;
+                        padding:10px;
+                        border:1px solid #d6b84b;
+                        border-radius:8px;
+                    "
+                >
+            </div>
+
+            <div>
+                <label style="display:block;font-weight:700;margin-bottom:6px;">
+                    Cantidad
+                </label>
+
+                <input
+                    type="number"
+                    id="otro_cantidad"
+                    value="1"
+                    min="0.01"
+                    step="0.01"
+                    style="
+                        width:100%;
+                        box-sizing:border-box;
+                        padding:10px;
+                        border:1px solid #d6b84b;
+                        border-radius:8px;
+                    "
+                >
+            </div>
+
+        </div>
+
+        <div style="margin-top:14px;">
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                Observación
+            </label>
+
+            <textarea
+                id="otro_observacion"
+                rows="2"
+                placeholder="Explique brevemente el accesorio o por qué no aparece en el catálogo."
+                style="
+                    width:100%;
+                    box-sizing:border-box;
+                    padding:10px;
+                    border:1px solid #d6b84b;
+                    border-radius:8px;
+                "
+            ></textarea>
+        </div>
+
+        <button
+            type="button"
+            id="btn_agregar_otro"
+            style="
+                margin-top:12px;
+                background:#0b5c92;
+                color:white;
+                border:0;
+                border-radius:8px;
+                padding:10px 16px;
+                font-weight:700;
+                cursor:pointer;
+            ">
+            Agregar accesorio
+        </button>
+
+    </div>
+
+
+    <!-- LISTA DE ACCESORIOS AGREGADOS -->
+
+    <div id="contenedor_accesorios" style="margin-top:20px;">
+
+        <div
+            id="mensaje_sin_accesorios"
+            style="
+                padding:18px;
+                text-align:center;
+                border:1px dashed #cbd5e1;
+                border-radius:10px;
+                color:#64748b;
+            ">
+            No se han registrado accesorios utilizados.
+        </div>
+
+        <div id="lista_accesorios"></div>
+
+    </div>
+
+</section>        
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+            <a href="{% url 'lista_actividades' %}"
+               style="
+                   padding:12px 18px;background:#eef2f6;color:#334155;
+                   text-decoration:none;border-radius:9px;font-weight:700;">
+                Cancelar
+            </a>
+
+            <button type="submit"
+                    style="
+                        padding:13px 24px;background:#198754;color:white;border:0;
+                        border-radius:9px;cursor:pointer;font-weight:800;font-size:15px;
+                        box-shadow:0 4px 12px rgba(25,135,84,.18);">
+                Guardar actividad
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ======================================================
+    // UNIDAD / CASO 7X24 / REMISIÓN
+    // ======================================================
+
+    const clienteSelect = document.getElementById("id_cliente");
+    const servicioSelect = document.getElementById("id_servicio");
+    const remisionSelect = document.getElementById("id_remision");
+
+    function limpiarSelect(select, texto = "---------") {
+        if (!select) return;
+        select.innerHTML = "";
+        const opcion = document.createElement("option");
+        opcion.value = "";
+        opcion.textContent = texto;
+        select.appendChild(opcion);
+    }
+
+    function cargarCasos(clienteId) {
+        if (!servicioSelect) return;
+        limpiarSelect(servicioSelect);
+        if (!clienteId) return;
+
+        fetch("{% url 'casos_por_cliente' %}?cliente_id=" + encodeURIComponent(clienteId))
+        .then(response => {
+            if (!response.ok) throw new Error("Error al consultar los casos");
+            return response.json();
+        })
+        .then(data => {
+            if (clienteSelect && clienteSelect.value !== clienteId) return;
+            limpiarSelect(servicioSelect);
+            data.casos.forEach(caso => {
+                const opcion = document.createElement("option");
+                opcion.value = caso.id;
+                opcion.textContent = caso.texto;
+                servicioSelect.appendChild(opcion);
+            });
+        })
+        .catch(error => console.error("Error cargando casos:", error));
+    }
+
+    function cargarRemisiones(clienteId, servicioId) {
+        if (!remisionSelect) return;
+        limpiarSelect(remisionSelect);
+        if (!clienteId) return;
+
+        let url = "{% url 'remisiones_por_cliente' %}?cliente_id=" + encodeURIComponent(clienteId);
+        if (servicioId) {
+            url += "&servicio_id=" + encodeURIComponent(servicioId);
+        }
+
+        const clienteSolicitado = clienteId;
+        const servicioSolicitado = servicioId;
+
+        fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error("Error al consultar las remisiones");
+            return response.json();
+        })
+        .then(data => {
+            if (clienteSelect && clienteSelect.value !== clienteSolicitado) return;
+            if (servicioSolicitado && servicioSelect && servicioSelect.value !== servicioSolicitado) return;
+
+            limpiarSelect(remisionSelect);
+            data.remisiones.forEach(remision => {
+                const opcion = document.createElement("option");
+                opcion.value = remision.id;
+                opcion.textContent = remision.texto;
+                remisionSelect.appendChild(opcion);
+            });
+        })
+        .catch(error => console.error("Error cargando remisiones:", error));
+    }
+
+    if (clienteSelect) {
+        clienteSelect.addEventListener("change", function () {
+            const clienteId = this.value;
+            limpiarSelect(servicioSelect);
+            limpiarSelect(remisionSelect);
+            cargarCasos(clienteId);
+            cargarRemisiones(clienteId, "");
+        });
+    }
+
+    if (servicioSelect) {
+        servicioSelect.addEventListener("change", function () {
+            limpiarSelect(remisionSelect);
+            if (!this.value) {
+                if (clienteSelect) cargarRemisiones(clienteSelect.value, "");
+                return;
+            }
+            cargarRemisiones(clienteSelect ? clienteSelect.value : "", this.value);
+        });
+    }
+
+    // ======================================================
+    // ACCESORIOS UTILIZADOS
+    // ======================================================
+
+    const buscarAccesorio = document.getElementById("buscar_accesorio");
+    const cantidadAccesorio = document.getElementById("cantidad_accesorio");
+    const resultadosAccesorios = document.getElementById("resultados_accesorios");
+    const listaAccesorios = document.getElementById("lista_accesorios");
+    const mensajeSinAccesorios = document.getElementById("mensaje_sin_accesorios");
+    const btnOtroAccesorio = document.getElementById("btn_otro_accesorio");
+    const panelOtroAccesorio = document.getElementById("panel_otro_accesorio");
+    const btnAgregarOtro = document.getElementById("btn_agregar_otro");
+    const otroDescripcion = document.getElementById("otro_descripcion");
+    const otroCantidad = document.getElementById("otro_cantidad");
+    const otroObservacion = document.getElementById("otro_observacion");
+
+    let temporizadorBusqueda = null;
+
+    if (buscarAccesorio && resultadosAccesorios && cantidadAccesorio) {
+        buscarAccesorio.addEventListener("input", function () {
+            const texto = this.value.trim();
+            clearTimeout(temporizadorBusqueda);
+
+            if (texto.length < 2) {
+                resultadosAccesorios.innerHTML = "";
+                resultadosAccesorios.style.display = "none";
+                return;
+            }
+
+            temporizadorBusqueda = setTimeout(function () {
+                fetch("{% url 'buscar_accesorios' %}?q=" + encodeURIComponent(texto))
+                .then(response => {
+                    if (!response.ok) throw new Error("No fue posible buscar accesorios.");
+                    return response.json();
+                })
+                .then(data => {
+                    resultadosAccesorios.innerHTML = "";
+
+                    if (!data.resultados.length) {
+                        const vacio = document.createElement("div");
+                        vacio.textContent = "No se encontraron accesorios. Puede usar Otro / No encontrado.";
+                        vacio.style.padding = "12px";
+                        vacio.style.color = "#64748b";
+                        resultadosAccesorios.appendChild(vacio);
+                        resultadosAccesorios.style.display = "block";
+                        return;
+                    }
+
+                    data.resultados.forEach(accesorio => {
+                        const opcion = document.createElement("div");
+                        opcion.textContent = accesorio.descripcion;
+                        opcion.style.padding = "10px 12px";
+                        opcion.style.cursor = "pointer";
+                        opcion.style.borderBottom = "1px solid #eef2f6";
+
+                        opcion.addEventListener("mouseenter", function () {
+                            this.style.background = "#f0f7ff";
+                        });
+                        opcion.addEventListener("mouseleave", function () {
+                            this.style.background = "white";
+                        });
+                        opcion.addEventListener("click", function () {
+                            agregarAccesorioCatalogo(accesorio.id, accesorio.descripcion);
+                            buscarAccesorio.value = "";
+                            resultadosAccesorios.innerHTML = "";
+                            resultadosAccesorios.style.display = "none";
+                        });
+
+                        resultadosAccesorios.appendChild(opcion);
+                    });
+
+                    resultadosAccesorios.style.display = "block";
+                })
+                .catch(error => console.error("Error buscando accesorios:", error));
+            }, 300);
+        });
+    }
+
+    function agregarAccesorioCatalogo(id, descripcion) {
+        let cantidad = cantidadAccesorio ? cantidadAccesorio.value : "1";
+        if (!cantidad || parseFloat(cantidad) <= 0) cantidad = "1";
+
+        crearFilaAccesorio({
+            accesorioId: id,
+            descripcion: descripcion,
+            cantidad: cantidad,
+            esOtro: false,
+            descripcionOtro: "",
+            observacion: ""
+        });
+
+        if (cantidadAccesorio) cantidadAccesorio.value = "1";
+    }
+
+    if (btnOtroAccesorio && panelOtroAccesorio) {
+        btnOtroAccesorio.addEventListener("click", function () {
+            const estaOculto = panelOtroAccesorio.style.display === "none" || panelOtroAccesorio.style.display === "";
+            panelOtroAccesorio.style.display = estaOculto ? "block" : "none";
+            if (estaOculto && otroDescripcion) otroDescripcion.focus();
+        });
+    }
+
+    if (btnAgregarOtro && otroDescripcion && otroCantidad && otroObservacion) {
+        btnAgregarOtro.addEventListener("click", function () {
+            const descripcion = otroDescripcion.value.trim();
+            let cantidad = otroCantidad.value;
+            const observacion = otroObservacion.value.trim();
+
+            if (!descripcion) {
+                alert("Escriba la descripción del accesorio.");
+                otroDescripcion.focus();
+                return;
+            }
+
+            if (!cantidad || parseFloat(cantidad) <= 0) cantidad = "1";
+
+            crearFilaAccesorio({
+                accesorioId: "",
+                descripcion: descripcion,
+                cantidad: cantidad,
+                esOtro: true,
+                descripcionOtro: descripcion,
+                observacion: observacion
+            });
+
+            otroDescripcion.value = "";
+            otroCantidad.value = "1";
+            otroObservacion.value = "";
+            if (panelOtroAccesorio) panelOtroAccesorio.style.display = "none";
+        });
+    }
+
+    function crearFilaAccesorio(datos) {
+        if (!listaAccesorios || !mensajeSinAccesorios) return;
+
+        mensajeSinAccesorios.style.display = "none";
+
+        const fila = document.createElement("div");
+        fila.style.display = "grid";
+        fila.style.gridTemplateColumns = "1fr 100px auto";
+        fila.style.gap = "12px";
+        fila.style.alignItems = "center";
+        fila.style.padding = "12px";
+        fila.style.marginBottom = "8px";
+        fila.style.background = "#f8fafc";
+        fila.style.border = "1px solid #e2e8f0";
+        fila.style.borderRadius = "9px";
+
+        const informacion = document.createElement("div");
+        const nombre = document.createElement("strong");
+        nombre.textContent = datos.descripcion;
+        informacion.appendChild(nombre);
+
+        if (datos.esOtro) {
+            const etiqueta = document.createElement("span");
+            etiqueta.textContent = "  • No catalogado";
+            etiqueta.style.color = "#a65311";
+            etiqueta.style.fontSize = "12px";
+            informacion.appendChild(etiqueta);
+
+            if (datos.observacion) {
+                const obs = document.createElement("div");
+                obs.textContent = datos.observacion;
+                obs.style.fontSize = "12px";
+                obs.style.color = "#64748b";
+                obs.style.marginTop = "4px";
+                informacion.appendChild(obs);
+            }
+        }
+
+        const cantidadVisible = document.createElement("div");
+        cantidadVisible.textContent = "Cant. " + datos.cantidad;
+        cantidadVisible.style.fontWeight = "700";
+        cantidadVisible.style.textAlign = "center";
+
+        const eliminar = document.createElement("button");
+        eliminar.type = "button";
+        eliminar.textContent = "Eliminar";
+        eliminar.style.border = "0";
+        eliminar.style.background = "#fee2e2";
+        eliminar.style.color = "#991b1b";
+        eliminar.style.padding = "7px 10px";
+        eliminar.style.borderRadius = "7px";
+        eliminar.style.cursor = "pointer";
+        eliminar.addEventListener("click", function () {
+            fila.remove();
+            if (listaAccesorios.children.length === 0) {
+                mensajeSinAccesorios.style.display = "block";
+            }
+        });
+
+        const inputId = document.createElement("input");
+        inputId.type = "hidden";
+        inputId.name = "accesorio_id[]";
+        inputId.value = datos.accesorioId;
+
+        const inputCantidad = document.createElement("input");
+        inputCantidad.type = "hidden";
+        inputCantidad.name = "cantidad[]";
+        inputCantidad.value = datos.cantidad;
+
+        const inputEsOtro = document.createElement("input");
+        inputEsOtro.type = "hidden";
+        inputEsOtro.name = "es_otro[]";
+        inputEsOtro.value = datos.esOtro ? "1" : "0";
+
+        const inputDescripcionOtro = document.createElement("input");
+        inputDescripcionOtro.type = "hidden";
+        inputDescripcionOtro.name = "descripcion_otro[]";
+        inputDescripcionOtro.value = datos.descripcionOtro;
+
+        const inputObservacion = document.createElement("input");
+        inputObservacion.type = "hidden";
+        inputObservacion.name = "observacion[]";
+        inputObservacion.value = datos.observacion;
+
+        fila.appendChild(informacion);
+        fila.appendChild(cantidadVisible);
+        fila.appendChild(eliminar);
+        fila.appendChild(inputId);
+        fila.appendChild(inputCantidad);
+        fila.appendChild(inputEsOtro);
+        fila.appendChild(inputDescripcionOtro);
+        fila.appendChild(inputObservacion);
+
+        listaAccesorios.appendChild(fila);
+    }
+
+});
+</script>
+
+{% endblock %}

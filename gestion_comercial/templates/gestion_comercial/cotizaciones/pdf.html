@@ -1,0 +1,282 @@
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ cotizacion.numero_cotizacion }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm 18mm 14mm;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1f2937;
+            font-size: 10.5pt;
+            line-height: 1.4;
+        }
+
+        .header {
+            display: table;
+            width: 100%;
+            border-bottom: 3px solid #0b5fa5;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+
+        .header-logo, .header-data {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .header-logo { width: 42%; }
+
+        .header-logo img {
+            max-width: 210px;
+            max-height: 80px;
+        }
+
+        .header-data {
+            text-align: right;
+        }
+
+        .header-data h1 {
+            margin: 0 0 4px;
+            color: #073b6f;
+            font-size: 19pt;
+        }
+
+        .number {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #0b5fa5;
+        }
+
+        .section-title {
+            margin: 18px 0 8px;
+            padding: 7px 10px;
+            background: #eef4f9;
+            border-left: 4px solid #0b5fa5;
+            color: #073b6f;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        .info-table, .detail-table, .totals {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 5px 7px;
+            vertical-align: top;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #475569;
+            width: 18%;
+        }
+
+        .detail-table th {
+            background: #073b6f;
+            color: white;
+            padding: 7px 6px;
+            font-size: 9pt;
+        }
+
+        .detail-table td {
+            border-bottom: 1px solid #dbe3ea;
+            padding: 7px 6px;
+            vertical-align: top;
+            font-size: 9pt;
+        }
+
+        .right { text-align: right; }
+        .center { text-align: center; }
+
+        .totals-wrap {
+            width: 46%;
+            margin-left: auto;
+            margin-top: 14px;
+        }
+
+        .totals td {
+            padding: 5px 7px;
+            border-bottom: 1px solid #dbe3ea;
+        }
+
+        .totals .grand td {
+            background: #073b6f;
+            color: white;
+            font-weight: bold;
+            font-size: 12pt;
+            border: none;
+        }
+
+        .commercial {
+            margin-top: 16px;
+            padding: 11px 13px;
+            background: #f8fafc;
+            border: 1px solid #dbe3ea;
+            border-radius: 6px;
+        }
+
+        .commercial p { margin: 4px 0; }
+
+        .footer {
+            margin-top: 28px;
+            padding-top: 9px;
+            border-top: 1px solid #cbd5e1;
+            text-align: center;
+            color: #64748b;
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-logo">
+            <img src="{{ logo_uri }}" alt="D&S Soluciones">
+        </div>
+        <div class="header-data">
+            <h1>COTIZACIÓN</h1>
+            <div class="number">
+                {{ cotizacion.numero_cotizacion|default:"Cotización" }}
+            </div>
+            <div>
+                Fecha:
+                {{ cotizacion.fecha_creacion|date:"d/m/Y" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">Información del cliente</div>
+
+    <table class="info-table">
+        <tr>
+            <td class="label">Cliente / Unidad:</td>
+            <td>{{ cotizacion.cliente.nombre }}</td>
+            <td class="label">Estado:</td>
+            <td>{{ cotizacion.get_estado_display }}</td>
+        </tr>
+        <tr>
+            <td class="label">Asunto:</td>
+            <td colspan="3">{{ cotizacion.asunto }}</td>
+        </tr>
+        {% if cotizacion.descripcion %}
+        <tr>
+            <td class="label">Descripción:</td>
+            <td colspan="3">{{ cotizacion.descripcion|linebreaksbr }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <div class="section-title">Detalle de la propuesta</div>
+
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th style="width:12%;">Tipo</th>
+                <th>Descripción</th>
+                <th style="width:10%;">Cant.</th>
+                <th style="width:18%;">Valor unitario</th>
+                <th style="width:18%;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+            <tr>
+                <td>{{ detalle.get_tipo_display }}</td>
+                <td>
+                    {{ detalle.descripcion }}
+                    {% if detalle.observaciones %}
+                        <br><small>{{ detalle.observaciones }}</small>
+                    {% endif %}
+                </td>
+                <td class="center">{{ detalle.cantidad|floatformat:2 }}</td>
+                <td class="right">
+                    ${{ detalle.valor_unitario|floatformat:0 }}
+                </td>
+                <td class="right">
+                    ${{ detalle.subtotal|floatformat:0 }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-wrap">
+        <table class="totals">
+            <tr>
+                <td>Subtotal costos</td>
+                <td class="right">
+                    ${{ cotizacion.subtotal_costos|floatformat:0 }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Utilidad
+                    ({{ cotizacion.porcentaje_utilidad|floatformat:2 }}%)
+                </td>
+                <td class="right">
+                    ${{ cotizacion.valor_utilidad|floatformat:0 }}
+                </td>
+            </tr>
+            <tr>
+                <td>Valor antes de IVA</td>
+                <td class="right">
+                    ${{ cotizacion.valor_sin_iva|floatformat:0 }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    IVA ({{ cotizacion.porcentaje_iva|floatformat:2 }}%)
+                </td>
+                <td class="right">
+                    ${{ cotizacion.valor_iva|floatformat:0 }}
+                </td>
+            </tr>
+            <tr class="grand">
+                <td>TOTAL</td>
+                <td class="right">
+                    ${{ cotizacion.valor_total|floatformat:0 }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-title">Condiciones comerciales</div>
+
+    <div class="commercial">
+        <p>
+            <strong>Validez de la oferta:</strong>
+            {{ cotizacion.vigencia_dias }} días.
+        </p>
+        <p>
+            <strong>Forma de pago:</strong>
+            {% if cotizacion.forma_pago %}
+                {{ cotizacion.forma_pago|linebreaksbr }}
+            {% else %}
+                Por definir.
+            {% endif %}
+        </p>
+        {% if cotizacion.observaciones %}
+        <p>
+            <strong>Observaciones:</strong>
+            {{ cotizacion.observaciones|linebreaksbr }}
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        D&S SOLUCIONES EN BOMBEO S.A.S. · Propuesta comercial
+        {{ cotizacion.numero_cotizacion }}
+    </div>
+
+</body>
+</html>

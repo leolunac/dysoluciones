@@ -404,15 +404,15 @@
 
         <div class="hero-actions">
         <a class="btn btn-light" href="{% url 'hoja_vida' cliente.id %}">
-            🧾 Hoja de vida
+            Hoja de vida
         </a>
 
         <a class="btn btn-light" href="{% url 'hoja_vida_pdf' cliente.id %}">
-            📄 Descargar Hoja de Vida
+            Descargar Hoja de Vida
         </a>
 
         <a class="btn btn-light" href="{% url 'mis_documentos' %}">
-            📁 Mis documentos
+            Mis documentos
         </a>
 
         <a class="btn btn-light" href="{% url 'logout' %}">
@@ -424,7 +424,7 @@
     {% if fuera_servicio > 0 %}
         <div class="status-banner status-alert">
             <div>
-                <strong>⚠ Atención requerida</strong><br>
+                <strong>Atención requerida</strong><br>
                 Hay {{ fuera_servicio }} equipo(s) que no se encuentran plenamente operativos.
             </div>
             <a class="btn btn-secondary" href="#equipos-criticos">
@@ -434,7 +434,7 @@
     {% else %}
         <div class="status-banner status-ok">
             <div>
-                <strong>✅ Operación estable</strong><br>
+                <strong>Operación estable</strong><br>
                 Todos los equipos registrados se encuentran operativos.
             </div>
         </div>
@@ -464,7 +464,7 @@
 
     <section class="content-grid">
         <div class="panel">
-            <h2>📈 Emergencias de los últimos 12 meses</h2>
+            <h2>Emergencias de los últimos 12 meses</h2>
             <p class="panel-subtitle">
                 Tendencia mensual de atenciones registradas para esta unidad.
             </p>
@@ -474,7 +474,7 @@
         </div>
 
         <div class="panel">
-            <h2>⚙ Estado actual de los equipos</h2>
+            <h2>Estado actual de los equipos</h2>
             <p class="panel-subtitle">
                 Distribución entre operativos, en reparación y fuera de servicio.
             </p>
@@ -485,7 +485,7 @@
     </section>
 
     <section class="panel" id="equipos-criticos">
-        <h2>🚨 Equipos que requieren atención</h2>
+        <h2>Equipos que requieren atención</h2>
         <p class="panel-subtitle">
             Equipos en reparación o fuera de servicio que requieren seguimiento.
         </p>
@@ -534,13 +534,12 @@
 
                     {% if e.ultima_revision %}
                         <div class="equipment-meta">
-                            <strong>Última revisión:</strong> {{ e.ultima_revision|date:"d/m/Y" }}
-                        </div>
+                            <strong>Última revisión:</strong> {{ e.ultima_revision|date:"d/m/Y" }}                        </div>
                     {% endif %}
                 </article>
             {% empty %}
                 <div class="empty">
-                    <strong>✅ Sin novedades críticas</strong>
+                    <strong>Sin novedades críticas</strong>
                     <p>No hay equipos en reparación ni fuera de servicio.</p>
                 </div>
             {% endfor %}
@@ -549,7 +548,7 @@
 
     <section class="content-grid section-space">
         <div class="panel">
-            <h2>💰 Cotizaciones recientes</h2>
+            <h2>Cotizaciones recientes</h2>
             <p class="panel-subtitle">
                 Seguimiento de propuestas relacionadas con los equipos de la unidad.
             </p>
@@ -583,26 +582,26 @@
         </div>
 
         <div class="panel">
-            <h2>📂 Documentos y exportaciones</h2>
+            <h2>Documentos y exportaciones</h2>
             <p class="panel-subtitle">
                 Descargue la información actualmente disponible.
             </p>
 
             <div class="quick-actions">
                 <a class="btn btn-primary" href="{% url 'hoja_vida_pdf' cliente.id %}">
-                    📄 Hoja de vida PDF
+                    Hoja de vida PDF
                 </a>
 
                 <a class="btn btn-secondary" href="{% url 'export_excel' cliente.id %}">
-                    📊 Exportar Excel
+                    Exportar Excel
                 </a>
 
                 <a class="btn btn-secondary" href="{% url 'export_csv' cliente.id %}">
-                    📋 Exportar CSV
+                    Exportar CSV
                 </a>
 
                 <a class="btn btn-secondary" href="{% url 'reporte_pdf' cliente.id %}">
-                    🧾 Reporte básico
+                    Reporte básico
                 </a>
             </div>
         </div>

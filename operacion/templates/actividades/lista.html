@@ -1,0 +1,589 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="max-width:1450px; margin:30px auto; padding:0 18px;">
+
+    <!-- ENCABEZADO -->
+    <div style="
+        background:linear-gradient(135deg,#0b4778,#1478ad);
+        color:white;
+        border-radius:14px;
+        padding:22px 26px;
+        margin-bottom:22px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:20px;
+    ">
+
+        <div>
+            <h2 style="margin:0; font-size:26px;">
+                Actividades de técnicos
+            </h2>
+
+            <p style="margin:6px 0 0; opacity:.9;">
+                Historial operativo de visitas, trabajos realizados,
+                tiempos y materiales utilizados.
+            </p>
+        </div>
+
+        <a href="{% url 'nueva_actividad' %}"
+           style="
+               background:white;
+               color:#0b5c92;
+               padding:11px 18px;
+               border-radius:8px;
+               text-decoration:none;
+               font-weight:700;
+               white-space:nowrap;
+           ">
+            + Nueva actividad
+        </a>
+
+    </div>
+<!-- FILTROS -->
+<div style="
+    background:white;
+    border:1px solid #dfe5eb;
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.04);
+">
+
+    <div style="
+        font-weight:700;
+        color:#17324d;
+        margin-bottom:14px;
+        font-size:15px;
+    ">
+        🔎 Buscar actividades
+    </div>
+
+    <form method="get"
+          style="
+              display:grid;
+              grid-template-columns:160px 1fr 1.4fr 1fr auto auto;
+              gap:12px;
+              align-items:end;
+          ">
+
+        <!-- FECHA -->
+        <div>
+            <label style="
+                display:block;
+                font-size:12px;
+                font-weight:700;
+                margin-bottom:5px;
+                color:#475569;
+            ">
+                Fecha
+            </label>
+
+            <input type="date"
+                   name="fecha"
+                   value="{{ filtro_fecha }}"
+                   style="
+                       width:100%;
+                       padding:8px;
+                       border:1px solid #cbd5e1;
+                       border-radius:6px;
+                       box-sizing:border-box;
+                   ">
+        </div>
+
+
+        <!-- TÉCNICO -->
+        <div>
+            <label style="
+                display:block;
+                font-size:12px;
+                font-weight:700;
+                margin-bottom:5px;
+                color:#475569;
+            ">
+                Técnico
+            </label>
+
+            <select name="tecnico"
+                    style="
+                        width:100%;
+                        padding:8px;
+                        border:1px solid #cbd5e1;
+                        border-radius:6px;
+                        background:white;
+                    ">
+
+                <option value="">Todos</option>
+
+                {% for tecnico in tecnicos %}
+                    <option value="{{ tecnico.id }}"
+                        {% if filtro_tecnico == tecnico.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ tecnico.nombre }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+
+        <!-- UNIDAD -->
+        <div>
+            <label style="
+                display:block;
+                font-size:12px;
+                font-weight:700;
+                margin-bottom:5px;
+                color:#475569;
+            ">
+                Unidad / Cliente
+            </label>
+
+            <select name="cliente"
+                    style="
+                        width:100%;
+                        padding:8px;
+                        border:1px solid #cbd5e1;
+                        border-radius:6px;
+                        background:white;
+                    ">
+
+                <option value="">Todas</option>
+
+                {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}"
+                        {% if filtro_cliente == cliente.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ cliente.nombre }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+
+        <!-- TIPO -->
+        <div>
+            <label style="
+                display:block;
+                font-size:12px;
+                font-weight:700;
+                margin-bottom:5px;
+                color:#475569;
+            ">
+                Tipo de actividad
+            </label>
+
+            <select name="tipo"
+                    style="
+                        width:100%;
+                        padding:8px;
+                        border:1px solid #cbd5e1;
+                        border-radius:6px;
+                        background:white;
+                    ">
+
+                <option value="">Todas</option>
+
+                {% for valor, nombre in tipos_actividad %}
+                    <option value="{{ valor }}"
+                        {% if filtro_tipo == valor %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ nombre }}
+                    </option>
+                {% endfor %}
+
+            </select>
+        </div>
+
+
+        <!-- BUSCAR -->
+        <button type="submit"
+                style="
+                    padding:9px 18px;
+                    background:#0d6efd;
+                    color:white;
+                    border:0;
+                    border-radius:7px;
+                    font-weight:700;
+                    cursor:pointer;
+                    white-space:nowrap;
+                ">
+            Buscar
+        </button>
+
+
+        <!-- LIMPIAR -->
+        <a href="{% url 'lista_actividades' %}"
+           style="
+               padding:9px 16px;
+               background:#eef2f6;
+               color:#334155;
+               border-radius:7px;
+               text-decoration:none;
+               font-weight:700;
+               text-align:center;
+               white-space:nowrap;
+           ">
+            Limpiar
+        </a>
+
+    </form>
+
+</div>  
+
+    <!-- TABLA -->
+    <div style="
+        background:white;
+        border:1px solid #dfe5eb;
+        border-radius:12px;
+        overflow:auto;
+        box-shadow:0 3px 12px rgba(0,0,0,.05);
+    ">
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            min-width:1400px;
+        ">
+
+            <thead>
+                <tr style="
+                    background:#edf3f7;
+                    color:#17324d;
+                ">
+                    <th style="padding:12px;text-align:left;">Fecha</th>
+                    <th style="padding:12px;text-align:left;">Técnico</th>
+                    <th style="padding:12px;text-align:left;">Unidad</th>
+                    <th style="padding:12px;text-align:left;">Actividad</th>
+                    <th style="padding:12px;text-align:left;">Caso 7x24</th>
+                    <th style="padding:12px;text-align:left;">Remisión</th>
+                    <th style="padding:12px;text-align:left;">Material utilizado</th>
+
+                    <th style="padding:12px;text-align:center;">
+                        Llegada
+                    </th>
+
+                    <th style="padding:12px;text-align:center;">
+                        Salida
+                    </th>
+
+                    <th style="padding:12px;text-align:center;">
+                        Permanencia
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">Resultado</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                {% for actividad in actividades %}
+
+                <tr style="
+                    border-top:1px solid #e5e7eb;
+                    vertical-align:top;
+                ">
+
+                    <!-- FECHA -->
+                    <td style="padding:12px; white-space:nowrap;">
+                        <strong>
+                            {{ actividad.fecha|date:"d/m/Y" }}
+                        </strong>
+                    </td>
+
+
+                    <!-- TECNICO -->
+                    <td style="padding:12px;">
+                        {{ actividad.tecnico.nombre }}
+                    </td>
+
+
+                    <!-- UNIDAD -->
+                    <td style="padding:12px; min-width:180px;">
+                        {{ actividad.cliente.nombre }}
+                    </td>
+
+
+                    <!-- ACTIVIDAD -->
+                    <td style="padding:12px;">
+                        <span style="
+                            background:#e8f1ff;
+                            color:#1559a5;
+                            padding:5px 9px;
+                            border-radius:12px;
+                            font-weight:600;
+                            white-space:nowrap;
+                        ">
+                            {{ actividad.get_tipo_actividad_display }}
+                        </span>
+                    </td>
+
+
+                    <!-- CASO -->
+                    <td style="padding:12px; white-space:nowrap;">
+
+                        {% if actividad.servicio and actividad.servicio.numero_caso %}
+
+                            <strong style="color:#075985;">
+                                {{ actividad.servicio.numero_caso }}
+                            </strong>
+
+                        {% else %}
+
+                            <span style="color:#9ca3af;">—</span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- REMISION -->
+                    <td style="padding:12px; white-space:nowrap;">
+
+                        {% if actividad.remision %}
+
+                            <span style="
+                                background:#ecfdf3;
+                                color:#08783e;
+                                padding:5px 9px;
+                                border-radius:12px;
+                                font-weight:700;
+                            ">
+                                {{ actividad.remision.numero_remision }}
+                            </span>
+
+                        {% else %}
+
+                            <span style="color:#9ca3af;">—</span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- MATERIAL -->
+                    <td style="padding:12px; min-width:240px;">
+
+                        {% for uso in actividad.accesorios_utilizados.all %}
+
+                            <div style="
+                                background:#f6f8fa;
+                                border-left:3px solid #0d6efd;
+                                padding:5px 8px;
+                                margin-bottom:5px;
+                                border-radius:4px;
+                            ">
+
+                                {% if uso.es_otro %}
+
+                                    <strong>{{ uso.descripcion_otro }}</strong>
+
+                                    <span style="color:#a65311; font-size:11px;">
+                                        (Otro)
+                                    </span>
+
+                                {% elif uso.accesorio %}
+
+                                    <strong>{{ uso.accesorio.descripcion }}</strong>
+
+                                {% endif %}
+
+                                <strong>× {{ uso.cantidad }}</strong>
+
+                                {% if uso.observacion %}
+                                    <div style="font-size:11px; color:#64748b; margin-top:3px;">
+                                        {{ uso.observacion }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+                        {% empty %}
+
+                            <span style="color:#9ca3af;">—</span>
+
+                        {% endfor %}
+
+                    </td>
+
+
+                    <!-- LLEGADA -->
+                    <td style="
+                        padding:12px;
+                        text-align:center;
+                        white-space:nowrap;
+                        font-weight:600;
+                    ">
+
+                        {% if actividad.hora_llegada %}
+                            {{ actividad.hora_llegada|time:"H:i" }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- SALIDA -->
+                    <td style="
+                        padding:12px;
+                        text-align:center;
+                        white-space:nowrap;
+                        font-weight:600;
+                    ">
+
+                        {% if actividad.hora_salida %}
+                            {{ actividad.hora_salida|time:"H:i" }}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- PERMANENCIA -->
+                    <td style="
+                        padding:12px;
+                        text-align:center;
+                        white-space:nowrap;
+                    ">
+                        {% if actividad.duracion_en_sitio %}
+                            <span style="
+                                background:#eef6ff;
+                                color:#1559a5;
+                                padding:5px 9px;
+                                border-radius:12px;
+                                font-weight:700;
+                            ">
+                                {{ actividad.duracion_en_sitio }}
+                            </span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+
+                    <!-- RESULTADO -->
+                    <td style="padding:12px; min-width:170px;">
+
+                        {% if actividad.resultado == "OPERATIVO" %}
+
+                            <span style="
+                                background:#dcfce7;
+                                color:#166534;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                ✓ Equipo operativo
+                            </span>
+
+                        {% elif actividad.resultado == "OPERATIVO_PROVISIONAL" %}
+
+                            <span style="
+                                background:#fef3c7;
+                                color:#92400e;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                Operativo provisional
+                            </span>
+
+                        {% elif actividad.resultado == "PENDIENTE_REPUESTO" %}
+
+                            <span style="
+                                background:#fff7ed;
+                                color:#9a3412;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                Pendiente repuesto
+                            </span>
+
+                        {% elif actividad.resultado == "REQUIERE_COTIZACION" %}
+
+                            <span style="
+                                background:#fef3c7;
+                                color:#854d0e;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                Requiere cotización
+                            </span>
+
+                        {% elif actividad.resultado == "REQUIERE_REGRESO" %}
+
+                            <span style="
+                                background:#ffedd5;
+                                color:#9a3412;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                Requiere regreso
+                            </span>
+
+                        {% elif actividad.resultado == "NO_SOLUCIONADO" %}
+
+                            <span style="
+                                background:#fee2e2;
+                                color:#991b1b;
+                                padding:6px 10px;
+                                border-radius:14px;
+                                font-weight:700;
+                            ">
+                                No solucionado
+                            </span>
+
+                        {% elif actividad.resultado %}
+
+                            {{ actividad.get_resultado_display }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="11"
+                        style="
+                            padding:40px;
+                            text-align:center;
+                            color:#6b7280;
+                        ">
+                        Todavía no existen actividades registradas.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

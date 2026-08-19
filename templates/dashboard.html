@@ -1,104 +1,425 @@
-<!doctype html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <title>Dashboard Gerencial 7x24</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
-    h1 { margin:0 0 10px 0; }
-    .sub { color:#555; margin-bottom:18px; }
-    .grid { display:flex; gap:12px; flex-wrap:wrap; }
-    .card { background:#fff; border-radius:10px; padding:16px; min-width:210px; flex:1; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .kpi { font-size:28px; font-weight:700; margin-top:6px; }
-    .row { display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
-    .panel { background:#fff; border-radius:10px; padding:16px; flex:1; box-shadow:0 2px 8px rgba(0,0,0,.06); min-width:320px; }
-    table { width:100%; border-collapse:collapse; margin-top:8px; }
-    th, td { border-bottom:1px solid #eee; padding:10px; text-align:left; font-size:14px; }
-    th { background:#fafafa; }
-    .badge { padding:4px 8px; border-radius:999px; font-size:12px; display:inline-block; }
-    .ALTA { background:#ffe3e3; }
-    .MEDIA { background:#fff1cc; }
-    .NORMAL { background:#e6f4ff; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB 7x24 | Panel Empresarial</title>
+
+    <style>
+        :root{
+            --primary:#0b3c5d;
+            --secondary:#1d70a2;
+            --accent:#00a896;
+            --bg:#eef4f8;
+            --card:#ffffff;
+            --text:#1f2937;
+            --muted:#64748b;
+            --border:#d7e3ec;
+            --danger:#dc2626;
+            --warning:#f59e0b;
+            --success:#16a34a;
+            --info:#2563eb;
+            --shadow:0 12px 30px rgba(11,60,93,.10);
+        }
+
+        *{box-sizing:border-box}
+
+        body{
+            margin:0;
+            font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+            color:var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(0,168,150,.10), transparent 30%),
+                linear-gradient(180deg,var(--bg),#f8fbfd);
+            min-height:100vh;
+        }
+
+        a{color:inherit}
+
+        .page-shell{
+            max-width:1450px;
+            margin:0 auto;
+            padding:22px 16px 42px;
+        }
+
+        .hero{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;
+            border-radius:24px;
+            padding:24px;
+            box-shadow:var(--shadow);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:20px;
+            margin-bottom:20px;
+        }
+
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:16px;
+        }
+
+        .brand-logo{
+            width:78px;
+            height:78px;
+            object-fit:contain;
+            background:rgba(255,255,255,.12);
+            padding:9px;
+            border-radius:18px;
+        }
+
+        .hero h1{
+            margin:0;
+            font-size:1.7rem;
+        }
+
+        .hero p{
+            margin:6px 0 0;
+            opacity:.92;
+        }
+
+        .hero-actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            border:none;
+            border-radius:999px;
+            padding:10px 15px;
+            font-weight:700;
+            text-decoration:none;
+            cursor:pointer;
+            font-size:.9rem;
+        }
+
+        .btn-light{
+            background:#fff;
+            color:var(--primary);
+            box-shadow:0 8px 20px rgba(0,0,0,.14);
+        }
+
+        .btn-primary{
+            background:linear-gradient(135deg,var(--accent),#47c9bc);
+            color:#fff;
+        }
+
+        .kpi-grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(180px,1fr));
+            gap:14px;
+            margin-bottom:20px;
+        }
+
+        .kpi-card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:18px;
+            box-shadow:var(--shadow);
+            position:relative;
+            overflow:hidden;
+        }
+
+        .kpi-card::before{
+            content:"";
+            position:absolute;
+            top:0;
+            left:0;
+            width:6px;
+            height:100%;
+        }
+
+        .kpi-blue::before{background:var(--info)}
+        .kpi-orange::before{background:var(--warning)}
+        .kpi-green::before{background:var(--success)}
+        .kpi-teal::before{background:var(--accent)}
+
+        .kpi-label{
+            color:var(--muted);
+            font-weight:700;
+            font-size:.9rem;
+        }
+
+        .kpi-value{
+            margin-top:8px;
+            font-size:2rem;
+            font-weight:800;
+            color:var(--primary);
+        }
+
+        .section-title{
+            margin:24px 0 12px;
+            color:var(--primary);
+            font-size:1.2rem;
+        }
+
+        .module-grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(220px,1fr));
+            gap:14px;
+        }
+
+        .module-card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:18px;
+            box-shadow:var(--shadow);
+            text-decoration:none;
+            transition:transform .15s ease, box-shadow .15s ease;
+            min-height:155px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .module-card:hover{
+            transform:translateY(-2px);
+            box-shadow:0 16px 34px rgba(11,60,93,.15);
+        }
+
+        .module-icon{
+            width:46px;
+            height:46px;
+            border-radius:14px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.35rem;
+            font-weight:800;
+            background:#e7f3f9;
+            color:var(--primary);
+            margin-bottom:12px;
+        }
+
+        .module-card h3{
+            margin:0 0 7px;
+            color:var(--primary);
+            font-size:1.02rem;
+        }
+
+        .module-card p{
+            margin:0;
+            color:var(--muted);
+            font-size:.88rem;
+            line-height:1.45;
+        }
+
+        .module-link{
+            margin-top:14px;
+            color:var(--secondary);
+            font-weight:800;
+            font-size:.86rem;
+        }
+
+        .footer{
+            margin-top:28px;
+            text-align:center;
+            color:var(--muted);
+            font-size:.86rem;
+        }
+
+        @media(max-width:1150px){
+            .module-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
+            .kpi-grid{grid-template-columns:repeat(2,minmax(180px,1fr))}
+        }
+
+        @media(max-width:700px){
+            .page-shell{padding:12px 10px 28px}
+            .hero{display:block;border-radius:18px}
+            .brand{align-items:flex-start}
+            .brand-logo{width:64px;height:64px}
+            .hero-actions{justify-content:flex-start;margin-top:16px}
+            .hero-actions .btn{width:100%}
+            .module-grid,.kpi-grid{grid-template-columns:1fr}
+        }
+    </style>
 </head>
+
 <body>
-  <h1>Dashboard Operativo 7x24</h1>
-  <div class="sub">Resumen del mes {{ mes }}/{{ anio }}</div>
+<div class="page-shell">
 
-  <div class="grid">
-    <div class="card">
-      <div>Emergencias del mes</div>
-      <div class="kpi">{{ total_mes }}</div>
-    </div>
-    <div class="card">
-      <div>Pendientes</div>
-      <div class="kpi">{{ pendientes }}</div>
-    </div>
-    <div class="card">
-      <div>Atendidas</div>
-      <div class="kpi">{{ atendidas }}</div>
-    </div>
-    <div class="card">
-      <div>Nocturnas</div>
-      <div class="kpi">{{ nocturnas }}</div>
-    </div>
-    <div class="card">
-      <div>Valor total mes</div>
-      <div class="kpi">$ {{ facturacion_mes }}</div>
-    </div>
-  </div>
+    <header class="hero">
+        <div class="brand">
+            <img src="{% static 'img/logo_dys.png' %}" alt="D&S" class="brand-logo">
+            <div>
+                <h1>SIGOB 7x24 | Panel Empresarial</h1>
+                <p>
+                    Centro de control de operación, atención 7x24 y gestión comercial.
+                </p>
+            </div>
+        </div>
 
-  <div class="row">
-    <div class="panel">
-      <h3>Emergencias por prioridad</h3>
-      <canvas id="chartPrioridad" height="120"></canvas>
-    </div>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="{% url 'nueva_llamada' %}">
+                + Registrar llamada
+            </a>
+            <a class="btn btn-light" href="{% url 'centro_operaciones' %}">
+                Centro de Operaciones
+            </a>
+            <a class="btn btn-light" href="{% url 'logout' %}">
+                Cerrar sesión
+            </a>
+        </div>
+    </header>
 
-    <div class="panel">
-      <h3>Últimas 10 emergencias</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Prioridad</th>
-            <th>Estado</th>
-            <th>Nocturna</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in ultimas %}
-          <tr>
-            <td>{{ e.fecha_llamada|date:"Y-m-d H:i" }}</td>
-            <td>{{ e.cliente.nombre }}</td>
-            <td><span class="badge {{ e.prioridad }}">{{ e.prioridad }}</span></td>
-            <td>{{ e.estado }}</td>
-            <td>{% if e.es_nocturna %}Sí{% else %}No{% endif %}</td>
-            <td>$ {{ e.valor_total }}</td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="6">No hay emergencias este mes.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+    <section class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-label">Emergencias registradas</div>
+            <div class="kpi-value">{{ total_emergencias }}</div>
+        </div>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const data = {{ por_prioridad|safe }};
-    const labels = data.map(x => x.prioridad);
-    const values = data.map(x => x.total);
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-label">Pendientes</div>
+            <div class="kpi-value">{{ pendientes }}</div>
+        </div>
 
-    const ctx = document.getElementById('chartPrioridad').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: { labels: labels, datasets: [{ label: 'Emergencias', data: values }] },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-  </script>
+        <div class="kpi-card kpi-green">
+            <div class="kpi-label">Atendidas</div>
+            <div class="kpi-value">{{ atendidas }}</div>
+        </div>
+
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-label">Clientes / Unidades</div>
+            <div class="kpi-value">{{ clientes }}</div>
+        </div>
+    </section>
+
+    <h2 class="section-title">Operación 7x24</h2>
+
+    <section class="module-grid">
+        <a class="module-card" href="{% url 'centro_operaciones' %}">
+            <div>
+                <div class="module-icon">24</div>
+                <h3>Centro de Operaciones</h3>
+                <p>Seguimiento de llamadas, emergencias, pendientes y casos activos.</p>
+            </div>
+            <div class="module-link">Abrir centro →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'escritorio_coordinador' %}">
+            <div>
+                <div class="module-icon">CO</div>
+                <h3>Escritorio del Coordinador</h3>
+                <p>Control operativo, asignaciones y seguimiento de servicios.</p>
+            </div>
+            <div class="module-link">Abrir escritorio →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'lista_bitacora' %}">
+            <div>
+                <div class="module-icon">BI</div>
+                <h3>Bitácoras</h3>
+                <p>Consulta y registro de novedades, actividades y seguimiento operativo.</p>
+            </div>
+            <div class="module-link">Ver bitácoras →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'lista_actividades' %}">
+            <div>
+                <div class="module-icon">AT</div>
+                <h3>Actividades de Técnicos</h3>
+                <p>Registro de trabajos realizados y actividades asociadas a clientes.</p>
+            </div>
+            <div class="module-link">Ver actividades →</div>
+        </a>
+    </section>
+
+    <h2 class="section-title">Control técnico y documental</h2>
+
+    <section class="module-grid">
+        <a class="module-card" href="{% url 'lista_remisiones' %}">
+            <div>
+                <div class="module-icon">RE</div>
+                <h3>Remisiones</h3>
+                <p>Registro, consulta y conciliación de remisiones de técnicos.</p>
+            </div>
+            <div class="module-link">Ver remisiones →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'levantamiento_equipo' %}">
+            <div>
+                <div class="module-icon">EQ</div>
+                <h3>Levantamiento de Equipos</h3>
+                <p>Registro técnico de equipos y actualización de información de unidades.</p>
+            </div>
+            <div class="module-link">Registrar equipo →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'portal_unidades' %}">
+            <div>
+                <div class="module-icon">UN</div>
+                <h3>Portal de Unidades</h3>
+                <p>Acceso a unidades y consulta de información técnica por cliente.</p>
+            </div>
+            <div class="module-link">Ver unidades →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'nueva_llamada' %}">
+            <div>
+                <div class="module-icon">LL</div>
+                <h3>Nueva Llamada</h3>
+                <p>Registro inmediato de una nueva solicitud o servicio 7x24.</p>
+            </div>
+            <div class="module-link">Registrar llamada →</div>
+        </a>
+    </section>
+
+    <h2 class="section-title">Gestión Comercial</h2>
+
+    <section class="module-grid">
+        <a class="module-card" href="{% url 'gestion_comercial:panel' %}">
+            <div>
+                <div class="module-icon">GC</div>
+                <h3>Gestión Comercial</h3>
+                <p>Panel general de liquidaciones, revisión y procesos comerciales.</p>
+            </div>
+            <div class="module-link">Abrir gestión →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'gestion_comercial:nueva_liquidacion' %}">
+            <div>
+                <div class="module-icon">LI</div>
+                <h3>Nueva Liquidación</h3>
+                <p>Crear una liquidación comercial a partir de trabajos y costos registrados.</p>
+            </div>
+            <div class="module-link">Crear liquidación →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'gestion_comercial:lista_cotizaciones' %}">
+            <div>
+                <div class="module-icon">CO</div>
+                <h3>Cotizaciones</h3>
+                <p>Crear, elaborar, generar PDF y controlar estados de propuestas comerciales.</p>
+            </div>
+            <div class="module-link">Ver cotizaciones →</div>
+        </a>
+
+        <a class="module-card" href="{% url 'gestion_comercial:consolidado_facturacion' %}">
+            <div>
+                <div class="module-icon">FA</div>
+                <h3>Consolidado de Facturación</h3>
+                <p>Consulta de liquidaciones facturadas, filtros y exportación a Excel.</p>
+            </div>
+            <div class="module-link">Abrir consolidado →</div>
+        </a>
+    </section>
+
+    <footer class="footer">
+        SIGOB 7x24 — D&amp;S Soluciones en Bombeo S.A.S.<br>
+        Operación técnica y gestión comercial integradas en una sola plataforma.
+    </footer>
+
+</div>
 </body>
 </html>

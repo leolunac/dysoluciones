@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="max-width:1200px; margin:30px auto; padding:0 20px;">
+
+    <!-- ENCABEZADO -->
+
+    <div style="
+        background:linear-gradient(135deg,#0b4778,#1478ad);
+        color:white;
+        padding:22px 26px;
+        border-radius:14px;
+        margin-bottom:20px;
+    ">
+        <h1 style="margin:0; font-size:26px;">
+            Conciliar remisión {{ remision.numero_remision }}
+        </h1>
+
+        <p style="margin:6px 0 0;">
+            Registre los accesorios utilizados y devueltos por el técnico.
+        </p>
+    </div>
+
+
+    <!-- DATOS GENERALES -->
+
+    <div style="
+        background:white;
+        padding:20px;
+        border-radius:12px;
+        border:1px solid #e5e7eb;
+        margin-bottom:20px;
+    ">
+
+        <div style="
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:12px 30px;
+        ">
+
+            <div>
+                <strong>Remisión física:</strong>
+                {{ remision.numero_remision }}
+            </div>
+
+            <div>
+                <strong>Fecha:</strong>
+                {{ remision.fecha|date:"d/m/Y H:i" }}
+            </div>
+
+            <div>
+                <strong>Técnico:</strong>
+                {{ remision.tecnico }}
+            </div>
+
+            <div>
+                <strong>Unidad:</strong>
+                {{ remision.cliente.nombre }}
+            </div>
+
+            <div>
+                <strong>Caso 7x24:</strong>
+
+                {% if remision.servicio %}
+                    #{{ remision.servicio.id }}
+                {% else %}
+                    No relacionado
+                {% endif %}
+            </div>
+
+            <div>
+                <strong>Estado actual:</strong>
+                {{ remision.get_estado_display }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CONCILIACIÓN -->
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {{ formset.management_form }}
+        {% if formset.errors %}
+    <div style="
+        background:#fee2e2;
+        color:#991b1b;
+        padding:12px;
+        border-radius:8px;
+        margin-bottom:15px;
+    ">
+        <strong>Errores encontrados:</strong>
+
+        {% for detalle in formset %}
+            {% if detalle.errors %}
+                <div style="margin-top:8px;">
+                    Accesorio {{ forloop.counter }}:
+                    {{ detalle.errors }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+        {% if formset.non_form_errors %}
+            <div style="
+                background:#fee2e2;
+                color:#991b1b;
+                padding:12px;
+                border-radius:8px;
+                margin-bottom:15px;
+            ">
+                {{ formset.non_form_errors }}
+            </div>
+        {% endif %}
+
+
+        <div style="
+            background:white;
+            padding:22px;
+            border-radius:12px;
+            border:1px solid #e5e7eb;
+            margin-bottom:20px;
+        ">
+
+            <h2 style="margin-top:0;">
+                Conciliación de accesorios
+            </h2>
+
+            <p style="color:#6b7280;">
+                Para cada accesorio indique cuánto utilizó el técnico
+                y cuánto devolvió.
+            </p>
+
+
+            <div style="overflow-x:auto;">
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:950px;
+                ">
+
+                    <thead style="background:#edf3f7;">
+
+                        <tr>
+                            <th style="padding:10px;text-align:left;">
+                                Código
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
+                                Accesorio
+                            </th>
+
+                            <th style="padding:10px;text-align:center;">
+                                Entregado
+                            </th>
+
+                            <th style="padding:10px;text-align:center;">
+                                Utilizado
+                            </th>
+
+                            <th style="padding:10px;text-align:center;">
+                                Devuelto
+                            </th>
+                            <th style="padding:10px;text-align:center;">
+                                Pendiente
+                            </th>
+                            <th style="padding:10px;text-align:left;">
+                                Observaciones
+                            </th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for detalle in formset %}
+
+                            {% if detalle.instance.pk %}
+                            {% if detalle.non_field_errors %}
+<tr>
+    <td colspan="6">
+        <div style="
+            background:#fee2e2;
+            color:#991b1b;
+            padding:10px 12px;
+            border-radius:8px;
+            margin:8px 0;
+            font-weight:600;
+        ">
+            {{ detalle.non_field_errors }}
+        </div>
+    </td>
+</tr>
+{% endif %}
+                            <tr style="border-bottom:1px solid #e5e7eb;">
+
+                                <td style="padding:10px;">
+
+    {{ detalle.id }}
+
+    <strong>
+        {{ detalle.instance.codigo_accesorio|default:"—" }}
+    </strong>
+
+</td>
+
+
+                                <td style="padding:10px;">
+
+                                    {{ detalle.instance.descripcion_accesorio }}
+
+                                    <div style="display:none;">
+                                        {{ detalle.descripcion_accesorio }}
+                                    </div>
+
+                                </td>
+
+
+                                <td style="
+                                    padding:10px;
+                                    text-align:center;
+                                    font-weight:700;
+                                ">
+
+                                    {{ detalle.instance.cantidad_entregada }}
+
+                                    <div style="display:none;">
+                                        {{ detalle.cantidad_entregada }}
+                                    </div>
+
+                                </td>
+
+
+                               <td style="padding:10px;">
+    <input
+        type="number"
+        name="{{ detalle.prefix }}-cantidad_utilizada"
+        id="id_{{ detalle.prefix }}-cantidad_utilizada"
+        value="{{ detalle.cantidad_utilizada.value|default_if_none:'0.00' }}"
+        min="0"
+        step="0.01"
+        class="form-control"
+    >
+</td>
+
+<td style="padding:10px;">
+    <input
+        type="number"
+        name="{{ detalle.prefix }}-cantidad_devuelta"
+        id="id_{{ detalle.prefix }}-cantidad_devuelta"
+        value="{{ detalle.cantidad_devuelta.value|default_if_none:'0.00' }}"
+        min="0"
+        step="0.01"
+        class="form-control"
+    >
+</td>
+<td style="
+    padding:10px;
+    text-align:center;
+    font-weight:700;
+">
+    {{ detalle.instance.cantidad_pendiente }}
+</td>
+<td style="padding:10px;">
+    <input
+        type="text"
+        name="{{ detalle.prefix }}-observaciones"
+        id="id_{{ detalle.prefix }}-observaciones"
+        value="{{ detalle.observaciones.value|default_if_none:'' }}"
+        class="form-control"
+        placeholder="Observaciones"
+    >
+</td>
+
+
+                                
+
+                            </tr>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- BOTONES -->
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:15px;
+        ">
+
+            <a href="{% url 'lista_remisiones' %}"
+               style="
+                   text-decoration:none;
+                   background:#e5e7eb;
+                   color:#1f2937;
+                   padding:11px 18px;
+                   border-radius:7px;
+               ">
+                ← Volver
+            </a>
+
+
+            <button type="submit"
+                    style="
+                        border:0;
+                        background:#08783e;
+                        color:white;
+                        padding:12px 22px;
+                        border-radius:7px;
+                        font-weight:700;
+                        cursor:pointer;
+                    ">
+                Guardar conciliación
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

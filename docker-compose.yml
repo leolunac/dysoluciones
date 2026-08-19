@@ -1,0 +1,17 @@
+services:
+
+  sigob:
+    build: .
+    container_name: sigob
+
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8010:8000"
+
+    env_file:
+      - .env.production
+
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles

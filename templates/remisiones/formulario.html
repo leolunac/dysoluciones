@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="max-width:1200px; margin:30px auto; padding:0 20px;">
+
+    <div style="
+        background:linear-gradient(135deg,#0b4778,#1478ad);
+        color:white;
+        padding:22px 26px;
+        border-radius:14px;
+        margin-bottom:20px;
+    ">
+        <h1 style="margin:0; font-size:26px;">Nueva remisión</h1>
+        <p style="margin:6px 0 0;">
+            Registro digital de la remisión física entregada al técnico.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="
+            background:white;
+            padding:22px;
+            border-radius:12px;
+            margin-bottom:20px;
+            border:1px solid #e5e7eb;
+        ">
+
+            <h2 style="margin-top:0;">Datos de la remisión</h2>
+
+            {% if form.errors %}
+                <div style="
+                    background:#fee2e2;
+                    color:#991b1b;
+                    padding:12px;
+                    border-radius:8px;
+                    margin-bottom:15px;
+                ">
+                    {{ form.errors }}
+                </div>
+            {% endif %}
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(2,minmax(0,1fr));
+                gap:18px;
+            ">
+
+                <div>
+                    <label><strong>Número de remisión física</strong></label><br>
+                    {{ form.numero_remision }}
+                </div>
+
+                <div>
+                    <label><strong>Fecha y hora de entrega</strong></label><br>
+                    {{ form.fecha }}
+                </div>
+
+                <div>
+                    <label><strong>Técnico</strong></label><br>
+                    {{ form.tecnico }}
+                </div>
+
+                <div>
+                    <label><strong>Unidad / Cliente</strong></label><br>
+                    {{ form.cliente }}
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label><strong>Caso 7x24 relacionado</strong></label><br>
+                    {{ form.servicio }}
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                        Es opcional. Se utiliza cuando la remisión corresponde
+                        a un correctivo o servicio 7x24 ya registrado.
+                    </div>
+                </div>
+
+                <div style="grid-column:1 / -1;">
+                    <label><strong>Observaciones</strong></label><br>
+                    {{ form.observaciones }}
+                </div>
+
+            </div>
+        </div>
+
+
+        <div style="
+            background:white;
+            padding:22px;
+            border-radius:12px;
+            border:1px solid #e5e7eb;
+            margin-bottom:20px;
+        ">
+
+            <h2 style="margin-top:0;">Accesorios entregados</h2>
+
+            <p style="color:#6b7280;">
+                Registre los elementos que aparecen en la remisión física.
+                La utilización y devolución se controlarán posteriormente.
+            </p>
+
+            {{ formset.management_form }}
+
+            {% if formset.non_form_errors %}
+                <div style="color:#b91c1c;">
+                    {{ formset.non_form_errors }}
+                </div>
+            {% endif %}
+
+            <div style="overflow-x:auto;">
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:850px;
+                ">
+
+                    <thead style="background:#edf3f7;">
+                        <tr>
+                            <th style="padding:10px;text-align:left;">Código</th>
+                            <th style="padding:10px;text-align:left;">Accesorio</th>
+                            <th style="padding:10px;text-align:center;">Cantidad entregada</th>
+                            <th style="padding:10px;text-align:left;">Observaciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for detalle in formset %}
+
+                            <tr style="border-bottom:1px solid #e5e7eb;">
+
+                                <td style="padding:10px;">
+                                    {{ detalle.codigo_accesorio }}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    {{ detalle.descripcion_accesorio }}
+
+                                    {% if detalle.descripcion_accesorio.errors %}
+                                        <div style="color:#b91c1c;font-size:12px;">
+                                            {{ detalle.descripcion_accesorio.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    {{ detalle.cantidad_entregada }}
+
+                                    {% if detalle.cantidad_entregada.errors %}
+                                        <div style="color:#b91c1c;font-size:12px;">
+                                            {{ detalle.cantidad_entregada.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    {{ detalle.observaciones }}
+                                </td>
+
+                                <div style="display:none;">
+                                    {{ detalle.cantidad_utilizada }}
+                                    {{ detalle.cantidad_devuelta }}
+                                    {{ detalle.id }}
+                                    {{ detalle.DELETE }}
+                                </div>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+        ">
+
+            <a href="{% url 'lista_remisiones' %}"
+               style="
+                   text-decoration:none;
+                   background:#e5e7eb;
+                   color:#1f2937;
+                   padding:11px 18px;
+                   border-radius:7px;
+               ">
+                ← Cancelar
+            </a>
+
+            <button type="submit"
+                    style="
+                        border:0;
+                        background:#08783e;
+                        color:white;
+                        padding:12px 22px;
+                        border-radius:7px;
+                        font-weight:700;
+                        cursor:pointer;
+                    ">
+                Guardar remisión
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
