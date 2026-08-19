@@ -75,7 +75,6 @@ def es_usuario_gestion_comercial(user):
         name__in=GRUPOS_GESTION_COMERCIAL
     ).exists()
 
-
 def login_view(request):
 
     if request.method == "POST":
@@ -91,15 +90,29 @@ def login_view(request):
         if user is not None:
             login(request, user)
 
-            # Perfiles internos de Gestión Comercial.
+            # =========================================
+            # GERENCIA / SUPERUSUARIO
+            # =========================================
+            if (
+                user.is_superuser
+                or user.groups.filter(
+                    name="GESTION_GERENCIA"
+                ).exists()
+            ):
+                return redirect("/gerencia/")
+
+            # =========================================
+            # GESTIÓN COMERCIAL
+            # Auxiliar, Coordinador y Facturación
+            # =========================================
             if es_usuario_gestion_comercial(user):
                 return redirect("/gestion-comercial/")
 
-            # Otros usuarios internos/staff conservan el menú principal.
+            # Otros usuarios internos
             if user.is_staff:
                 return redirect("/")
 
-            # Usuarios cliente entran al selector de unidades.
+            # Usuarios cliente
             return redirect("/mis-unidades/")
 
         return render(
@@ -111,7 +124,6 @@ def login_view(request):
         )
 
     return render(request, "login.html")
-
 
 # =========================================
 # LOGOUT
@@ -125,20 +137,32 @@ def logout_view(request):
 # HOME
 # =========================================
 @login_required
+@login_required
 def home(request):
 
-    # Auxiliar, Coordinador, Facturación y Gerencia
-    # entran directamente a Gestión Comercial.
+    # =========================================
+    # GERENCIA / SUPERUSUARIO
+    # =========================================
+    if (
+        request.user.is_superuser
+        or request.user.groups.filter(
+            name="GESTION_GERENCIA"
+        ).exists()
+    ):
+        return redirect("/gerencia/")
+
+    # =========================================
+    # GESTIÓN COMERCIAL
+    # =========================================
     if es_usuario_gestion_comercial(request.user):
         return redirect("/gestion-comercial/")
 
-    # Otros usuarios internos mantienen su menú general.
+    # Otros usuarios internos
     if request.user.is_staff:
         return render(request, "menu_principal.html")
 
-    # Los usuarios cliente continúan con su portal.
+    # Usuarios cliente
     return redirect("/mis-unidades/")
-
 
 # =========================================
 # VALIDAR ACCESO DEL CLIENTE
