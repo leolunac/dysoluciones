@@ -32,6 +32,10 @@ from .views import (
     buscar_accesorios,
     actividades_por_cliente,
     detalle_actividad,
+    panel_tecnico,
+    servicio_tecnico,
+    iniciar_preventivo,
+    formulario_preventivo,
 )
 
 
@@ -62,7 +66,28 @@ urlpatterns = [
 
     # HOME
     path("", home, name="home"),
+    # PANEL DEL TÉCNICO
+    path(
+        "tecnico/",
+    panel_tecnico,
+        name="panel_tecnico",
+    ),
+    path(
+        "tecnico/servicio/<int:servicio_id>/",
+        servicio_tecnico,
+        name="servicio_tecnico",
+    ),
+    path(
+        "tecnico/preventivo/<int:programacion_id>/iniciar/",
+        iniciar_preventivo,
+        name="iniciar_preventivo",
+    ),
 
+    path(
+        "tecnico/preventivo/<int:programacion_id>/",
+        formulario_preventivo,
+        name="formulario_preventivo",
+    ),
     path(
         "inventario/nuevo/",
         levantamiento_equipo,

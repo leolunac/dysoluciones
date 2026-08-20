@@ -94,47 +94,111 @@
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1.4fr; gap:18px 22px;">
-                <div>
-                    <label style="display:block;font-weight:700;margin-bottom:6px;">
-                        {{ form.tecnico.label }}
-                    </label>
-                    {{ form.tecnico }}
-                </div>
 
-                <div>
-                    <label style="display:block;font-weight:700;margin-bottom:6px;">
-                        {{ form.cliente.label }}
-                    </label>
-                    {{ form.cliente }}
-                </div>
+    {% if es_tecnico %}
 
-                <div>
-                    <label style="display:block;font-weight:700;margin-bottom:6px;">
-                        {{ form.servicio.label }}
-                    </label>
-                    {{ form.servicio }}
-                    <small style="color:#64748b;display:block;margin-top:5px;">
-                        Déjelo vacío si la actividad no corresponde a un caso 7x24.
-                    </small>
-                </div>
-
-                <div>
-                    <label style="display:block;font-weight:700;margin-bottom:6px;">
-                        {{ form.remision.label }}
-                    </label>
-                    {{ form.remision }}
-                    <small style="color:#64748b;display:block;margin-top:5px;">
-                        Remisión de accesorios relacionada con esta actividad.
-                    </small>
-                </div>
-
-                <div>
-                    <label style="display:block;font-weight:700;margin-bottom:6px;">
-                        {{ form.tipo_actividad.label }}
-                    </label>
-                    {{ form.tipo_actividad }}
-                </div>
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                Técnico
+            </label>
+            <div style="
+                padding:10px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#f8fafc;
+                font-weight:700;
+            ">
+                {{ servicio_forzado.tecnico.nombre }}
             </div>
+        </div>
+
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                Unidad / Cliente
+            </label>
+            <div style="
+                padding:10px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#f8fafc;
+                font-weight:700;
+            ">
+                {{ servicio_forzado.cliente.nombre }}
+            </div>
+        </div>
+
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                Caso 7x24 relacionado
+            </label>
+            <div style="
+                padding:10px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#f8fafc;
+                font-weight:700;
+            ">
+                {% if servicio_forzado.numero_caso %}
+                    {{ servicio_forzado.numero_caso }}
+                {% else %}
+                    Caso #{{ servicio_forzado.id }}
+                {% endif %}
+            </div>
+
+            <input
+                type="hidden"
+                name="servicio"
+                value="{{ servicio_forzado.id }}">
+        </div>
+
+    {% else %}
+
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                {{ form.tecnico.label }}
+            </label>
+            {{ form.tecnico }}
+        </div>
+
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                {{ form.cliente.label }}
+            </label>
+            {{ form.cliente }}
+        </div>
+
+        <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;">
+                {{ form.servicio.label }}
+            </label>
+            {{ form.servicio }}
+
+            <small style="color:#64748b;display:block;margin-top:5px;">
+                Déjelo vacío si la actividad no corresponde a un caso 7x24.
+            </small>
+        </div>
+
+    {% endif %}
+
+    <div>
+        <label style="display:block;font-weight:700;margin-bottom:6px;">
+            {{ form.remision.label }}
+        </label>
+        {{ form.remision }}
+
+        <small style="color:#64748b;display:block;margin-top:5px;">
+            Remisión de accesorios relacionada con esta actividad.
+        </small>
+    </div>
+
+    <div>
+        <label style="display:block;font-weight:700;margin-bottom:6px;">
+            {{ form.tipo_actividad.label }}
+        </label>
+        {{ form.tipo_actividad }}
+    </div>
+
+</div>
         </section>
 
         <section style="

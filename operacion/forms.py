@@ -4,10 +4,15 @@ from django import forms
 from .models import (
     Emergencia,
     EquipoUnidad,
+    TanqueUnidad,
     BitacoraOperativa,
     RemisionTecnico,
     DetalleRemision,
     ActividadTecnico,
+    MantenimientoPreventivo,
+    MedicionEquipoPreventivo,
+    RevisionComponentePreventivo,
+    RevisionTanquePreventivo,
 )
 
 class NuevaLlamadaForm(forms.ModelForm):
@@ -620,10 +625,7 @@ class ActividadTecnicoForm(forms.ModelForm):
     "class": "form-control",
     "type": "time",
 }),
-            "hora_salida": forms.TimeInput(attrs={
-                "class": "form-control",
-                "type": "time",
-            }),
+
 
             
 
@@ -696,16 +698,23 @@ class ActividadTecnicoForm(forms.ModelForm):
         if fecha and hora_llegada and hora_salida:
             from datetime import datetime, timedelta
 
-            llegada = datetime.combine(fecha, hora_llegada)
-            salida = datetime.combine(fecha, hora_salida)
+            llegada = datetime.combine(
+            fecha,
+            hora_llegada,
+        )
 
-        # Permite servicios que terminan después de medianoche
+        salida = datetime.combine(
+            fecha,
+            hora_salida,
+        )
+
+        # Permite servicios que terminan después de medianoche.
         if salida < llegada:
             salida += timedelta(days=1)
 
         duracion = salida - llegada
 
-        # Evita registros probablemente equivocados
+        # Evita registros probablemente equivocados.
         if duracion > timedelta(hours=12):
             raise forms.ValidationError(
                 "La permanencia calculada supera las 12 horas. "
@@ -713,3 +722,213 @@ class ActividadTecnicoForm(forms.ModelForm):
             )
 
         return cleaned_data
+ # =========================================================
+# MANTENIMIENTO PREVENTIVO
+# =========================================================
+
+class MantenimientoPreventivoForm(forms.ModelForm):
+
+    class Meta:
+        model = MantenimientoPreventivo
+
+        fields = [
+            "control_nivel",
+            "tablero_electrico",
+            "novedades",
+            "persona_recibe",
+            "cargo_recibe",
+            "firma_recibido",
+        ]
+
+        widgets = {
+            "control_nivel": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Describa la revisión del control de nivel",
+            }),
+
+            "tablero_electrico": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Describa la revisión del tablero eléctrico",
+            }),
+
+            "novedades": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Novedades encontradas durante el mantenimiento",
+            }),
+
+            "persona_recibe": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nombre de quien recibe el servicio",
+            }),
+
+            "cargo_recibe": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Cargo de quien recibe",
+            }),
+
+            "firma_recibido": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+            }),
+        }
+
+        labels = {
+            "control_nivel": "Control de nivel",
+            "tablero_electrico": "Tablero eléctrico",
+            "novedades": "Novedades",
+            "persona_recibe": "Persona que recibe",
+            "cargo_recibe": "Cargo",
+            "firma_recibido": "Firma / soporte de recibido",
+        }
+
+
+# =========================================================
+# MEDICIÓN DE EQUIPOS
+# =========================================================
+
+class MedicionEquipoPreventivoForm(forms.ModelForm):
+
+    class Meta:
+        model = MedicionEquipoPreventivo
+
+        fields = [
+            "equipo",
+            "nombre_equipo",
+            "voltaje_medido",
+            "corriente_medida",
+            "estado",
+            "observaciones",
+        ]
+
+        widgets = {
+            "equipo": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
+            "nombre_equipo": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nombre o identificación del equipo",
+            }),
+
+            "voltaje_medido": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 220 V",
+            }),
+
+            "corriente_medida": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 8.5 A",
+            }),
+
+            "estado": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
+            "observaciones": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 2,
+                "placeholder": "Observaciones del equipo",
+            }),
+        }
+
+        labels = {
+            "equipo": "Equipo registrado",
+            "nombre_equipo": "Nombre del equipo",
+            "voltaje_medido": "Voltaje medido",
+            "corriente_medida": "Corriente medida",
+            "estado": "Estado",
+            "observaciones": "Observaciones",
+        }
+
+
+# =========================================================
+# COMPONENTES HIDRÁULICOS
+# =========================================================
+
+class RevisionComponentePreventivoForm(forms.ModelForm):
+
+    class Meta:
+        model = RevisionComponentePreventivo
+
+        fields = [
+            "tipo",
+            "estado",
+            "observaciones",
+        ]
+
+        widgets = {
+            "tipo": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
+            "estado": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
+            "observaciones": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 2,
+                "placeholder": "Observaciones del componente",
+            }),
+        }
+
+        labels = {
+            "tipo": "Componente",
+            "estado": "Estado",
+            "observaciones": "Observaciones",
+        }
+
+
+# =========================================================
+# TANQUES HIDRONEUMÁTICOS
+# =========================================================
+
+class RevisionTanquePreventivoForm(forms.ModelForm):
+
+    class Meta:
+        model = RevisionTanquePreventivo
+
+        fields = [
+            "tanque",
+            "descripcion_tanque",
+            "capacidad",
+            "precarga_aire",
+            "observaciones",
+        ]
+
+        widgets = {
+            "tanque": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
+            "descripcion_tanque": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Descripción del tanque",
+            }),
+
+            "capacidad": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 300 litros",
+            }),
+
+            "precarga_aire": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 28 PSI",
+            }),
+
+            "observaciones": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 2,
+                "placeholder": "Observaciones del tanque",
+            }),
+        }
+
+        labels = {
+            "tanque": "Tanque registrado",
+            "descripcion_tanque": "Descripción",
+            "capacidad": "Capacidad",
+            "precarga_aire": "Precarga de aire",
+            "observaciones": "Observaciones",
+        }   

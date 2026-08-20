@@ -25,6 +25,10 @@ from .forms import (
     DetalleRemisionFormSet,
     DetalleConciliacionFormSet,
     ActividadTecnicoForm,
+    MantenimientoPreventivoForm,
+    MedicionEquipoPreventivoForm,
+    RevisionComponentePreventivoForm,
+    RevisionTanquePreventivoForm,
 )
 from .models import (
     Cliente,
@@ -42,6 +46,11 @@ from .models import (
     ActividadTecnico,
     Accesorio,
     AccesorioActividad,
+    ProgramacionMantenimientoPreventivo,
+    MantenimientoPreventivo,
+    RevisionComponentePreventivo,
+    RevisionTanquePreventivo,
+
 )                    
 
 from .utils import registrar_evento
@@ -102,17 +111,30 @@ def login_view(request):
                 return redirect("/gerencia/")
 
             # =========================================
+            # TÉCNICO
+            # =========================================
+            if Tecnico.objects.filter(
+                user=user,
+                activo=True,
+            ).exists():
+                return redirect("/tecnico/")
+
+            # =========================================
             # GESTIÓN COMERCIAL
             # Auxiliar, Coordinador y Facturación
             # =========================================
             if es_usuario_gestion_comercial(user):
                 return redirect("/gestion-comercial/")
 
-            # Otros usuarios internos
+            # =========================================
+            # OTROS USUARIOS INTERNOS
+            # =========================================
             if user.is_staff:
                 return redirect("/")
 
-            # Usuarios cliente
+            # =========================================
+            # USUARIOS CLIENTE
+            # =========================================
             return redirect("/mis-unidades/")
 
         return render(
@@ -124,7 +146,6 @@ def login_view(request):
         )
 
     return render(request, "login.html")
-
 # =========================================
 # LOGOUT
 # =========================================
@@ -136,7 +157,8 @@ def logout_view(request):
 # =========================================
 # HOME
 # =========================================
-@login_required
+
+
 @login_required
 def home(request):
 
@@ -152,18 +174,497 @@ def home(request):
         return redirect("/gerencia/")
 
     # =========================================
+    # TÉCNICO
+    # =========================================
+    if Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).exists():
+        return redirect("/tecnico/")
+
+    # =========================================
     # GESTIÓN COMERCIAL
     # =========================================
     if es_usuario_gestion_comercial(request.user):
         return redirect("/gestion-comercial/")
 
-    # Otros usuarios internos
+    # =========================================
+    # OTROS USUARIOS INTERNOS
+    # =========================================
     if request.user.is_staff:
-        return render(request, "menu_principal.html")
+        return render(
+            request,
+            "menu_principal.html",
+        )
 
-    # Usuarios cliente
+    # =========================================
+    # CLIENTES
+    # =========================================
     return redirect("/mis-unidades/")
 
+# =========================================
+# PANEL DEL TÉCNICO
+# =========================================
+@login_required
+def panel_tecnico(request):
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    if not tecnico:
+        return HttpResponseForbidden(
+            "Este usuario no tiene un perfil de técnico activo."
+        )
+
+    hoy = timezone.localdate()
+
+    servicios = (
+        Emergencia.objects
+        .filter(tecnico=tecnico)
+        .select_related("cliente")
+        .order_by("-fecha_llamada")
+    )
+
+    servicios_activos = servicios.exclude(
+        estado="CERRADA"
+    )
+
+    actividades_hoy = ActividadTecnico.objects.filter(
+        tecnico=tecnico,
+        fecha=hoy,
+    ).count()
+
+    pendientes = servicios.filter(
+        estado="PENDIENTE"
+    ).count()
+
+    en_proceso = servicios.filter(
+        estado="EN_PROCESO"
+    ).count()
+
+    atendidos = servicios.filter(
+        estado="ATENDIDA"
+    ).count()
+
+    preventivos = (
+    ProgramacionMantenimientoPreventivo.objects
+    .filter(
+        tecnico=tecnico,
+        estado__in=[
+            "PROGRAMADO",
+            "REPROGRAMADO",
+            "EN_PROCESO",
+        ],
+    )
+    .select_related("cliente")
+    .order_by(
+        "fecha_programada",
+        "hora_programada",
+    )
+)
+
+    context = {
+        "tecnico": tecnico,
+        "servicios": servicios[:20],
+        "pendientes": pendientes,
+        "en_proceso": en_proceso,
+        "atendidos": atendidos,
+        "actividades_hoy": actividades_hoy,
+        "preventivos": preventivos,
+    }
+
+    return render(
+        request,
+        "tecnico/panel.html",
+        context,
+    )
+
+
+ # =========================================
+# DETALLE DE SERVICIO PARA TÉCNICO
+# =========================================
+@login_required
+def servicio_tecnico(request, servicio_id):
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    if not tecnico:
+        return HttpResponseForbidden(
+            "Este usuario no tiene un perfil de técnico activo."
+        )
+
+    servicio = get_object_or_404(
+        Emergencia.objects.select_related(
+            "cliente",
+            "tecnico",
+        ),
+        id=servicio_id,
+    )
+
+    if servicio.tecnico_id != tecnico.id:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar este servicio."
+        )
+
+    eventos = servicio.eventos.all().order_by("fecha")
+
+    actividades = (
+        ActividadTecnico.objects
+        .filter(
+            tecnico=tecnico,
+            servicio=servicio,
+        )
+        .prefetch_related(
+            "accesorios_utilizados__accesorio",
+        )
+        .order_by(
+            "-fecha",
+            "-hora_llegada",
+        )
+    )
+
+    return render(
+        request,
+        "tecnico/servicio.html",
+        {
+            "tecnico": tecnico,
+            "servicio": servicio,
+            "eventos": eventos,
+            "actividades": actividades,
+        },
+    ) 
+# =========================================
+# INICIAR MANTENIMIENTO PREVENTIVO
+# =========================================
+@login_required
+def iniciar_preventivo(request, programacion_id):
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    if not tecnico:
+        return HttpResponseForbidden(
+            "Este usuario no tiene un perfil de técnico activo."
+        )
+
+    programacion = get_object_or_404(
+        ProgramacionMantenimientoPreventivo.objects.select_related(
+            "cliente",
+            "tecnico",
+            "actividad",
+        ),
+        id=programacion_id,
+        tecnico=tecnico,
+    )
+
+    if programacion.estado in [
+        "CANCELADO",
+        "EJECUTADO",
+    ]:
+        return HttpResponseForbidden(
+            "Este mantenimiento preventivo ya no puede iniciarse."
+        )
+
+    # Si ya existe una actividad asociada, la reutilizamos.
+    if programacion.actividad:
+
+        actividad = programacion.actividad
+
+    else:
+
+        actividad = ActividadTecnico.objects.create(
+            tecnico=tecnico,
+            cliente=programacion.cliente,
+            servicio=None,
+            tipo_actividad="PREVENTIVO",
+            fecha=timezone.localdate(),
+            labor_realizada="Mantenimiento preventivo programado.",
+            registrado_por=request.user,
+        )
+
+        programacion.actividad = actividad
+        programacion.estado = "EN_PROCESO"
+
+        programacion.save(
+            update_fields=[
+                "actividad",
+                "estado",
+                "actualizado",
+            ]
+        )
+
+    preventivo, created = MantenimientoPreventivo.objects.get_or_create(
+        actividad=actividad,
+    )
+
+    return redirect(
+        "formulario_preventivo",
+        programacion_id=programacion.id,
+    ) 
+# =========================================
+# FORMULARIO MANTENIMIENTO PREVENTIVO
+# =========================================
+@login_required
+@login_required
+def formulario_preventivo(request, programacion_id):
+
+    # =====================================================
+    # VALIDAR TÉCNICO
+    # =====================================================
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    if not tecnico:
+        return HttpResponseForbidden(
+            "Este usuario no tiene un perfil de técnico activo."
+        )
+
+    # =====================================================
+    # VALIDAR PROGRAMACIÓN
+    # El técnico solamente puede abrir sus propios preventivos.
+    # =====================================================
+    programacion = get_object_or_404(
+        ProgramacionMantenimientoPreventivo.objects.select_related(
+            "cliente",
+            "tecnico",
+            "actividad",
+        ),
+        id=programacion_id,
+        tecnico=tecnico,
+    )
+
+    # Si todavía no ha sido iniciado, lo enviamos al proceso de inicio.
+    if not programacion.actividad:
+        return redirect(
+            "iniciar_preventivo",
+            programacion_id=programacion.id,
+        )
+
+    actividad = programacion.actividad
+
+    # =====================================================
+    # OBTENER / CREAR EXPEDIENTE PREVENTIVO
+    # =====================================================
+    preventivo, created = MantenimientoPreventivo.objects.get_or_create(
+        actividad=actividad,
+    )
+
+    # =====================================================
+    # FORMULARIOS BASE
+    # =====================================================
+    form_general = MantenimientoPreventivoForm(
+        instance=preventivo,
+    )
+
+    form_equipo = MedicionEquipoPreventivoForm()
+
+    form_componente = RevisionComponentePreventivoForm()
+
+    form_tanque = RevisionTanquePreventivoForm()
+
+    # Solo equipos pertenecientes a esta unidad.
+    form_equipo.fields["equipo"].queryset = (
+        EquipoUnidad.objects
+        .filter(cliente=programacion.cliente)
+        .order_by("tipo", "id")
+    )
+
+    # Solo tanques pertenecientes a esta unidad.
+    form_tanque.fields["tanque"].queryset = (
+        TanqueUnidad.objects
+        .filter(cliente=programacion.cliente)
+        .order_by("tipo_tanque", "id")
+    )
+
+    # =====================================================
+    # GUARDAR SECCIONES
+    # =====================================================
+    if request.method == "POST":
+
+        accion = request.POST.get("accion")
+
+        # -------------------------------------------------
+        # DATOS GENERALES
+        # -------------------------------------------------
+        if accion == "guardar_general":
+
+            form_general = MantenimientoPreventivoForm(
+                request.POST,
+                request.FILES,
+                instance=preventivo,
+            )
+
+            if form_general.is_valid():
+
+                form_general.save()
+
+                return redirect(
+                    "formulario_preventivo",
+                    programacion_id=programacion.id,
+                )
+
+        # -------------------------------------------------
+        # MEDICIÓN DE EQUIPO
+        # -------------------------------------------------
+        elif accion == "agregar_equipo":
+
+            form_equipo = MedicionEquipoPreventivoForm(
+                request.POST,
+            )
+
+            form_equipo.fields["equipo"].queryset = (
+                EquipoUnidad.objects
+                .filter(cliente=programacion.cliente)
+                .order_by("tipo", "id")
+            )
+
+            if form_equipo.is_valid():
+
+                medicion = form_equipo.save(
+                    commit=False
+                )
+
+                medicion.preventivo = preventivo
+
+                # Guardamos una referencia histórica del nombre.
+                if (
+                    medicion.equipo
+                    and not medicion.nombre_equipo
+                ):
+                    medicion.nombre_equipo = str(
+                        medicion.equipo
+                    )
+
+                medicion.save()
+
+                return redirect(
+                    "formulario_preventivo",
+                    programacion_id=programacion.id,
+                )
+
+        # -------------------------------------------------
+        # COMPONENTE HIDRÁULICO
+        # -------------------------------------------------
+        elif accion == "agregar_componente":
+
+            form_componente = RevisionComponentePreventivoForm(
+                request.POST,
+            )
+
+            if form_componente.is_valid():
+
+                componente = form_componente.save(
+                    commit=False
+                )
+
+                componente.preventivo = preventivo
+                componente.save()
+
+                return redirect(
+                    "formulario_preventivo",
+                    programacion_id=programacion.id,
+                )
+
+        # -------------------------------------------------
+        # TANQUE HIDRONEUMÁTICO
+        # -------------------------------------------------
+        elif accion == "agregar_tanque":
+
+            form_tanque = RevisionTanquePreventivoForm(
+                request.POST,
+            )
+
+            form_tanque.fields["tanque"].queryset = (
+                TanqueUnidad.objects
+                .filter(cliente=programacion.cliente)
+                .order_by("tipo_tanque", "id")
+            )
+
+            if form_tanque.is_valid():
+
+                revision_tanque = form_tanque.save(
+                    commit=False
+                )
+
+                revision_tanque.preventivo = preventivo
+
+                # Conservamos descripción histórica.
+                if (
+                    revision_tanque.tanque
+                    and not revision_tanque.descripcion_tanque
+                ):
+                    revision_tanque.descripcion_tanque = (
+                        revision_tanque.tanque.get_tipo_tanque_display()
+                    )
+
+                # Si el tanque ya tiene capacidad registrada,
+                # la precargamos como referencia histórica.
+                if (
+                    revision_tanque.tanque
+                    and not revision_tanque.capacidad
+                ):
+                    revision_tanque.capacidad = (
+                        revision_tanque.tanque.capacidad or ""
+                    )
+
+                revision_tanque.save()
+
+                return redirect(
+                    "formulario_preventivo",
+                    programacion_id=programacion.id,
+                )
+
+    # =====================================================
+    # REGISTROS YA GUARDADOS
+    # =====================================================
+    mediciones = (
+        preventivo.mediciones_equipos
+        .select_related("equipo")
+        .all()
+    )
+
+    componentes = (
+        preventivo.componentes_revisados
+        .all()
+    )
+
+    tanques = (
+        preventivo.tanques_revisados
+        .select_related("tanque")
+        .all()
+    )
+
+    # =====================================================
+    # MOSTRAR FORMULARIO
+    # =====================================================
+    return render(
+        request,
+        "tecnico/preventivo.html",
+        {
+            "tecnico": tecnico,
+            "programacion": programacion,
+            "actividad": actividad,
+            "preventivo": preventivo,
+
+            "form_general": form_general,
+            "form_equipo": form_equipo,
+            "form_componente": form_componente,
+            "form_tanque": form_tanque,
+
+            "mediciones": mediciones,
+            "componentes": componentes,
+            "tanques": tanques,
+        },
+    )    
 # =========================================
 # VALIDAR ACCESO DEL CLIENTE
 # =========================================
@@ -192,7 +693,45 @@ def usuario_puede_ver_cliente(user, cliente_id):
         activo=True,
     ).exists()
 
+def usuario_puede_gestionar_servicio(user, servicio):
+    """
+    Personal interno puede gestionar servicios.
+    Un técnico únicamente puede gestionar servicios asignados a él.
+    """
 
+    if not user.is_authenticated:
+        return False
+
+    # Si el usuario corresponde a un técnico,
+    # solamente puede consultar sus propios servicios.
+    tecnico = Tecnico.objects.filter(
+        user=user,
+        activo=True,
+    ).first()
+
+    if tecnico:
+        return servicio.tecnico_id == tecnico.id
+
+    # Gerencia / superusuario.
+    if (
+        user.is_superuser
+        or user.groups.filter(
+            name="GESTION_GERENCIA"
+        ).exists()
+    ):
+        return True
+
+    # Coordinador.
+    if user.groups.filter(
+        name="GESTION_COORDINADOR"
+    ).exists():
+        return True
+
+    # Conservamos acceso del personal interno/staff existente.
+    if user.is_staff:
+        return True
+
+    return False
 # =========================================
 # PORTAL DE UNIDADES DEL CLIENTE
 # =========================================
@@ -264,23 +803,7 @@ def portal_unidades(request):
             "usuario_cliente": usuario_cliente,
         }
     )
-    # Con una sola unidad entra directamente.
-    if clientes.count() == 1:
-        cliente = clientes.first()
-
-        return redirect(
-            "dashboard_cliente",
-            cliente_id=cliente.id,
-        )
-
-    return render(
-        request,
-        "mis_unidades.html",
-        {
-            "clientes": clientes,
-            "usuario_cliente": usuario_cliente,
-        },
-    )
+    
 # =========================================
 # NUEVA LLAMADA
 # =========================================
@@ -341,18 +864,37 @@ def levantamiento_equipo(request):
 @login_required
 def demo_sigob(request):
     return render(request, "demo_sigob.html")
-@login_required
+
 @login_required
 def dashboard(request):
+
+    # =========================================
+    # SEGURIDAD - SOLO GERENCIA
+    # =========================================
+    es_gerencia = (
+        request.user.is_superuser
+        or request.user.groups.filter(
+            name="GESTION_GERENCIA"
+        ).exists()
+    )
+
+    if not es_gerencia:
+        return HttpResponseForbidden(
+            "No está autorizado para acceder al Panel de Gerencia."
+        )
+
     total_emergencias = Emergencia.objects.count()
     pendientes = Emergencia.objects.filter(
-        estado="PENDIENTE"
+    estado="PENDIENTE"
     ).count()
-    atendidas = Emergencia.objects.filter(
-        estado="ATENDIDA"
-    ).count()
-    clientes = Cliente.objects.count()
 
+    atendidas = Emergencia.objects.filter(
+    estado="ATENDIDA"
+    ).count()
+
+    clientes = Cliente.objects.filter(
+    activo=True
+    ).count()
     # =====================================================
     # GRÁFICA 1: EMERGENCIAS ÚLTIMOS 12 MESES
     # =====================================================
@@ -968,6 +1510,7 @@ def nueva_remision(request):
 
 
 @login_required
+@login_required
 def conciliar_remision(request, remision_id):
 
     remision = get_object_or_404(
@@ -981,11 +1524,7 @@ def conciliar_remision(request, remision_id):
             request.POST,
             instance=remision,
         )
-        
 
-        if formset.is_valid():
-
-            formset.save()
         if formset.is_valid():
 
             formset.save()
@@ -1455,21 +1994,38 @@ def hoja_vida_pdf(request, cliente_id):
 # =========================================
 # GESTIONAR SERVICIO
 # =========================================
+# =========================================
+# GESTIONAR SERVICIO
+# =========================================
 @login_required
 def gestionar_servicio(request, servicio_id):
+
     servicio = get_object_or_404(
         Emergencia,
         id=servicio_id,
     )
+
+    # Seguridad:
+    # el técnico solo puede consultar servicios asignados a él.
+    if not usuario_puede_gestionar_servicio(
+        request.user,
+        servicio,
+    ):
+        return HttpResponseForbidden(
+            "No está autorizado para consultar este servicio."
+        )
+
     eventos = servicio.eventos.all()
 
     if request.method == "POST":
+
         form = GestionServicioForm(
             request.POST,
             instance=servicio,
         )
 
         if form.is_valid():
+
             servicio = form.save()
 
             registrar_evento(
@@ -1480,9 +2036,21 @@ def gestionar_servicio(request, servicio_id):
                 "📝",
             )
 
+            # Si quien actualiza es técnico,
+            # vuelve a su Panel Técnico.
+            if Tecnico.objects.filter(
+                user=request.user,
+                activo=True,
+            ).exists():
+                return redirect("panel_tecnico")
+
+            # Personal interno vuelve al Centro de Operaciones.
             return redirect("/centro-operaciones/")
+
     else:
-        form = GestionServicioForm(instance=servicio)
+        form = GestionServicioForm(
+            instance=servicio,
+        )
 
     return render(
         request,
@@ -1495,6 +2063,78 @@ def gestionar_servicio(request, servicio_id):
     )
 
 
+# =========================================
+# ACCIONES DEL SERVICIO
+# =========================================
+@login_required
+def accion_servicio(request, servicio_id, accion):
+
+    servicio = get_object_or_404(
+        Emergencia,
+        id=servicio_id,
+    )
+
+    # Seguridad:
+    # el técnico solo puede actuar sobre servicios asignados a él.
+    if not usuario_puede_gestionar_servicio(
+        request.user,
+        servicio,
+    ):
+        return HttpResponseForbidden(
+            "No está autorizado para realizar acciones sobre este servicio."
+        )
+
+    acciones = {
+        "salida": (
+            "🚗",
+            "Técnico salió",
+            "El técnico salió hacia el sitio.",
+        ),
+        "llegada": (
+            "📍",
+            "Llegó al sitio",
+            "El técnico llegó al sitio.",
+        ),
+        "reparando": (
+            "🔧",
+            "Reparación iniciada",
+            "El técnico inició la reparación.",
+        ),
+        "terminado": (
+            "✅",
+            "Servicio finalizado",
+            "El técnico informó que terminó la reparación.",
+        ),
+    }
+
+    if accion in acciones:
+
+        icono, titulo, descripcion = acciones[accion]
+
+        registrar_evento(
+            servicio,
+            titulo,
+            descripcion,
+            request.user.username,
+            icono,
+        )
+
+        if accion in [
+            "salida",
+            "llegada",
+            "reparando",
+        ]:
+            servicio.estado = "EN_PROCESO"
+
+        if accion == "terminado":
+            servicio.estado = "ATENDIDA"
+
+        servicio.save()
+
+    return redirect(
+        "gestionar_servicio",
+        servicio_id=servicio.id,
+    )
 # =========================================
 # EXPORTAR CSV
 # =========================================
@@ -1638,62 +2278,7 @@ def reporte_pdf(request, cliente_id):
     return response
 
 
-# =========================================
-# ACCIONES DEL SERVICIO
-# =========================================
-@login_required
-def accion_servicio(request, servicio_id, accion):
-    servicio = get_object_or_404(
-        Emergencia,
-        id=servicio_id,
-    )
 
-    acciones = {
-        "salida": (
-            "🚗",
-            "Técnico salió",
-            "El técnico salió hacia el sitio.",
-        ),
-        "llegada": (
-            "📍",
-            "Llegó al sitio",
-            "El técnico llegó al sitio.",
-        ),
-        "reparando": (
-            "🔧",
-            "Reparación iniciada",
-            "El técnico inició la reparación.",
-        ),
-        "terminado": (
-            "✅",
-            "Servicio finalizado",
-            "El técnico informó que terminó la reparación.",
-        ),
-    }
-
-    if accion in acciones:
-        icono, titulo, descripcion = acciones[accion]
-
-        registrar_evento(
-            servicio,
-            titulo,
-            descripcion,
-            request.user.username,
-            icono,
-        )
-
-        if accion in ["salida", "llegada", "reparando"]:
-            servicio.estado = "EN_PROCESO"
-
-        if accion == "terminado":
-            servicio.estado = "ATENDIDA"
-
-        servicio.save()
-
-    return redirect(
-        "gestionar_servicio",
-        servicio_id=servicio.id,
-    )
 # =========================================================
 # ACTIVIDADES DE TÉCNICOS
 # =========================================================
@@ -1985,23 +2570,85 @@ def lista_actividades(request):
 @login_required
 def nueva_actividad(request):
 
+    # Técnico asociado al usuario conectado, si existe.
+    tecnico_usuario = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    # Servicio que viene desde el Panel Técnico.
+    servicio_id = (
+        request.GET.get("servicio")
+        or request.POST.get("servicio")
+    )
+
+    servicio_forzado = None
+
+    # =====================================================
+    # SEGURIDAD PARA USUARIO TÉCNICO
+    # =====================================================
+    if tecnico_usuario and servicio_id:
+
+        servicio_forzado = get_object_or_404(
+            Emergencia,
+            id=servicio_id,
+            tecnico=tecnico_usuario,
+        )
+
+    # =====================================================
+    # POST - GUARDAR ACTIVIDAD
+    # =====================================================
     if request.method == "POST":
-        form = ActividadTecnicoForm(request.POST)
+
+        datos_post = request.POST.copy()
+
+        # Si es técnico, estos valores NO los decide el formulario.
+        # Los impone SIGOB desde el servidor.
+        if tecnico_usuario:
+
+            if not servicio_forzado:
+                return HttpResponseForbidden(
+                    "No está autorizado para registrar esta actividad."
+                )
+
+            datos_post["tecnico"] = str(tecnico_usuario.id)
+            datos_post["cliente"] = str(servicio_forzado.cliente_id)
+            datos_post["servicio"] = str(servicio_forzado.id)
+
+        form = ActividadTecnicoForm(datos_post)
 
         if form.is_valid():
+
             actividad = form.save(commit=False)
+
+            # Seguridad adicional:
+            # volvemos a imponer estos datos antes de guardar.
+            if tecnico_usuario:
+                actividad.tecnico = tecnico_usuario
+                actividad.cliente = servicio_forzado.cliente
+                actividad.servicio = servicio_forzado
+
             actividad.registrado_por = request.user
             actividad.save()
 
-            # ==============================
+            # =================================================
             # ACCESORIOS UTILIZADOS
-            # ==============================
-
-            accesorios_ids = request.POST.getlist("accesorio_id[]")
-            cantidades = request.POST.getlist("cantidad[]")
-            es_otro_lista = request.POST.getlist("es_otro[]")
-            descripciones_otro = request.POST.getlist("descripcion_otro[]")
-            observaciones = request.POST.getlist("observacion[]")
+            # =================================================
+            accesorios_ids = request.POST.getlist(
+                "accesorio_id[]"
+            )
+            cantidades = request.POST.getlist(
+                "cantidad[]"
+            )
+            es_otro_lista = request.POST.getlist(
+                "es_otro[]"
+            )
+            descripciones_otro = request.POST.getlist(
+                "descripcion_otro[]"
+            )
+            observaciones = request.POST.getlist(
+                "observacion[]"
+            )
 
             total_filas = max(
                 len(accesorios_ids),
@@ -2044,15 +2691,15 @@ def nueva_actividad(request):
                     else ""
                 )
 
-                # Si la fila está completamente vacía, no hacemos nada.
+                # Fila completamente vacía.
                 if not accesorio_id and not descripcion_otro:
                     continue
 
-                # Si no hay cantidad, usamos 1.
                 if not cantidad:
                     cantidad = 1
 
                 if es_otro:
+
                     AccesorioActividad.objects.create(
                         actividad=actividad,
                         accesorio=None,
@@ -2063,6 +2710,7 @@ def nueva_actividad(request):
                     )
 
                 else:
+
                     accesorio = get_object_or_404(
                         Accesorio,
                         id=accesorio_id,
@@ -2077,15 +2725,47 @@ def nueva_actividad(request):
                         observacion=observacion,
                     )
 
+            # Técnico vuelve al servicio que estaba atendiendo.
+            if tecnico_usuario:
+                return redirect(
+                    "servicio_tecnico",
+                    servicio_id=servicio_forzado.id,
+                )
+
+            # Personal interno conserva su flujo actual.
             return redirect("lista_actividades")
 
+    # =====================================================
+    # GET - MOSTRAR FORMULARIO
+    # =====================================================
     else:
-        form = ActividadTecnicoForm()
+
+        if tecnico_usuario and servicio_forzado:
+
+            form = ActividadTecnicoForm(
+                initial={
+                    "tecnico": tecnico_usuario,
+                    "cliente": servicio_forzado.cliente,
+                    "servicio": servicio_forzado,
+                    "tipo_actividad": (
+                        servicio_forzado.tipo_servicio
+                        if servicio_forzado.tipo_servicio
+                        in dict(ActividadTecnico.TIPO_ACTIVIDAD)
+                        else "CORRECTIVO"
+                    ),
+                    "fecha": timezone.localdate(),
+                }
+            )
+
+        else:
+            form = ActividadTecnicoForm()
 
     return render(
         request,
         "actividades/nueva.html",
         {
             "form": form,
+            "es_tecnico": bool(tecnico_usuario),
+            "servicio_forzado": servicio_forzado,
         },
     )

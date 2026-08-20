@@ -40,6 +40,14 @@ class Cliente(models.Model):
 # =========================
 
 class Tecnico(models.Model):
+    user = models.OneToOneField(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="perfil_tecnico",
+    verbose_name="Usuario de acceso",
+)
 
     nombre = models.CharField(max_length=200)
     telefono = models.CharField(max_length=50)
@@ -1148,3 +1156,334 @@ class AccesorioActividad(models.Model):
             descripcion = "Accesorio sin identificar"
 
         return f"{descripcion} x {self.cantidad}"
+
+# =========================================================
+# PROGRAMACIÓN DE MANTENIMIENTOS PREVENTIVOS
+# =========================================================
+
+class ProgramacionMantenimientoPreventivo(models.Model):
+
+    ESTADO = [
+        ("PROGRAMADO", "Programado"),
+        ("EN_PROCESO", "En proceso"),
+        ("EJECUTADO", "Ejecutado"),
+        ("REPROGRAMADO", "Reprogramado"),
+        ("CANCELADO", "Cancelado"),
+    ]
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name="preventivos_programados",
+    )
+
+    tecnico = models.ForeignKey(
+        Tecnico,
+        on_delete=models.PROTECT,
+        related_name="preventivos_programados",
+    )
+
+    fecha_programada = models.DateField()
+
+    hora_programada = models.TimeField(
+        null=True,
+        blank=True,
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO,
+        default="PROGRAMADO",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    fecha_reprogramada = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    motivo_reprogramacion = models.TextField(
+        blank=True,
+    )
+
+    actividad = models.OneToOneField(
+        ActividadTecnico,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programacion_preventiva",
+    )
+
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preventivos_programados_creados",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = [
+            "fecha_programada",
+            "hora_programada",
+            "id",
+        ]
+        verbose_name = "Programación de mantenimiento preventivo"
+        verbose_name_plural = "Programaciones de mantenimientos preventivos"
+
+    def __str__(self):
+        return (
+            f"{self.fecha_programada} - "
+            f"{self.cliente.nombre} - "
+            f"{self.tecnico.nombre}"
+        )
+
+# =========================================================
+# MANTENIMIENTO PREVENTIVO
+# =========================================================
+
+class MantenimientoPreventivo(models.Model):
+
+    actividad = models.OneToOneField(
+        ActividadTecnico,
+        on_delete=models.CASCADE,
+        related_name="preventivo",
+    )
+
+    control_nivel = models.TextField(
+        blank=True,
+    )
+
+    tablero_electrico = models.TextField(
+        blank=True,
+    )
+
+    novedades = models.TextField(
+        blank=True,
+    )
+
+    persona_recibe = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    cargo_recibe = models.CharField(
+        max_length=120,
+        blank=True,
+    )
+
+    firma_recibido = models.FileField(
+        upload_to="preventivos/firmas/%Y/%m/",
+        null=True,
+        blank=True,
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-creado"]
+        verbose_name = "Mantenimiento preventivo"
+        verbose_name_plural = "Mantenimientos preventivos"
+
+    def __str__(self):
+        return (
+            f"Preventivo - "
+            f"{self.actividad.cliente.nombre} - "
+            f"{self.actividad.fecha}"
+        )
+
+
+# =========================================================
+# MEDICIONES DE EQUIPOS DURANTE PREVENTIVO
+# =========================================================
+
+class MedicionEquipoPreventivo(models.Model):
+
+    ESTADO = [
+        ("OPERATIVO", "Operativo"),
+        ("CON_NOVEDAD", "Operativo con novedad"),
+        ("FUERA_SERVICIO", "Fuera de servicio"),
+        ("NO_REVISADO", "No revisado"),
+    ]
+
+    preventivo = models.ForeignKey(
+        MantenimientoPreventivo,
+        on_delete=models.CASCADE,
+        related_name="mediciones_equipos",
+    )
+
+    equipo = models.ForeignKey(
+        EquipoUnidad,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mediciones_preventivas",
+    )
+
+    nombre_equipo = models.CharField(
+        max_length=180,
+        blank=True,
+        help_text="Nombre guardado como referencia histórica.",
+    )
+
+    voltaje_medido = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    corriente_medida = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    estado = models.CharField(
+        max_length=25,
+        choices=ESTADO,
+        default="OPERATIVO",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Medición de equipo en preventivo"
+        verbose_name_plural = "Mediciones de equipos en preventivos"
+
+    def __str__(self):
+        nombre = (
+            self.nombre_equipo
+            or (
+                str(self.equipo)
+                if self.equipo
+                else "Equipo"
+            )
+        )
+        return f"{nombre} - {self.preventivo.actividad.fecha}"
+
+
+# =========================================================
+# REVISIÓN DE COMPONENTES HIDRÁULICOS
+# =========================================================
+
+class RevisionComponentePreventivo(models.Model):
+
+    TIPO = [
+        ("VALVULA", "Válvula"),
+        ("CHEQUE", "Cheque"),
+        ("FLOTADOR", "Flotador mecánico"),
+        ("PRESOSTATO", "Presostato"),
+        ("MANOMETRO", "Manómetro"),
+        ("OTRO", "Otro"),
+    ]
+
+    ESTADO = [
+        ("OK", "Funciona correctamente"),
+        ("CON_NOVEDAD", "Presenta novedad"),
+        ("REQUIERE_CAMBIO", "Requiere cambio"),
+        ("NO_APLICA", "No aplica"),
+    ]
+
+    preventivo = models.ForeignKey(
+        MantenimientoPreventivo,
+        on_delete=models.CASCADE,
+        related_name="componentes_revisados",
+    )
+
+    tipo = models.CharField(
+        max_length=30,
+        choices=TIPO,
+    )
+
+    estado = models.CharField(
+        max_length=30,
+        choices=ESTADO,
+        default="OK",
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["tipo", "id"]
+        verbose_name = "Componente revisado en preventivo"
+        verbose_name_plural = "Componentes revisados en preventivos"
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.get_estado_display()}"
+
+
+# =========================================================
+# REVISIÓN DE TANQUES HIDRONEUMÁTICOS
+# =========================================================
+
+class RevisionTanquePreventivo(models.Model):
+
+    preventivo = models.ForeignKey(
+        MantenimientoPreventivo,
+        on_delete=models.CASCADE,
+        related_name="tanques_revisados",
+    )
+
+    tanque = models.ForeignKey(
+        TanqueUnidad,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="revisiones_preventivas",
+    )
+
+    descripcion_tanque = models.CharField(
+        max_length=180,
+        blank=True,
+        help_text="Descripción guardada como referencia histórica.",
+    )
+
+    capacidad = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    precarga_aire = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Revisión de tanque en preventivo"
+        verbose_name_plural = "Revisiones de tanques en preventivos"
+
+    def __str__(self):
+        descripcion = (
+            self.descripcion_tanque
+            or (
+                str(self.tanque)
+                if self.tanque
+                else "Tanque"
+            )
+        )
+        return descripcion    

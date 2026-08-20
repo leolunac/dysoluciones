@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mantenimiento Preventivo | SIGOB 7x24</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#eef4f8;
+    color:#17324d;
+}
+
+.container{
+    max-width:950px;
+    margin:20px auto;
+    padding:0 15px;
+}
+
+.header{
+    background:linear-gradient(135deg,#064d73,#1677a8);
+    color:white;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:16px;
+}
+
+.header h1{
+    margin:0 0 5px 0;
+    font-size:22px;
+}
+
+.header p{
+    margin:3px 0;
+    font-size:13px;
+}
+
+.card{
+    background:white;
+    border:1px solid #d7e0e7;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:15px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+}
+
+.card h2{
+    margin-top:0;
+    font-size:17px;
+    color:#064d73;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+label{
+    display:block;
+    font-weight:700;
+    font-size:13px;
+    margin-bottom:6px;
+    color:#17324d;
+}
+
+.label{
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:4px;
+}
+
+.value{
+    font-weight:700;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    box-sizing:border-box;
+    padding:10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:white;
+    font-family:Arial, sans-serif;
+}
+
+textarea{
+    resize:vertical;
+}
+
+.estado{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:20px;
+    background:#fff3cd;
+    color:#8a5700;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.btn{
+    display:inline-block;
+    background:#064d73;
+    color:white;
+    padding:10px 16px;
+    border-radius:9px;
+    text-decoration:none;
+    font-weight:bold;
+    font-size:13px;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+.btn:hover{
+    opacity:.92;
+}
+
+.btn-volver{
+    background:#e2e8f0;
+    color:#17324d;
+    margin-bottom:25px;
+}
+
+.aviso{
+    background:#f0f9ff;
+    border-left:4px solid #0ea5e9;
+    padding:15px;
+    border-radius:8px;
+    line-height:1.5;
+    font-size:13px;
+}
+
+.separador{
+    margin:22px 0;
+    border:0;
+    border-top:1px solid #e2e8f0;
+}
+
+.errorlist{
+    color:#b91c1c;
+    font-size:12px;
+    margin:5px 0;
+    padding-left:20px;
+}
+
+@media(max-width:700px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================================================= -->
+    <!-- ENCABEZADO -->
+    <!-- ================================================= -->
+
+    <div class="header">
+        <h1>Mantenimiento Preventivo</h1>
+
+        <p>
+            SIGOB 7x24 — D&S Soluciones en Bombeo S.A.S.
+        </p>
+
+        <p>
+            Técnico:
+            <strong>{{ tecnico.nombre }}</strong>
+        </p>
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- 1. INFORMACION DEL MANTENIMIENTO -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>1. Información del mantenimiento</h2>
+
+        <div class="grid">
+
+            <div>
+                <div class="label">Unidad / Cliente</div>
+                <div class="value">
+                    {{ programacion.cliente.nombre }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Técnico asignado</div>
+                <div class="value">
+                    {{ programacion.tecnico.nombre }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Fecha programada</div>
+                <div class="value">
+                    {{ programacion.fecha_programada|date:"d/m/Y" }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Hora programada</div>
+                <div class="value">
+                    {% if programacion.hora_programada %}
+                        {{ programacion.hora_programada|time:"H:i" }}
+                    {% else %}
+                        Sin hora definida
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Estado</div>
+
+                <span class="estado">
+                    {{ programacion.get_estado_display }}
+                </span>
+            </div>
+
+            <div>
+                <div class="label">Actividad</div>
+
+                <div class="value">
+                    Preventivo #{{ actividad.id }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- OBSERVACIONES DE PROGRAMACION -->
+    <!-- ================================================= -->
+
+    {% if programacion.observaciones %}
+
+    <div class="card">
+
+        <h2>Observaciones de programación</h2>
+
+        <p>
+            {{ programacion.observaciones }}
+        </p>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================= -->
+    <!-- 2. REVISION GENERAL -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>2. Revisión general</h2>
+
+        <form
+            method="post"
+            enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="guardar_general">
+
+            {{ form_general.non_field_errors }}
+
+            <div class="grid">
+
+                <div>
+                    <label>
+                        {{ form_general.control_nivel.label }}
+                    </label>
+
+                    {{ form_general.control_nivel }}
+                    {{ form_general.control_nivel.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_general.tablero_electrico.label }}
+                    </label>
+
+                    {{ form_general.tablero_electrico }}
+                    {{ form_general.tablero_electrico.errors }}
+                </div>
+
+            </div>
+
+            <div style="margin-top:15px;">
+
+                <label>
+                    {{ form_general.novedades.label }}
+                </label>
+
+                {{ form_general.novedades }}
+                {{ form_general.novedades.errors }}
+
+            </div>
+
+
+            <hr class="separador">
+
+
+            <h2 style="font-size:15px;">
+                Recibido por
+            </h2>
+
+            <div class="grid">
+
+                <div>
+                    <label>
+                        {{ form_general.persona_recibe.label }}
+                    </label>
+
+                    {{ form_general.persona_recibe }}
+                    {{ form_general.persona_recibe.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_general.cargo_recibe.label }}
+                    </label>
+
+                    {{ form_general.cargo_recibe }}
+                    {{ form_general.cargo_recibe.errors }}
+                </div>
+
+            </div>
+
+            <div style="margin-top:15px;">
+
+                <label>
+                    {{ form_general.firma_recibido.label }}
+                </label>
+
+                {{ form_general.firma_recibido }}
+                {{ form_general.firma_recibido.errors }}
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn"
+                style="border:0;">
+
+                Guardar revisión general
+
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- 3. MEDICIONES DE EQUIPOS -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>3. Mediciones de equipos</h2>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="agregar_equipo">
+
+            {{ form_equipo.non_field_errors }}
+
+            <div class="grid">
+
+                <div>
+                    <label>
+                        {{ form_equipo.equipo.label }}
+                    </label>
+
+                    {{ form_equipo.equipo }}
+                    {{ form_equipo.equipo.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_equipo.nombre_equipo.label }}
+                    </label>
+
+                    {{ form_equipo.nombre_equipo }}
+                    {{ form_equipo.nombre_equipo.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_equipo.voltaje_medido.label }}
+                    </label>
+
+                    {{ form_equipo.voltaje_medido }}
+                    {{ form_equipo.voltaje_medido.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_equipo.corriente_medida.label }}
+                    </label>
+
+                    {{ form_equipo.corriente_medida }}
+                    {{ form_equipo.corriente_medida.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_equipo.estado.label }}
+                    </label>
+
+                    {{ form_equipo.estado }}
+                    {{ form_equipo.estado.errors }}
+                </div>
+
+            </div>
+
+            <div style="margin-top:15px;">
+
+                <label>
+                    {{ form_equipo.observaciones.label }}
+                </label>
+
+                {{ form_equipo.observaciones }}
+                {{ form_equipo.observaciones.errors }}
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn"
+                style="border:0;">
+
+                + Agregar equipo
+
+            </button>
+
+        </form>
+
+
+        {% if mediciones %}
+
+            <hr class="separador">
+
+            <h2 style="font-size:15px;">
+                Equipos revisados
+            </h2>
+
+            {% for medicion in mediciones %}
+
+                <div
+                    class="aviso"
+                    style="margin-bottom:10px;">
+
+                    <strong>
+                        {% if medicion.nombre_equipo %}
+                            {{ medicion.nombre_equipo }}
+                        {% else %}
+                            {{ medicion.equipo }}
+                        {% endif %}
+                    </strong>
+
+                    <br>
+
+                    Voltaje:
+                    {{ medicion.voltaje_medido|default:"-" }}
+
+                    &nbsp; | &nbsp;
+
+                    Corriente:
+                    {{ medicion.corriente_medida|default:"-" }}
+
+                    &nbsp; | &nbsp;
+
+                    Estado:
+                    {{ medicion.get_estado_display }}
+
+                    {% if medicion.observaciones %}
+
+                        <br>
+                        {{ medicion.observaciones }}
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- 4. COMPONENTES HIDRAULICOS -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>4. Componentes hidráulicos</h2>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="agregar_componente">
+
+            {{ form_componente.non_field_errors }}
+
+            <div class="grid">
+
+                <div>
+                    <label>
+                        {{ form_componente.tipo.label }}
+                    </label>
+
+                    {{ form_componente.tipo }}
+                    {{ form_componente.tipo.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_componente.estado.label }}
+                    </label>
+
+                    {{ form_componente.estado }}
+                    {{ form_componente.estado.errors }}
+                </div>
+
+            </div>
+
+            <div style="margin-top:15px;">
+
+                <label>
+                    {{ form_componente.observaciones.label }}
+                </label>
+
+                {{ form_componente.observaciones }}
+                {{ form_componente.observaciones.errors }}
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn"
+                style="border:0;">
+
+                + Agregar componente
+
+            </button>
+
+        </form>
+
+
+        {% if componentes %}
+
+            <hr class="separador">
+
+            <h2 style="font-size:15px;">
+                Componentes revisados
+            </h2>
+
+            {% for componente in componentes %}
+
+                <div
+                    class="aviso"
+                    style="margin-bottom:10px;">
+
+                    <strong>
+                        {{ componente.get_tipo_display }}
+                    </strong>
+
+                    —
+                    {{ componente.get_estado_display }}
+
+                    {% if componente.observaciones %}
+
+                        <br>
+                        {{ componente.observaciones }}
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- 5. TANQUES HIDRONEUMATICOS -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>5. Tanques hidroneumáticos</h2>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="agregar_tanque">
+
+            {{ form_tanque.non_field_errors }}
+
+            <div class="grid">
+
+                <div>
+                    <label>
+                        {{ form_tanque.tanque.label }}
+                    </label>
+
+                    {{ form_tanque.tanque }}
+                    {{ form_tanque.tanque.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_tanque.descripcion_tanque.label }}
+                    </label>
+
+                    {{ form_tanque.descripcion_tanque }}
+                    {{ form_tanque.descripcion_tanque.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_tanque.capacidad.label }}
+                    </label>
+
+                    {{ form_tanque.capacidad }}
+                    {{ form_tanque.capacidad.errors }}
+                </div>
+
+                <div>
+                    <label>
+                        {{ form_tanque.precarga_aire.label }}
+                    </label>
+
+                    {{ form_tanque.precarga_aire }}
+                    {{ form_tanque.precarga_aire.errors }}
+                </div>
+
+            </div>
+
+            <div style="margin-top:15px;">
+
+                <label>
+                    {{ form_tanque.observaciones.label }}
+                </label>
+
+                {{ form_tanque.observaciones }}
+                {{ form_tanque.observaciones.errors }}
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn"
+                style="border:0;">
+
+                + Agregar tanque
+
+            </button>
+
+        </form>
+
+
+        {% if tanques %}
+
+            <hr class="separador">
+
+            <h2 style="font-size:15px;">
+                Tanques revisados
+            </h2>
+
+            {% for tanque in tanques %}
+
+                <div
+                    class="aviso"
+                    style="margin-bottom:10px;">
+
+                    <strong>
+                        {% if tanque.descripcion_tanque %}
+                            {{ tanque.descripcion_tanque }}
+                        {% else %}
+                            {{ tanque.tanque }}
+                        {% endif %}
+                    </strong>
+
+                    <br>
+
+                    Capacidad:
+                    {{ tanque.capacidad|default:"-" }}
+
+                    &nbsp; | &nbsp;
+
+                    Precarga:
+                    {{ tanque.precarga_aire|default:"-" }}
+
+                    {% if tanque.observaciones %}
+
+                        <br>
+                        {{ tanque.observaciones }}
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- VOLVER -->
+    <!-- ================================================= -->
+
+    <a
+        href="{% url 'panel_tecnico' %}"
+        class="btn btn-volver">
+
+        ← Volver a mis servicios
+
+    </a>
+
+</div>
+
+</body>
+</html>

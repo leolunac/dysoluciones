@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SIGOB 7x24 | Servicio Técnico</title>
+
+    <style>
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            margin:0;
+            font-family:"Segoe UI", Arial, sans-serif;
+            background:#eef4f8;
+            color:#1f2937;
+        }
+
+        .container{
+            max-width:900px;
+            margin:auto;
+            padding:16px;
+        }
+
+        .header{
+            background:linear-gradient(135deg,#0b3c5d,#1d70a2);
+            color:white;
+            padding:20px;
+            border-radius:18px;
+            margin-bottom:16px;
+        }
+
+        .header h1{
+            margin:0;
+            font-size:1.45rem;
+        }
+
+        .header p{
+            margin:6px 0 0;
+        }
+
+        .card{
+            background:white;
+            border-radius:16px;
+            padding:18px;
+            margin-bottom:15px;
+            box-shadow:0 8px 24px rgba(0,0,0,.08);
+        }
+
+        .card h2{
+            margin-top:0;
+            color:#0b3c5d;
+            font-size:1.1rem;
+        }
+
+        .info{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:12px;
+        }
+
+        .label{
+            color:#64748b;
+            font-size:.82rem;
+            font-weight:700;
+        }
+
+        .value{
+            font-weight:700;
+            margin-top:3px;
+        }
+
+        .descripcion{
+            margin-top:12px;
+            padding:12px;
+            background:#f8fafc;
+            border-radius:10px;
+            line-height:1.5;
+        }
+
+        .actions{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:10px;
+        }
+
+        .btn{
+            display:block;
+            padding:13px;
+            border-radius:10px;
+            text-align:center;
+            text-decoration:none;
+            font-weight:700;
+            border:none;
+            cursor:pointer;
+        }
+
+        .btn-blue{
+            background:#1d70a2;
+            color:white;
+        }
+
+        .btn-green{
+            background:#00a896;
+            color:white;
+        }
+
+        .btn-orange{
+            background:#f59e0b;
+            color:white;
+        }
+
+        .btn-dark{
+            background:#0b3c5d;
+            color:white;
+        }
+
+        .btn-light{
+            background:#e2e8f0;
+            color:#334155;
+        }
+
+        .timeline{
+            border-left:3px solid #1d70a2;
+            padding-left:15px;
+        }
+
+        .evento{
+            margin-bottom:15px;
+        }
+
+        .evento strong{
+            color:#0b3c5d;
+        }
+
+        .actividad{
+            padding:12px;
+            background:#f8fafc;
+            border-radius:10px;
+            margin-bottom:10px;
+        }
+
+        .badge{
+            display:inline-block;
+            padding:5px 9px;
+            border-radius:20px;
+            background:#e2e8f0;
+            font-size:.8rem;
+            font-weight:700;
+        }
+
+        .footer{
+            text-align:center;
+            color:#64748b;
+            font-size:.8rem;
+            margin-top:22px;
+        }
+
+        @media(max-width:600px){
+
+            .info{
+                grid-template-columns:1fr;
+            }
+
+            .actions{
+                grid-template-columns:1fr;
+            }
+
+            .container{
+                padding:10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Servicio Técnico</h1>
+
+        <p>
+            Técnico:
+            <strong>{{ tecnico.nombre }}</strong>
+        </p>
+    </div>
+
+
+    <!-- DATOS DEL SERVICIO -->
+    <div class="card">
+
+        <h2>Datos del servicio</h2>
+
+        <div class="info">
+
+            <div>
+                <div class="label">Cliente / Unidad</div>
+                <div class="value">
+                    {{ servicio.cliente.nombre }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Caso</div>
+                <div class="value">
+                    {% if servicio.numero_caso %}
+                        {{ servicio.numero_caso }}
+                    {% else %}
+                        #{{ servicio.id }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Tipo de servicio</div>
+                <div class="value">
+                    {{ servicio.get_tipo_servicio_display }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Estado</div>
+                <div class="value">
+                    <span class="badge">
+                        {{ servicio.get_estado_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Fecha del reporte</div>
+                <div class="value">
+                    {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="descripcion">
+            <strong>Solicitud / falla reportada</strong><br>
+            {{ servicio.descripcion_falla|default:"Sin descripción registrada." }}
+        </div>
+
+    </div>
+
+
+    <!-- ACCIONES -->
+    <div class="card">
+
+        <h2>Estado de mi atención</h2>
+
+        <div class="actions">
+
+            <a
+                class="btn btn-blue"
+                href="{% url 'accion_servicio' servicio.id 'salida' %}">
+                🚗 Salí hacia el sitio
+            </a>
+
+            <a
+                class="btn btn-green"
+                href="{% url 'accion_servicio' servicio.id 'llegada' %}">
+                📍 Llegué al sitio
+            </a>
+
+            <a
+                class="btn btn-orange"
+                href="{% url 'accion_servicio' servicio.id 'reparando' %}">
+                🔧 Iniciar trabajo
+            </a>
+
+            <a
+                class="btn btn-dark"
+                href="{% url 'accion_servicio' servicio.id 'terminado' %}">
+                ✅ Terminé atención
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- REGISTRAR INFORME -->
+    <div class="card">
+
+        <h2>Registro técnico</h2>
+
+        <p>
+            Registre el diagnóstico, trabajo realizado,
+            novedades y accesorios utilizados.
+        </p>
+
+        <a
+            class="btn btn-green"
+            href="{% url 'nueva_actividad' %}?servicio={{ servicio.id }}">
+            Registrar actividad técnica
+        </a>
+
+    </div>
+
+
+    <!-- ACTIVIDADES -->
+    <div class="card">
+
+        <h2>Mis actividades en este servicio</h2>
+
+        {% for actividad in actividades %}
+
+            <div class="actividad">
+
+                <strong>
+                    {{ actividad.get_tipo_actividad_display }}
+                </strong>
+
+                <br>
+
+                {{ actividad.fecha|date:"d/m/Y" }}
+
+                {% if actividad.hora_llegada %}
+                    · Llegada {{ actividad.hora_llegada|time:"H:i" }}
+                {% endif %}
+
+                {% if actividad.hora_salida %}
+                    · Salida {{ actividad.hora_salida|time:"H:i" }}
+                {% endif %}
+
+                {% if actividad.labor_realizada %}
+                    <div style="margin-top:8px;">
+                        {{ actividad.labor_realizada }}
+                    </div>
+                {% endif %}
+
+            </div>
+
+        {% empty %}
+
+            <p>
+                Todavía no hay actividades registradas para este servicio.
+            </p>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- TRAZABILIDAD -->
+    <div class="card">
+
+        <h2>Seguimiento del servicio</h2>
+
+        <div class="timeline">
+
+            {% for evento in eventos %}
+
+                <div class="evento">
+                    <strong>{{ evento.titulo }}</strong><br>
+
+                    {{ evento.descripcion }}
+
+                    <br>
+
+                    <small>
+                        {{ evento.fecha|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+
+            {% empty %}
+
+                <p>
+                    No hay eventos registrados todavía.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <a
+        href="{% url 'panel_tecnico' %}"
+        class="btn btn-light">
+        ← Volver a mis servicios
+    </a>
+
+
+    <div class="footer">
+        SIGOB 7x24 — D&amp;S Soluciones en Bombeo S.A.S.
+    </div>
+
+</div>
+
+</body>
+</html>

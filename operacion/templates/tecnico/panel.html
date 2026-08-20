@@ -1,0 +1,453 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB 7x24 | Panel Técnico</title>
+
+    <style>
+        :root{
+            --primary:#0b3c5d;
+            --secondary:#1d70a2;
+            --accent:#00a896;
+            --bg:#eef4f8;
+            --card:#ffffff;
+            --text:#1f2937;
+            --muted:#64748b;
+            --border:#d7e3ec;
+            --warning:#f59e0b;
+            --success:#16a34a;
+            --danger:#dc2626;
+            --shadow:0 12px 30px rgba(11,60,93,.10);
+        }
+
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            margin:0;
+            font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+            color:var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(0,168,150,.10), transparent 30%),
+                linear-gradient(180deg,var(--bg),#f8fbfd);
+            min-height:100vh;
+        }
+
+        .page-shell{
+            max-width:1180px;
+            margin:0 auto;
+            padding:18px 14px 40px;
+        }
+
+        .hero{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;
+            border-radius:22px;
+            padding:20px;
+            box-shadow:var(--shadow);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:16px;
+            margin-bottom:18px;
+        }
+
+        .hero h1{
+            margin:0;
+            font-size:1.55rem;
+        }
+
+        .hero p{
+            margin:6px 0 0;
+            opacity:.92;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            border:none;
+            border-radius:999px;
+            padding:10px 15px;
+            font-weight:700;
+            text-decoration:none;
+            cursor:pointer;
+        }
+
+        .btn-light{
+            background:#fff;
+            color:var(--primary);
+        }
+
+        .kpi-grid{
+            display:grid;
+            grid-template-columns:repeat(4,minmax(150px,1fr));
+            gap:12px;
+            margin-bottom:20px;
+        }
+
+        .kpi-card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:17px;
+            padding:16px;
+            box-shadow:var(--shadow);
+        }
+
+        .kpi-label{
+            color:var(--muted);
+            font-size:.88rem;
+            font-weight:700;
+        }
+
+        .kpi-value{
+            margin-top:6px;
+            font-size:1.9rem;
+            font-weight:800;
+            color:var(--primary);
+        }
+
+        .section-title{
+            margin:22px 0 12px;
+            color:var(--primary);
+            font-size:1.15rem;
+        }
+
+        .services{
+            display:grid;
+            gap:12px;
+        }
+
+        .service-card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:16px;
+            box-shadow:var(--shadow);
+        }
+
+        .service-top{
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            align-items:flex-start;
+        }
+
+        .service-title{
+            font-weight:800;
+            color:var(--primary);
+            font-size:1.05rem;
+        }
+
+        .service-meta{
+            color:var(--muted);
+            font-size:.9rem;
+            margin-top:5px;
+        }
+
+        .badge{
+            display:inline-block;
+            padding:6px 10px;
+            border-radius:999px;
+            font-size:.78rem;
+            font-weight:800;
+        }
+
+        .badge-pendiente{
+            background:#fff4d6;
+            color:#92400e;
+        }
+
+        .badge-proceso{
+            background:#dbeafe;
+            color:#1e3a8a;
+        }
+
+        .badge-atendida{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        .service-actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:14px;
+        }
+
+        .btn-primary{
+            background:linear-gradient(135deg,var(--accent),#47c9bc);
+            color:#fff;
+        }
+
+        .btn-secondary{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;
+        }
+
+        .empty{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:24px;
+            text-align:center;
+            color:var(--muted);
+        }
+
+        .footer{
+            margin-top:26px;
+            text-align:center;
+            color:var(--muted);
+            font-size:.84rem;
+        }
+
+        @media(max-width:850px){
+            .kpi-grid{
+                grid-template-columns:repeat(2,minmax(130px,1fr));
+            }
+
+            .hero{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+        }
+
+        @media(max-width:520px){
+            .kpi-grid{
+                grid-template-columns:1fr 1fr;
+            }
+
+            .service-top{
+                flex-direction:column;
+            }
+
+            .service-actions{
+                flex-direction:column;
+            }
+
+            .service-actions .btn{
+                width:100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page-shell">
+
+    <header class="hero">
+        <div>
+            <h1>Panel Técnico</h1>
+            <p>
+                Bienvenido, <strong>{{ tecnico.nombre }}</strong>.
+                Aquí puede consultar y atender sus servicios asignados.
+            </p>
+        </div>
+
+        <a class="btn btn-light" href="{% url 'logout' %}">
+            Cerrar sesión
+        </a>
+    </header>
+
+    <section class="kpi-grid">
+
+        <div class="kpi-card">
+            <div class="kpi-label">Pendientes</div>
+            <div class="kpi-value">{{ pendientes|default:"0" }}</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">En proceso</div>
+            <div class="kpi-value">{{ en_proceso|default:"0" }}</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Atendidos</div>
+            <div class="kpi-value">{{ atendidos|default:"0" }}</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Actividades hoy</div>
+            <div class="kpi-value">{{ actividades_hoy }}</div>
+        </div>
+
+    </section>
+
+    <h2 class="section-title">Mis servicios asignados</h2>
+
+    <section class="services">
+
+        {% for servicio in servicios %}
+
+        <article class="service-card">
+
+            <div class="service-top">
+
+                <div>
+                    <div class="service-title">
+                        {{ servicio.cliente.nombre }}
+                    </div>
+
+                    <div class="service-meta">
+                        Caso:
+                        {% if servicio.numero_caso %}
+                            {{ servicio.numero_caso }}
+                        {% else %}
+                            #{{ servicio.id }}
+                        {% endif %}
+                    </div>
+
+                    <div class="service-meta">
+                        Tipo: {{ servicio.get_tipo_servicio_display }}
+                    </div>
+
+                    <div class="service-meta">
+                        Reportado:
+                        {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+
+                <div>
+                    {% if servicio.estado == "PENDIENTE" %}
+                        <span class="badge badge-pendiente">
+                            Pendiente
+                        </span>
+                    {% elif servicio.estado == "EN_PROCESO" %}
+                        <span class="badge badge-proceso">
+                            En proceso
+                        </span>
+                    {% elif servicio.estado == "ATENDIDA" %}
+                        <span class="badge badge-atendida">
+                            Atendida
+                        </span>
+                    {% else %}
+                        <span class="badge">
+                            {{ servicio.get_estado_display }}
+                        </span>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="service-meta" style="margin-top:12px;">
+                <strong>Falla / solicitud:</strong><br>
+                {{ servicio.descripcion_falla }}
+            </div>
+
+            <div class="service-actions">
+
+                <a
+                    class="btn btn-secondary"
+                    href="{% url 'servicio_tecnico' servicio.id %}">
+                    Abrir servicio
+                </a>
+
+                <a
+                    class="btn btn-primary"
+                    href="{% url 'nueva_actividad' %}?servicio={{ servicio.id }}">
+                    Registrar actividad
+                </a>
+
+            </div>
+
+        </article>
+
+        {% empty %}
+
+        <div class="empty">
+            No tiene servicios asignados actualmente.
+        </div>
+
+        {% endfor %}
+
+    </section>
+    <h2 class="section-title">Mis mantenimientos preventivos programados</h2>
+
+<section class="services">
+
+    {% for preventivo in preventivos %}
+
+        <article class="service-card">
+
+            <div class="service-top">
+
+                <div>
+                    <div class="service-title">
+                        {{ preventivo.cliente.nombre }}
+                    </div>
+
+                    <div class="service-meta">
+                        Fecha:
+                        {{ preventivo.fecha_programada|date:"d/m/Y" }}
+                    </div>
+
+                    {% if preventivo.hora_programada %}
+                        <div class="service-meta">
+                            Hora:
+                            {{ preventivo.hora_programada|time:"H:i" }}
+                        </div>
+                    {% endif %}
+
+                    <div class="service-meta">
+                        Estado:
+                        {{ preventivo.get_estado_display }}
+                    </div>
+
+                    {% if preventivo.observaciones %}
+                        <div class="service-meta" style="margin-top:8px;">
+                            <strong>Observaciones:</strong><br>
+                            {{ preventivo.observaciones }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if preventivo.estado == "PROGRAMADO" %}
+                        <span class="badge badge-pendiente">
+                            Programado
+                        </span>
+                    {% elif preventivo.estado == "EN_PROCESO" %}
+                        <span class="badge badge-proceso">
+                            En proceso
+                        </span>
+                    {% elif preventivo.estado == "REPROGRAMADO" %}
+                        <span class="badge">
+                            Reprogramado
+                        </span>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="service-actions">
+
+                <a
+    class="btn btn-primary"
+    href="{% url 'iniciar_preventivo' preventivo.id %}">
+    Iniciar preventivo
+</a>
+            </div>
+
+        </article>
+
+    {% empty %}
+
+        <div class="empty">
+            No tiene mantenimientos preventivos programados actualmente.
+        </div>
+
+    {% endfor %}
+
+</section>
+    <footer class="footer">
+        SIGOB 7x24 — D&amp;S Soluciones en Bombeo S.A.S.
+    </footer>
+
+</div>
+
+</body>
+</html>
