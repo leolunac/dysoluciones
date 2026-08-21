@@ -247,10 +247,22 @@
                 Aquí puede consultar y atender sus servicios asignados.
             </p>
         </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 
-        <a class="btn btn-light" href="{% url 'logout' %}">
-            Cerrar sesión
-        </a>
+    <a
+        class="btn btn-light"
+        href="{% url 'historial_preventivos' %}">
+        Historial de preventivos
+    </a>
+
+    <a
+        class="btn btn-light"
+        href="{% url 'logout' %}">
+        Cerrar sesión
+    </a>
+
+</div>
+        
     </header>
 
     <section class="kpi-grid">
