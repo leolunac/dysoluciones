@@ -2129,8 +2129,8 @@ def levantamiento_equipo(request):
             equipo = form.save()
 
             return redirect(
-                "dashboard_cliente",
-                cliente_id=equipo.cliente_id
+                 "levantamiento_equipo"
+                
             )
 
     else:

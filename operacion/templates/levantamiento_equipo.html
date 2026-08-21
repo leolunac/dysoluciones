@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Levantamiento de equipos | SIGOB 7x24</title>
+
+    <style>
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            margin:0;
+            font-family:Arial, Helvetica, sans-serif;
+            background:#f3f7fa;
+            color:#17324d;
+        }
+
+        .contenedor{
+            max-width:1050px;
+            margin:0 auto;
+            padding:24px 16px 45px;
+        }
+
+        .header{
+            background:linear-gradient(135deg,#064d73,#1677a8);
+            color:white;
+            padding:22px;
+            border-radius:16px;
+            margin-bottom:18px;
+        }
+
+        .header h1{
+            margin:0 0 6px;
+            font-size:24px;
+        }
+
+        .header p{
+            margin:0;
+            font-size:13px;
+        }
+
+        .card{
+            background:white;
+            border:1px solid #dce5eb;
+            border-radius:14px;
+            padding:22px;
+            box-shadow:0 3px 12px rgba(0,0,0,.05);
+        }
+
+        .card h2{
+            margin:0 0 18px;
+            color:#064d73;
+            font-size:18px;
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:18px 22px;
+        }
+
+        .campo-completo{
+            grid-column:1 / -1;
+        }
+
+        label{
+            display:block;
+            margin-bottom:6px;
+            font-size:13px;
+            font-weight:700;
+        }
+
+        input,
+        select,
+        textarea{
+            width:100%;
+            box-sizing:border-box;
+        }
+
+        .errorlist{
+            margin:5px 0 0;
+            padding-left:18px;
+            color:#b91c1c;
+            font-size:12px;
+        }
+
+        .acciones{
+            display:flex;
+            gap:10px;
+            margin-top:24px;
+            flex-wrap:wrap;
+        }
+
+        .btn{
+            display:inline-block;
+            border:0;
+            border-radius:9px;
+            padding:11px 17px;
+            text-decoration:none;
+            font-weight:700;
+            font-size:13px;
+            cursor:pointer;
+        }
+
+        .btn-guardar{
+            background:#064d73;
+            color:white;
+        }
+
+        .btn-volver{
+            background:#e2e8f0;
+            color:#17324d;
+        }
+
+        .ayuda{
+            background:#f0f9ff;
+            border-left:4px solid #0ea5e9;
+            padding:13px 15px;
+            border-radius:8px;
+            margin-bottom:18px;
+            font-size:13px;
+            line-height:1.5;
+        }
+
+        @media(max-width:700px){
+            .grid{
+                grid-template-columns:1fr;
+            }
+
+            .campo-completo{
+                grid-column:auto;
+            }
+
+            .acciones{
+                flex-direction:column;
+            }
+
+            .btn{
+                width:100%;
+                text-align:center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <div class="header">
+        <h1>Levantamiento de equipos</h1>
+        <p>
+            Registro técnico de activos de la unidad
+        </p>
+    </div>
+
+    <div class="card">
+
+        <div class="ayuda">
+            Registre la información disponible del equipo.
+            Los datos podrán ser complementados posteriormente.
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            <div class="grid">
+
+                <div>
+                    <label>{{ form.cliente.label }}</label>
+                    {{ form.cliente }}
+                    {{ form.cliente.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.tipo.label }}</label>
+                    {{ form.tipo }}
+                    {{ form.tipo.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.cantidad.label }}</label>
+                    {{ form.cantidad }}
+                    {{ form.cantidad.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.torre.label }}</label>
+                    {{ form.torre }}
+                    {{ form.torre.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.ubicacion.label }}</label>
+                    {{ form.ubicacion }}
+                    {{ form.ubicacion.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.marca.label }}</label>
+                    {{ form.marca }}
+                    {{ form.marca.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.modelo.label }}</label>
+                    {{ form.modelo }}
+                    {{ form.modelo.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.serie.label }}</label>
+                    {{ form.serie }}
+                    {{ form.serie.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.potencia.label }}</label>
+                    {{ form.potencia }}
+                    {{ form.potencia.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.voltaje.label }}</label>
+                    {{ form.voltaje }}
+                    {{ form.voltaje.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.control.label }}</label>
+                    {{ form.control }}
+                    {{ form.control.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.valor_comercial.label }}</label>
+                    {{ form.valor_comercial }}
+                    {{ form.valor_comercial.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.estado.label }}</label>
+                    {{ form.estado }}
+                    {{ form.estado.errors }}
+                </div>
+
+                <div>
+                    <label>{{ form.ultima_revision.label }}</label>
+                    {{ form.ultima_revision }}
+                    {{ form.ultima_revision.errors }}
+                </div>
+
+                <div class="campo-completo">
+                    <label>{{ form.causa_fuera_servicio.label }}</label>
+                    {{ form.causa_fuera_servicio }}
+                    {{ form.causa_fuera_servicio.errors }}
+                </div>
+
+                <div class="campo-completo">
+                    <label>{{ form.observaciones.label }}</label>
+                    {{ form.observaciones }}
+                    {{ form.observaciones.errors }}
+                </div>
+
+            </div>
+
+            <div class="acciones">
+
+                <button
+                    type="submit"
+                    class="btn btn-guardar">
+                    Guardar equipo
+                </button>
+
+                <a
+                    href="{% url 'portal_unidades' %}"
+                    class="btn btn-volver">
+                    Volver
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
