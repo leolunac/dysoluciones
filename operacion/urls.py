@@ -36,6 +36,9 @@ from .views import (
     servicio_tecnico,
     iniciar_preventivo,
     formulario_preventivo,
+    historial_preventivos,
+    detalle_preventivo,
+    preventivo_pdf,
 )
 
 
@@ -87,6 +90,23 @@ urlpatterns = [
         "tecnico/preventivo/<int:programacion_id>/",
         formulario_preventivo,
         name="formulario_preventivo",
+    ),
+
+    path(
+        "tecnico/preventivos/historial/",
+        historial_preventivos,
+        name="historial_preventivos",
+    ),
+
+    path(
+        "tecnico/preventivos/<int:programacion_id>/detalle/",
+        detalle_preventivo,
+        name="detalle_preventivo",
+    ),
+    path(
+        "tecnico/preventivos/<int:programacion_id>/pdf/",
+        preventivo_pdf,
+        name="preventivo_pdf",
     ),
     path(
         "inventario/nuevo/",

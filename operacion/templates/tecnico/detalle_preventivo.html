@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Detalle mantenimiento preventivo | SIGOB 7x24</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f3f7fa;
+    color:#1f2937;
+}
+
+.contenedor{
+    max-width:1050px;
+    margin:0 auto;
+    padding:24px 16px 45px;
+}
+
+.header{
+    background:linear-gradient(135deg,#064d73,#1677a8);
+    color:white;
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:18px;
+}
+
+.header h1{
+    margin:0 0 6px;
+    font-size:24px;
+}
+
+.header p{
+    margin:3px 0;
+    font-size:13px;
+}
+
+.card{
+    background:white;
+    border:1px solid #dce5eb;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:15px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+}
+
+.card h2{
+    margin:0 0 16px;
+    color:#064d73;
+    font-size:17px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px 22px;
+}
+
+.label{
+    color:#64748b;
+    font-size:12px;
+    margin-bottom:4px;
+}
+
+.valor{
+    font-weight:700;
+    line-height:1.4;
+}
+
+.estado{
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:20px;
+    background:#dcfce7;
+    color:#166534;
+    font-size:12px;
+    font-weight:700;
+}
+
+.registro{
+    background:#f0f9ff;
+    border-left:4px solid #0ea5e9;
+    border-radius:8px;
+    padding:13px 15px;
+    margin-bottom:10px;
+    font-size:13px;
+    line-height:1.55;
+}
+
+.registro:last-child{
+    margin-bottom:0;
+}
+
+.vacio{
+    color:#64748b;
+    font-size:13px;
+    font-style:italic;
+}
+
+.acciones{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+}
+
+.btn{
+    display:inline-block;
+    padding:10px 15px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:700;
+    font-size:13px;
+}
+
+.btn-volver{
+    background:#e2e8f0;
+    color:#17324d;
+}
+
+.btn-pdf{
+    background:#0f6b8f;
+    color:white;
+}
+
+@media(max-width:700px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .contenedor{
+        padding:12px 10px 30px;
+    }
+
+    .acciones{
+        flex-direction:column;
+    }
+
+    .btn{
+        width:100%;
+        text-align:center;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <div class="header">
+
+        <h1>Mantenimiento Preventivo Ejecutado</h1>
+
+        <p>
+            Unidad:
+            <strong>{{ programacion.cliente.nombre }}</strong>
+        </p>
+
+        <p>
+            Técnico:
+            <strong>{{ programacion.tecnico.nombre }}</strong>
+        </p>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- INFORMACION GENERAL -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Información general</h2>
+
+        <div class="grid">
+
+            <div>
+                <div class="label">Unidad / Cliente</div>
+                <div class="valor">
+                    {{ programacion.cliente.nombre }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Técnico</div>
+                <div class="valor">
+                    {{ programacion.tecnico.nombre }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Fecha programada</div>
+                <div class="valor">
+                    {{ programacion.fecha_programada|date:"d/m/Y" }}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Estado</div>
+                <span class="estado">
+                    {{ programacion.get_estado_display }}
+                </span>
+            </div>
+
+            <div>
+                <div class="label">Hora de llegada</div>
+                <div class="valor">
+                    {% if actividad and actividad.hora_llegada %}
+                        {{ actividad.hora_llegada|time:"H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="label">Hora de salida</div>
+                <div class="valor">
+                    {% if actividad and actividad.hora_salida %}
+                        {{ actividad.hora_salida|time:"H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        {% if programacion.observaciones %}
+            <div style="margin-top:16px;">
+                <div class="label">
+                    Observaciones de programación
+                </div>
+
+                <div>
+                    {{ programacion.observaciones }}
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- REVISION GENERAL -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Revisión general</h2>
+
+        {% if preventivo %}
+
+            <div class="grid">
+
+                <div>
+                    <div class="label">
+                        Control de nivel
+                    </div>
+
+                    <div>
+                        {{ preventivo.control_nivel|default:"Sin información registrada" }}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="label">
+                        Tablero eléctrico
+                    </div>
+
+                    <div>
+                        {{ preventivo.tablero_electrico|default:"Sin información registrada" }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="margin-top:16px;">
+                <div class="label">
+                    Novedades
+                </div>
+
+                <div>
+                    {{ preventivo.novedades|default:"Sin novedades registradas" }}
+                </div>
+            </div>
+
+        {% else %}
+
+            <div class="vacio">
+                No existe información general del mantenimiento.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- EQUIPOS -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Equipos revisados</h2>
+
+        {% for medicion in mediciones %}
+
+            <div class="registro">
+
+                <strong>
+                    {% if medicion.nombre_equipo %}
+                        {{ medicion.nombre_equipo }}
+                    {% else %}
+                        {{ medicion.equipo }}
+                    {% endif %}
+                </strong>
+
+                <br>
+
+                Voltaje:
+                {{ medicion.voltaje_medido|default:"-" }}
+
+                &nbsp; | &nbsp;
+
+                Corriente:
+                {{ medicion.corriente_medida|default:"-" }}
+
+                &nbsp; | &nbsp;
+
+                Estado:
+                {{ medicion.get_estado_display }}
+
+                {% if medicion.observaciones %}
+                    <br>
+                    <strong>Observaciones:</strong>
+                    {{ medicion.observaciones }}
+                {% endif %}
+
+            </div>
+
+        {% empty %}
+
+            <div class="vacio">
+                No se registraron mediciones de equipos.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- COMPONENTES -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Componentes hidráulicos</h2>
+
+        {% for componente in componentes %}
+
+            <div class="registro">
+
+                <strong>
+                    {{ componente.get_tipo_display }}
+                </strong>
+
+                <br>
+
+                Estado:
+                {{ componente.get_estado_display }}
+
+                {% if componente.observaciones %}
+                    <br>
+                    <strong>Observaciones:</strong>
+                    {{ componente.observaciones }}
+                {% endif %}
+
+            </div>
+
+        {% empty %}
+
+            <div class="vacio">
+                No se registraron componentes hidráulicos.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- TANQUES -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Tanques hidroneumáticos</h2>
+
+        {% for tanque in tanques %}
+
+            <div class="registro">
+
+                <strong>
+                    {% if tanque.descripcion_tanque %}
+                        {{ tanque.descripcion_tanque }}
+                    {% else %}
+                        {{ tanque.tanque }}
+                    {% endif %}
+                </strong>
+
+                <br>
+
+                Capacidad:
+                {{ tanque.capacidad|default:"-" }}
+
+                &nbsp; | &nbsp;
+
+                Precarga:
+                {{ tanque.precarga_aire|default:"-" }}
+
+                {% if tanque.observaciones %}
+                    <br>
+                    <strong>Observaciones:</strong>
+                    {{ tanque.observaciones }}
+                {% endif %}
+
+            </div>
+
+        {% empty %}
+
+            <div class="vacio">
+                No se registraron revisiones de tanques.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- RECIBIDO -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>Recibido del servicio</h2>
+
+        {% if preventivo %}
+
+            <div class="grid">
+
+                <div>
+                    <div class="label">
+                        Persona que recibe
+                    </div>
+
+                    <div class="valor">
+                        {{ preventivo.persona_recibe|default:"-" }}
+                    </div>
+                </div>
+
+                <div>
+                    <div class="label">
+                        Cargo
+                    </div>
+
+                    <div class="valor">
+                        {{ preventivo.cargo_recibe|default:"-" }}
+                    </div>
+                </div>
+
+            </div>
+
+            {% if preventivo.firma_recibido %}
+
+                <div style="margin-top:16px;">
+                    <div class="label">
+                        Firma / soporte
+                    </div>
+
+                    <a
+                        href="{{ preventivo.firma_recibido.url }}"
+                        target="_blank">
+                        Ver archivo de recibido
+                    </a>
+                </div>
+
+            {% endif %}
+
+        {% else %}
+
+            <div class="vacio">
+                No hay información de recibido.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- ACCIONES -->
+    <!-- ================================================= -->
+
+    <div class="acciones">
+
+    <a
+        class="btn btn-volver"
+        href="{% url 'historial_preventivos' %}">
+        ← Volver al historial
+    </a>
+
+    <a
+        class="btn btn-pdf"
+        href="{% url 'preventivo_pdf' programacion.id %}">
+        Generar PDF
+    </a>
+
+</div>
+
+</div>
+
+</body>
+</html>

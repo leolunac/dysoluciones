@@ -145,7 +145,78 @@ textarea{
     margin:5px 0;
     padding-left:20px;
 }
+/* ===================================================== */
+/* FORMULARIO PROGRESIVO / ACORDEON */
+/* ===================================================== */
 
+.acordeon{
+    background:white;
+    border:1px solid #d7e0e7;
+    border-radius:14px;
+    margin-bottom:15px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+    overflow:hidden;
+}
+
+.acordeon-header{
+    width:100%;
+    border:0;
+    background:white;
+    padding:18px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    text-align:left;
+    color:#064d73;
+    font-size:17px;
+    font-weight:700;
+}
+
+.acordeon-header:hover{
+    background:#f8fafc;
+}
+
+.acordeon-titulo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.acordeon-resumen{
+    font-size:12px;
+    color:#64748b;
+    font-weight:normal;
+}
+
+.acordeon-icono{
+    font-size:18px;
+    transition:transform .2s ease;
+}
+
+.acordeon.abierto .acordeon-icono{
+    transform:rotate(180deg);
+}
+
+.acordeon-contenido{
+    display:none;
+    padding:0 20px 20px 20px;
+    border-top:1px solid #edf2f7;
+}
+
+.acordeon.abierto .acordeon-contenido{
+    display:block;
+}
+
+.completado{
+    display:inline-block;
+    background:#dcfce7;
+    color:#166534;
+    border-radius:20px;
+    padding:4px 9px;
+    font-size:11px;
+    font-weight:700;
+}
 @media(max-width:700px){
     .grid{
         grid-template-columns:1fr;
@@ -261,10 +332,36 @@ textarea{
     <!-- ================================================= -->
     <!-- 2. REVISION GENERAL -->
     <!-- ================================================= -->
+    <div class="acordeon abierto">
 
-    <div class="card">
+    <button
+        type="button"
+        class="acordeon-header"
+        onclick="toggleAcordeon(this)">
 
-        <h2>2. Revisión general</h2>
+        <div class="acordeon-titulo">
+            <span>2. Revisión general</span>
+
+            {% if preventivo.control_nivel or preventivo.tablero_electrico or preventivo.novedades %}
+                <span class="completado">
+                    Guardado
+                </span>
+            {% endif %}
+        </div>
+
+        <div>
+            <span class="acordeon-resumen">
+                Control de nivel, tablero y novedades
+            </span>
+
+            <span class="acordeon-icono">
+                ▼
+            </span>
+        </div>
+
+    </button>
+
+    <div class="acordeon-contenido">
 
         <form
             method="post"
@@ -312,9 +409,7 @@ textarea{
 
             </div>
 
-
             <hr class="separador">
-
 
             <h2 style="font-size:15px;">
                 Recibido por
@@ -366,14 +461,42 @@ textarea{
 
     </div>
 
+</div>
+
 
     <!-- ================================================= -->
     <!-- 3. MEDICIONES DE EQUIPOS -->
     <!-- ================================================= -->
+    <div class="acordeon">
 
-    <div class="card">
+    <button
+        type="button"
+        class="acordeon-header"
+        onclick="toggleAcordeon(this)">
 
-        <h2>3. Mediciones de equipos</h2>
+        <div class="acordeon-titulo">
+            <span>3. Mediciones de equipos</span>
+
+            {% if mediciones %}
+                <span class="completado">
+                    {{ mediciones|length }} registrados
+                </span>
+            {% endif %}
+        </div>
+
+        <div>
+            <span class="acordeon-resumen">
+                Voltaje, corriente, estado y observaciones
+            </span>
+
+            <span class="acordeon-icono">
+                ▼
+            </span>
+        </div>
+
+    </button>
+
+    <div class="acordeon-contenido">
 
         <form method="post">
 
@@ -457,7 +580,6 @@ textarea{
 
         </form>
 
-
         {% if mediciones %}
 
             <hr class="separador">
@@ -510,14 +632,40 @@ textarea{
 
     </div>
 
-
+</div>    
     <!-- ================================================= -->
     <!-- 4. COMPONENTES HIDRAULICOS -->
     <!-- ================================================= -->
+    <div class="acordeon">
 
-    <div class="card">
+    <button
+        type="button"
+        class="acordeon-header"
+        onclick="toggleAcordeon(this)">
 
-        <h2>4. Componentes hidráulicos</h2>
+        <div class="acordeon-titulo">
+            <span>4. Componentes hidráulicos</span>
+
+            {% if componentes %}
+                <span class="completado">
+                    {{ componentes|length }} registrados
+                </span>
+            {% endif %}
+        </div>
+
+        <div>
+            <span class="acordeon-resumen">
+                Válvulas, cheques y otros componentes
+            </span>
+
+            <span class="acordeon-icono">
+                ▼
+            </span>
+        </div>
+
+    </button>
+
+    <div class="acordeon-contenido">
 
         <form method="post">
 
@@ -574,7 +722,6 @@ textarea{
 
         </form>
 
-
         {% if componentes %}
 
             <hr class="separador">
@@ -593,7 +740,9 @@ textarea{
                         {{ componente.get_tipo_display }}
                     </strong>
 
-                    —
+                    <br>
+
+                    Estado:
                     {{ componente.get_estado_display }}
 
                     {% if componente.observaciones %}
@@ -611,14 +760,43 @@ textarea{
 
     </div>
 
+</div>
+    
 
     <!-- ================================================= -->
     <!-- 5. TANQUES HIDRONEUMATICOS -->
     <!-- ================================================= -->
 
-    <div class="card">
+    <div class="acordeon">
 
-        <h2>5. Tanques hidroneumáticos</h2>
+    <button
+        type="button"
+        class="acordeon-header"
+        onclick="toggleAcordeon(this)">
+
+        <div class="acordeon-titulo">
+            <span>5. Tanques hidroneumáticos</span>
+
+            {% if tanques %}
+                <span class="completado">
+                    {{ tanques|length }} registrados
+                </span>
+            {% endif %}
+        </div>
+
+        <div>
+            <span class="acordeon-resumen">
+                Capacidad, precarga de aire y observaciones
+            </span>
+
+            <span class="acordeon-icono">
+                ▼
+            </span>
+        </div>
+
+    </button>
+
+    <div class="acordeon-contenido">
 
         <form method="post">
 
@@ -693,7 +871,6 @@ textarea{
 
         </form>
 
-
         {% if tanques %}
 
             <hr class="separador">
@@ -741,7 +918,50 @@ textarea{
 
     </div>
 
+</div>
+<!-- ================================================= -->
+<!-- FINALIZAR MANTENIMIENTO -->
+<!-- ================================================= -->
 
+<div class="card" style="border:2px solid #16a34a;">
+
+    <h2 style="color:#166534;">
+        Finalizar mantenimiento
+    </h2>
+
+    <p class="muted">
+        Verifique que la revisión general, equipos, componentes y tanques
+        hayan sido registrados correctamente antes de finalizar.
+    </p>
+
+    <form
+        method="post"
+        onsubmit="return confirm('¿Está seguro de finalizar este mantenimiento preventivo? Una vez finalizado quedará registrado como EJECUTADO.');">
+
+        {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="accion"
+            value="finalizar">
+
+        <button
+            type="submit"
+            class="btn"
+            style="
+                border:0;
+                background:#16a34a;
+                font-size:15px;
+                padding:12px 20px;
+            ">
+
+            ✓ Finalizar mantenimiento
+
+        </button>
+
+    </form>
+
+</div>
     <!-- ================================================= -->
     <!-- VOLVER -->
     <!-- ================================================= -->
@@ -755,6 +975,11 @@ textarea{
     </a>
 
 </div>
-
+<script>
+function toggleAcordeon(boton){
+    const acordeon = boton.closest(".acordeon");
+    acordeon.classList.toggle("abierto");
+}
+</script>
 </body>
 </html>

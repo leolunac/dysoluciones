@@ -622,7 +622,38 @@ def formulario_preventivo(request, programacion_id):
                     "formulario_preventivo",
                     programacion_id=programacion.id,
                 )
+        # -------------------------------------------------
+        # FINALIZAR MANTENIMIENTO PREVENTIVO
+        # -------------------------------------------------
+        elif accion == "finalizar":
 
+            if programacion.estado == "EJECUTADO":
+                return redirect(
+                    "panel_tecnico"
+                )
+
+            if not actividad.hora_salida:
+                actividad.hora_salida = timezone.localtime().time()
+
+                actividad.save(
+                    update_fields=[
+                        "hora_salida",
+                        "actualizado",
+                    ]
+                )
+
+            programacion.estado = "EJECUTADO"
+
+            programacion.save(
+                update_fields=[
+                    "estado",
+                    "actualizado",
+                ]
+            )
+
+            return redirect(
+                "panel_tecnico"
+            )
     # =====================================================
     # REGISTROS YA GUARDADOS
     # =====================================================
@@ -664,7 +695,1267 @@ def formulario_preventivo(request, programacion_id):
             "componentes": componentes,
             "tanques": tanques,
         },
-    )    
+    )  
+
+ # =========================================================
+# HISTORIAL DE MANTENIMIENTOS PREVENTIVOS
+# =========================================================
+@login_required
+def historial_preventivos(request):
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    preventivos = (
+        ProgramacionMantenimientoPreventivo.objects
+        .filter(estado="EJECUTADO")
+        .select_related(
+            "cliente",
+            "tecnico",
+            "actividad",
+        )
+        .order_by(
+            "-actualizado",
+            "-fecha_programada",
+        )
+    )
+
+    # Si el usuario es técnico, solamente ve sus propios mantenimientos.
+    if tecnico:
+        preventivos = preventivos.filter(
+            tecnico=tecnico,
+        )
+
+    # El personal que no sea técnico debe ser interno.
+    elif not request.user.is_staff:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar el historial de mantenimientos."
+        )
+
+    return render(
+        request,
+        "tecnico/historial_preventivos.html",
+        {
+            "preventivos": preventivos,
+            "tecnico": tecnico,
+        },
+    )
+
+
+# =========================================================
+# DETALLE DE MANTENIMIENTO PREVENTIVO EJECUTADO
+# =========================================================
+@login_required
+def detalle_preventivo(request, programacion_id):
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    programacion = get_object_or_404(
+        ProgramacionMantenimientoPreventivo.objects.select_related(
+            "cliente",
+            "tecnico",
+            "actividad",
+        ),
+        id=programacion_id,
+        estado="EJECUTADO",
+    )
+
+    # Técnico: solo puede consultar sus propios preventivos.
+    if tecnico and programacion.tecnico_id != tecnico.id:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar este mantenimiento."
+        )
+
+    # Usuario externo que no sea técnico ni personal interno.
+    if not tecnico and not request.user.is_staff:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar este mantenimiento."
+        )
+
+    actividad = programacion.actividad
+
+    preventivo = None
+    mediciones = []
+    componentes = []
+    tanques = []
+
+    if actividad:
+
+        preventivo = MantenimientoPreventivo.objects.filter(
+            actividad=actividad,
+        ).first()
+
+        if preventivo:
+
+            mediciones = (
+                preventivo.mediciones_equipos
+                .select_related("equipo")
+                .all()
+            )
+
+            componentes = (
+                preventivo.componentes_revisados
+                .all()
+            )
+
+            tanques = (
+                preventivo.tanques_revisados
+                .select_related("tanque")
+                .all()
+            )
+
+    return render(
+        request,
+        "tecnico/detalle_preventivo.html",
+        {
+            "programacion": programacion,
+            "actividad": actividad,
+            "preventivo": preventivo,
+            "mediciones": mediciones,
+            "componentes": componentes,
+            "tanques": tanques,
+            "tecnico": tecnico,
+        },
+    )
+
+ # =========================================================
+# PDF MANTENIMIENTO PREVENTIVO
+# =========================================================
+@login_required
+def preventivo_pdf(request, programacion_id):
+
+    tecnico_usuario = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    programacion = get_object_or_404(
+        ProgramacionMantenimientoPreventivo.objects.select_related(
+            "cliente",
+            "tecnico",
+            "actividad",
+        ),
+        id=programacion_id,
+        estado="EJECUTADO",
+    )
+
+    # =====================================================
+    # SEGURIDAD
+    # =====================================================
+    if tecnico_usuario:
+
+        if programacion.tecnico_id != tecnico_usuario.id:
+            return HttpResponseForbidden(
+                "No está autorizado para generar este informe."
+            )
+
+    elif not request.user.is_staff:
+
+        return HttpResponseForbidden(
+            "No está autorizado para generar este informe."
+        )
+
+    actividad = programacion.actividad
+
+    preventivo = None
+
+    if actividad:
+
+        preventivo = MantenimientoPreventivo.objects.filter(
+            actividad=actividad,
+        ).first()
+
+    mediciones = []
+    componentes = []
+    tanques = []
+
+    if preventivo:
+
+        mediciones = (
+            preventivo.mediciones_equipos
+            .select_related("equipo")
+            .all()
+        )
+
+        componentes = (
+            preventivo.componentes_revisados
+            .all()
+        )
+
+        tanques = (
+            preventivo.tanques_revisados
+            .select_related("tanque")
+            .all()
+        )
+
+    # =====================================================
+    # RESPUESTA PDF
+    # =====================================================
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="mantenimiento_preventivo_{programacion.id}.pdf"'
+    )
+
+    pdf = canvas.Canvas(
+        response,
+        pagesize=letter,
+    )
+
+    width, height = letter
+
+    margen = 38
+    ancho_util = width - (margen * 2)
+
+    azul = (0.0, 0.20, 0.40)
+    azul_claro = (0.92, 0.96, 0.98)
+    gris = (0.35, 0.40, 0.45)
+    gris_claro = (0.92, 0.93, 0.94)
+    verde = (0.10, 0.45, 0.25)
+
+    logo = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "logo_dys.png",
+    )
+
+    # =====================================================
+    # UTILIDADES
+    # =====================================================
+
+    def limpiar(valor):
+        if valor is None:
+            return "-"
+        valor = str(valor).strip()
+        return valor if valor else "-"
+
+    def encabezado():
+
+        # Logo
+        if os.path.exists(logo):
+
+            pdf.drawImage(
+                logo,
+                margen,
+                height - 88,
+                width=75,
+                height=50,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+
+        # Bloque corporativo
+        pdf.setFillColorRGB(*azul)
+
+        pdf.roundRect(
+            125,
+            height - 87,
+            width - 165,
+            50,
+            5,
+            fill=True,
+            stroke=False,
+        )
+
+        pdf.setFillColorRGB(1, 1, 1)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            12,
+        )
+
+        pdf.drawString(
+            140,
+            height - 58,
+            "D&S SOLUCIONES EN BOMBEO S.A.S.",
+        )
+
+        pdf.setFont(
+            "Helvetica",
+            8.5,
+        )
+
+        pdf.drawString(
+            140,
+            height - 72,
+            "SIGOB 7x24 - Sistema Integral de Gestión Operativa",
+        )
+
+        # Título
+        pdf.setFillColorRGB(0, 0, 0)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            15,
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 118,
+            "INFORME DE MANTENIMIENTO PREVENTIVO",
+        )
+
+        pdf.setStrokeColorRGB(*azul)
+
+        pdf.setLineWidth(1)
+
+        pdf.line(
+            margen,
+            height - 128,
+            width - margen,
+            height - 128,
+        )
+
+    def pie():
+
+        pdf.setStrokeColorRGB(
+            0.80,
+            0.83,
+            0.86,
+        )
+
+        pdf.line(
+            margen,
+            42,
+            width - margen,
+            42,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.setFont(
+            "Helvetica",
+            7.5,
+        )
+
+        pdf.drawString(
+            margen,
+            29,
+            "SIGOB 7x24 - Informe generado automáticamente",
+        )
+
+        pdf.drawRightString(
+            width - margen,
+            29,
+            "D&S Soluciones en Bombeo S.A.S.",
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+    def nueva_pagina():
+
+        pie()
+        pdf.showPage()
+        encabezado()
+
+        return height - 150
+
+    def asegurar_espacio(y, necesario=55):
+
+        if y - necesario < 58:
+            y = nueva_pagina()
+
+        return y
+
+    def seccion(titulo, y):
+
+        y = asegurar_espacio(
+            y,
+            34,
+        )
+
+        pdf.setFillColorRGB(*azul)
+
+        pdf.roundRect(
+            margen,
+            y - 17,
+            ancho_util,
+            21,
+            4,
+            fill=True,
+            stroke=False,
+        )
+
+        pdf.setFillColorRGB(1, 1, 1)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            9.5,
+        )
+
+        pdf.drawString(
+            margen + 9,
+            y - 9,
+            titulo,
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        return y - 24
+
+    def envolver_texto(
+        texto,
+        x,
+        y,
+        ancho,
+        tamano=8.2,
+        interlineado=10.5,
+        fuente="Helvetica",
+    ):
+
+        texto = limpiar(texto)
+
+        palabras = texto.split()
+        linea = ""
+
+        pdf.setFont(
+            fuente,
+            tamano,
+        )
+
+        for palabra in palabras:
+
+            prueba = (
+                f"{linea} {palabra}".strip()
+            )
+
+            if pdf.stringWidth(
+                prueba,
+                fuente,
+                tamano,
+            ) <= ancho:
+
+                linea = prueba
+
+            else:
+
+                y = asegurar_espacio(
+                    y,
+                    interlineado,
+                )
+
+                pdf.drawString(
+                    x,
+                    y,
+                    linea,
+                )
+
+                y -= interlineado
+                linea = palabra
+
+        if linea:
+
+            y = asegurar_espacio(
+                y,
+                interlineado,
+            )
+
+            pdf.drawString(
+                x,
+                y,
+                linea,
+            )
+
+            y -= interlineado
+
+        return y
+
+    def campo_caja(
+        label,
+        valor,
+        x,
+        y,
+        ancho,
+        alto=34,
+    ):
+
+        pdf.setStrokeColorRGB(
+            0.82,
+            0.85,
+            0.88,
+        )
+
+        pdf.setFillColorRGB(
+            0.98,
+            0.99,
+            1,
+        )
+
+        pdf.roundRect(
+            x,
+            y - alto,
+            ancho,
+            alto,
+            4,
+            fill=True,
+            stroke=True,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.3,
+        )
+
+        pdf.drawString(
+            x + 7,
+            y - 11,
+            label,
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            8.5,
+        )
+
+        valor = limpiar(valor)
+
+        if len(valor) > 40:
+            valor = valor[:37] + "..."
+
+        pdf.drawString(
+            x + 7,
+            y - 25,
+            valor,
+        )
+
+    def encabezado_tabla(
+        columnas,
+        x,
+        y,
+        anchos,
+    ):
+
+        altura = 20
+
+        pdf.setFillColorRGB(*azul_claro)
+
+        pdf.rect(
+            x,
+            y - altura,
+            sum(anchos),
+            altura,
+            fill=True,
+            stroke=False,
+        )
+
+        pdf.setFillColorRGB(*azul)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5,
+        )
+
+        posicion = x
+
+        for titulo, ancho in zip(
+            columnas,
+            anchos,
+        ):
+
+            pdf.drawString(
+                posicion + 5,
+                y - 13,
+                titulo,
+            )
+
+            posicion += ancho
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        return y - altura
+
+    def fila_tabla(
+        valores,
+        x,
+        y,
+        anchos,
+        alto=22,
+    ):
+
+        y = asegurar_espacio(
+            y,
+            alto + 5,
+        )
+
+        pdf.setStrokeColorRGB(
+            0.85,
+            0.87,
+            0.90,
+        )
+
+        posicion = x
+
+        for valor, ancho in zip(
+            valores,
+            anchos,
+        ):
+
+            pdf.rect(
+                posicion,
+                y - alto,
+                ancho,
+                alto,
+                fill=False,
+                stroke=True,
+            )
+
+            pdf.setFont(
+                "Helvetica",
+                7.5,
+            )
+
+            texto = limpiar(valor)
+
+            max_chars = max(
+                8,
+                int(ancho / 4.5),
+            )
+
+            if len(texto) > max_chars:
+                texto = (
+                    texto[:max_chars - 3]
+                    + "..."
+                )
+
+            pdf.drawString(
+                posicion + 5,
+                y - 14,
+                texto,
+            )
+
+            posicion += ancho
+
+        return y - alto
+
+    # =====================================================
+    # INICIO DOCUMENTO
+    # =====================================================
+
+    encabezado()
+
+    y = height - 142
+
+    # =====================================================
+    # 1. INFORMACIÓN GENERAL
+    # =====================================================
+
+    y = seccion(
+        "1. INFORMACIÓN GENERAL",
+        y,
+    )
+
+    espacio = 10
+
+    ancho_caja = (
+        ancho_util - espacio
+    ) / 2
+
+    campo_caja(
+        "UNIDAD / CLIENTE",
+        programacion.cliente.nombre,
+        margen,
+        y,
+        ancho_caja,
+    )
+
+    campo_caja(
+        "TÉCNICO",
+        programacion.tecnico.nombre,
+        margen + ancho_caja + espacio,
+        y,
+        ancho_caja,
+    )
+
+    y -= 37
+
+    campo_caja(
+        "FECHA DEL MANTENIMIENTO",
+        programacion.fecha_programada.strftime(
+            "%d/%m/%Y"
+        ),
+        margen,
+        y,
+        ancho_caja,
+    )
+
+    campo_caja(
+        "ESTADO",
+        programacion.get_estado_display(),
+        margen + ancho_caja + espacio,
+        y,
+        ancho_caja,
+    )
+
+    y -= 42
+
+    hora_llegada = "-"
+
+    hora_salida = "-"
+
+    if actividad:
+
+        if actividad.hora_llegada:
+            hora_llegada = (
+                actividad.hora_llegada.strftime(
+                    "%H:%M"
+                )
+            )
+
+        if actividad.hora_salida:
+            hora_salida = (
+                actividad.hora_salida.strftime(
+                    "%H:%M"
+                )
+            )
+
+    campo_caja(
+        "HORA DE LLEGADA",
+        hora_llegada,
+        margen,
+        y,
+        ancho_caja,
+    )
+
+    campo_caja(
+        "HORA DE SALIDA",
+        hora_salida,
+        margen + ancho_caja + espacio,
+        y,
+        ancho_caja,
+    )
+
+    y -= 39
+
+    if programacion.observaciones:
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.drawString(
+            margen,
+            y,
+            "OBSERVACIONES DE PROGRAMACIÓN",
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        y -= 12
+
+        y = envolver_texto(
+            programacion.observaciones,
+            margen + 5,
+            y,
+            ancho_util - 10,
+        )
+
+        y -= 6
+
+    # =====================================================
+    # 2. REVISIÓN GENERAL
+    # =====================================================
+
+    y = seccion(
+        "2. REVISIÓN GENERAL",
+        y,
+    )
+
+    revision_control = (
+        preventivo.control_nivel
+        if preventivo
+        else "-"
+    )
+
+    revision_tablero = (
+        preventivo.tablero_electrico
+        if preventivo
+        else "-"
+    )
+
+    novedades = (
+        preventivo.novedades
+        if preventivo
+        else "-"
+    )
+
+        # Revisión general compacta en tres columnas
+    ancho_revision = (ancho_util - 16) / 3
+
+    campos_revision = [
+        ("Control de nivel", revision_control),
+        ("Tablero eléctrico", revision_tablero),
+        ("Novedades", novedades),
+    ]
+
+    x_revision = margen
+
+    for titulo, valor in campos_revision:
+
+        pdf.setStrokeColorRGB(
+            0.82,
+            0.85,
+            0.88,
+        )
+
+        pdf.setFillColorRGB(
+            0.98,
+            0.99,
+            1,
+        )
+
+        pdf.roundRect(
+            x_revision,
+            y - 38,
+            ancho_revision,
+            34,
+            4,
+            fill=True,
+            stroke=True,
+        )
+
+        pdf.setFillColorRGB(*azul)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5,
+        )
+
+        pdf.drawString(
+            x_revision + 6,
+            y - 13,
+            titulo,
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        pdf.setFont(
+            "Helvetica",
+            7.5,
+        )
+
+        texto = limpiar(valor)
+
+        if len(texto) > 28:
+            texto = texto[:25] + "..."
+
+        pdf.drawString(
+            x_revision + 6,
+            y - 27,
+            texto,
+        )
+
+        x_revision += ancho_revision + 8
+
+    y -= 46
+    # =====================================================
+    # 3. EQUIPOS
+    # =====================================================
+
+    y = seccion(
+        "3. EQUIPOS REVISADOS",
+        y,
+    )
+
+    if mediciones:
+
+        anchos = [
+            170,
+            70,
+            75,
+            100,
+            ancho_util - 415,
+        ]
+
+        y = encabezado_tabla(
+            [
+                "Equipo",
+                "Voltaje",
+                "Corriente",
+                "Estado",
+                "Observaciones",
+            ],
+            margen,
+            y,
+            anchos,
+        )
+
+        for medicion in mediciones:
+
+            nombre = (
+                medicion.nombre_equipo
+                or str(medicion.equipo)
+                or "Equipo"
+            )
+
+            y = fila_tabla(
+                [
+                    nombre,
+                    medicion.voltaje_medido,
+                    medicion.corriente_medida,
+                    medicion.get_estado_display(),
+                    medicion.observaciones,
+                ],
+                margen,
+                y,
+                anchos,
+            )
+
+        y -= 8
+
+    else:
+
+        pdf.setFont(
+            "Helvetica-Oblique",
+            8,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.drawString(
+            margen + 5,
+            y,
+            "No se registraron mediciones de equipos.",
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        y -= 18
+
+    # =====================================================
+    # 4. COMPONENTES HIDRÁULICOS
+    # =====================================================
+
+    y = seccion(
+        "4. COMPONENTES HIDRÁULICOS",
+        y,
+    )
+
+    if componentes:
+
+        anchos = [
+            150,
+            150,
+            ancho_util - 300,
+        ]
+
+        y = encabezado_tabla(
+            [
+                "Componente",
+                "Estado",
+                "Observaciones",
+            ],
+            margen,
+            y,
+            anchos,
+        )
+
+        for componente in componentes:
+
+            y = fila_tabla(
+                [
+                    componente.get_tipo_display(),
+                    componente.get_estado_display(),
+                    componente.observaciones,
+                ],
+                margen,
+                y,
+                anchos,
+            )
+
+        y -= 8
+
+    else:
+
+        pdf.setFont(
+            "Helvetica-Oblique",
+            8,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.drawString(
+            margen + 5,
+            y,
+            "No se registraron componentes hidráulicos.",
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        y -= 18
+
+    # =====================================================
+    # 5. TANQUES HIDRONEUMÁTICOS
+    # =====================================================
+
+    y = seccion(
+        "5. TANQUES HIDRONEUMÁTICOS",
+        y,
+    )
+
+    if tanques:
+
+        anchos = [
+            175,
+            105,
+            105,
+            ancho_util - 385,
+        ]
+
+        y = encabezado_tabla(
+            [
+                "Tanque",
+                "Capacidad",
+                "Precarga",
+                "Observaciones",
+            ],
+            margen,
+            y,
+            anchos,
+        )
+
+        for tanque in tanques:
+
+            descripcion = (
+                tanque.descripcion_tanque
+                or str(tanque.tanque)
+                or "Tanque"
+            )
+
+            y = fila_tabla(
+                [
+                    descripcion,
+                    tanque.capacidad,
+                    tanque.precarga_aire,
+                    tanque.observaciones,
+                ],
+                margen,
+                y,
+                anchos,
+            )
+
+        y -= 8
+
+    else:
+
+        pdf.setFont(
+            "Helvetica-Oblique",
+            8,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.drawString(
+            margen + 5,
+            y,
+            "No se registraron revisiones de tanques.",
+        )
+
+        pdf.setFillColorRGB(0, 0, 0)
+
+        y -= 18
+
+        # =====================================================
+    # 6. RECIBIDO DEL SERVICIO
+    # =====================================================
+
+    y = seccion(
+        "6. RECIBIDO DEL SERVICIO",
+        y,
+    )
+
+    recibe = "-"
+    cargo = "-"
+
+    if preventivo:
+        recibe = preventivo.persona_recibe or "-"
+        cargo = preventivo.cargo_recibe or "-"
+
+    # -----------------------------------------------------
+    # DATOS DE QUIEN RECIBE
+    # -----------------------------------------------------
+
+    campo_caja(
+        "PERSONA QUE RECIBE",
+        recibe,
+        margen,
+        y,
+        ancho_caja,
+        28,
+    )
+
+    campo_caja(
+        "CARGO",
+        cargo,
+        margen + ancho_caja + espacio,
+        y,
+        ancho_caja,
+        28,
+    )
+
+    # Bajamos para ubicar las firmas debajo de los datos.
+    y -= 34
+
+    # =====================================================
+    # FIRMA / SOPORTE Y TÉCNICO RESPONSABLE
+    # =====================================================
+
+    alto_firma = 34
+
+    pdf.setStrokeColorRGB(
+        0.75,
+        0.78,
+        0.82,
+    )
+
+    # -----------------------------------------------------
+    # FIRMA / SOPORTE DE RECIBIDO
+    # -----------------------------------------------------
+
+    pdf.roundRect(
+        margen,
+        y - alto_firma,
+        ancho_caja,
+        alto_firma,
+        4,
+        fill=False,
+        stroke=True,
+    )
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        7.2,
+    )
+
+    pdf.setFillColorRGB(*gris)
+
+    pdf.drawString(
+        margen + 7,
+        y - 11,
+        "FIRMA / SOPORTE DE RECIBIDO",
+    )
+
+    firma_dibujada = False
+
+    if preventivo and preventivo.firma_recibido:
+
+        try:
+            ruta_firma = preventivo.firma_recibido.path
+
+            if os.path.exists(ruta_firma):
+
+                pdf.drawImage(
+                    ruta_firma,
+                    margen + 8,
+                    y - 31,
+                    width=115,
+                    height=18,
+                    preserveAspectRatio=True,
+                    mask="auto",
+                )
+
+                firma_dibujada = True
+
+        except Exception:
+            firma_dibujada = False
+
+    if not firma_dibujada:
+
+        pdf.setFont(
+            "Helvetica",
+            7.5,
+        )
+
+        pdf.setFillColorRGB(*gris)
+
+        pdf.drawString(
+            margen + 9,
+            y - 25,
+            "Sin firma registrada",
+        )
+
+    # -----------------------------------------------------
+    # TÉCNICO RESPONSABLE
+    # -----------------------------------------------------
+
+    x_tecnico = (
+        margen
+        + ancho_caja
+        + espacio
+    )
+
+    pdf.roundRect(
+        x_tecnico,
+        y - alto_firma,
+        ancho_caja,
+        alto_firma,
+        4,
+        fill=False,
+        stroke=True,
+    )
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        7.2,
+    )
+
+    pdf.setFillColorRGB(*gris)
+
+    pdf.drawString(
+        x_tecnico + 7,
+        y - 11,
+        "TÉCNICO RESPONSABLE",
+    )
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        8.5,
+    )
+
+    pdf.setFillColorRGB(0, 0, 0)
+
+    pdf.drawString(
+        x_tecnico + 9,
+        y - 24,
+        limpiar(
+            programacion.tecnico.nombre
+        ),
+    )
+
+    pdf.setFont(
+        "Helvetica",
+        7,
+    )
+
+    pdf.setFillColorRGB(*gris)
+
+    pdf.drawString(
+        x_tecnico + 9,
+        y - 32,
+        "D&S Soluciones en Bombeo S.A.S.",
+    )
+    # =====================================================
+    # CIERRE
+    # =====================================================
+
+    pie()
+    pdf.save()
+
+    return response         
 # =========================================
 # VALIDAR ACCESO DEL CLIENTE
 # =========================================
