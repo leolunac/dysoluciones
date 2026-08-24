@@ -7,7 +7,7 @@ import openpyxl
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
+from django.db.models import Count, Sum, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from django.db.models import Q
+
 from .forms import (
     NuevaLlamadaForm,
     GestionServicioForm,
@@ -54,8 +54,7 @@ from .models import (
 )                    
 
 from .utils import registrar_evento
-from gestion_comercial.models import Cotizacion
-
+from gestion_comercial.models import Cotizacion, Liquidacion
 
 # =========================================
 # LOGIN / REDIRECCIÓN POR PERFIL
@@ -2186,6 +2185,49 @@ def dashboard(request):
     clientes = Cliente.objects.filter(
     activo=True
     ).count()
+        # =====================================================
+    # INDICADORES DE FACTURACIÓN
+    # =====================================================
+
+    hoy = timezone.localdate()
+
+    facturadas = Liquidacion.objects.filter(
+        estado="FACTURADA",
+        fecha_facturacion__isnull=False,
+    )
+
+    facturado_mes = (
+        facturadas.filter(
+            fecha_facturacion__year=hoy.year,
+            fecha_facturacion__month=hoy.month,
+        ).aggregate(
+            total=Sum("valor_total")
+        )["total"]
+        or 0
+    )
+
+    facturado_anio = (
+        facturadas.filter(
+            fecha_facturacion__year=hoy.year,
+        ).aggregate(
+            total=Sum("valor_total")
+        )["total"]
+        or 0
+    )
+
+    pendiente_facturar = (
+        Liquidacion.objects.filter(
+            estado="LISTA_FACTURAR"
+        ).aggregate(
+            total=Sum("valor_total")
+        )["total"]
+        or 0
+    )
+
+    facturas_mes = facturadas.filter(
+        fecha_facturacion__year=hoy.year,
+        fecha_facturacion__month=hoy.month,
+    ).count()
     # =====================================================
     # GRÁFICA 1: EMERGENCIAS ÚLTIMOS 12 MESES
     # =====================================================
@@ -2281,7 +2323,47 @@ def dashboard(request):
         ).count()
         for estado in estados_cotizaciones
     ]
+        # =====================================================
+    # GRÁFICA 4: FACTURACIÓN ÚLTIMOS 12 MESES
+    # =====================================================
 
+    qs_facturacion = (
+        facturadas
+        .filter(
+            fecha_facturacion__date__gte=inicio
+        )
+        .annotate(
+            mes=TruncMonth("fecha_facturacion")
+        )
+        .values("mes")
+        .annotate(
+            total=Sum("valor_total")
+        )
+        .order_by("mes")
+    )
+
+    facturacion_dict = {
+        x["mes"].strftime("%Y-%m"): float(x["total"] or 0)
+        for x in qs_facturacion
+    }
+
+    labels_facturacion = []
+    data_facturacion = []
+
+    for i in range(11, -1, -1):
+        m = hoy.month - i
+        y = hoy.year
+
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        key = f"{y:04d}-{m:02d}"
+
+        labels_facturacion.append(key)
+        data_facturacion.append(
+            facturacion_dict.get(key, 0)
+        )
     context = {
         "total_emergencias": total_emergencias,
         "pendientes": pendientes,
@@ -2296,6 +2378,13 @@ def dashboard(request):
 
         "labels_cotizaciones": labels_cotizaciones,
         "data_cotizaciones": data_cotizaciones,
+                "facturado_mes": facturado_mes,
+        "facturado_anio": facturado_anio,
+        "pendiente_facturar": pendiente_facturar,
+        "facturas_mes": facturas_mes,
+
+        "labels_facturacion": labels_facturacion,
+        "data_facturacion": data_facturacion,
     }
 
     return render(
@@ -2889,7 +2978,7 @@ def dashboard_cliente(request, cliente_id):
     cotizaciones = CotizacionEquipo.objects.filter(
         equipo__cliente=cliente,
     ).order_by("-creado_en")[:10]
-
+    hoy = timezone.localdate()
     hoy = timezone.now().date()
     inicio = (hoy.replace(day=1) - timedelta(days=365)).replace(day=1)
 

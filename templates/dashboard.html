@@ -334,6 +334,39 @@
             <div class="kpi-value">{{ clientes }}</div>
         </div>
     </section>
+        <h2 class="section-title">Indicadores de facturación</h2>
+
+    <section class="kpi-grid">
+
+        <div class="kpi-card kpi-green">
+            <div class="kpi-label">Facturado este mes</div>
+            <div class="kpi-value">
+                $ {{ facturado_mes|floatformat:0 }}
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-label">Facturado este año</div>
+            <div class="kpi-value">
+                $ {{ facturado_anio|floatformat:0 }}
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-label">Pendiente por facturar</div>
+            <div class="kpi-value">
+                $ {{ pendiente_facturar|floatformat:0 }}
+            </div>
+        </div>
+
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-label">Facturas del mes</div>
+            <div class="kpi-value">
+                {{ facturas_mes }}
+            </div>
+        </div>
+
+    </section>
 
     <h2 class="section-title">Indicadores gerenciales</h2>
 
@@ -361,6 +394,16 @@
                 <canvas id="graficaCotizaciones"></canvas>
             </div>
         </div>
+             <div class="chart-card chart-wide">
+            <h3>Facturación — últimos 12 meses</h3>
+            <p>
+                Evolución mensual de las liquidaciones efectivamente facturadas.
+            </p>
+
+            <div class="chart-wrap">
+                <canvas id="graficaFacturacion"></canvas>
+            </div>
+        </div>   
     </section>
 
     <h2 class="section-title">Operación 7x24</h2>
@@ -497,6 +540,8 @@
     const dataEquipos = {{ data_equipos|safe }};
     const labelsCotizaciones = {{ labels_cotizaciones|safe }};
     const dataCotizaciones = {{ data_cotizaciones|safe }};
+    const labelsFacturacion = {{ labels_facturacion|safe }};
+    const dataFacturacion = {{ data_facturacion|safe }};
 
     new Chart(document.getElementById("graficaEmergencias"), {
         type: "line",
@@ -550,6 +595,50 @@
             }
         }
     });
+    new Chart(document.getElementById("graficaFacturacion"), {
+    type: "line",
+    data: {
+        labels: labelsFacturacion,
+        datasets: [{
+            label: "Facturación",
+            data: dataFacturacion,
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const valor = context.raw || 0;
+
+                        return "$ " + new Intl.NumberFormat(
+                            "es-CO"
+                        ).format(valor);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return "$ " + new Intl.NumberFormat(
+                            "es-CO"
+                        ).format(value);
+                    }
+                }
+            }
+        }
+    }
+});
 </script>
 
 </body>
