@@ -133,7 +133,35 @@
         text-align:left;
         width:100%;
     }
-}    
+} 
+.mini-kpis{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin:16px 0;
+}
+
+.mini-kpi{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    padding:12px;
+    text-align:center;
+}
+
+.mini-kpi-label{
+    display:block;
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:4px;
+}
+
+.mini-kpi-valor{
+    display:block;
+    font-size:22px;
+    font-weight:700;
+    color:#0f4c81;
+}   
 </style>
 
 <div class="container mt-4">
@@ -166,6 +194,7 @@
 {% endif %}
 
 <div class="unidades-header">
+{% if administracion %}    
 <div class="unidades-grid" style="margin-bottom:22px;">
 
     <div class="unidad-card">
@@ -203,7 +232,7 @@
             {{ total_cotizaciones }}
         </div>
     </div>
-
+{% endif %}
 </div>    
 
     <h2>Mis Unidades</h2>
@@ -218,76 +247,77 @@
 
 <div class="unidades-grid">
 
-    {% if resumen_unidades %}
+   {% if resumen_unidades %}
 
-        {% for item in resumen_unidades %}
+    {% for item in resumen_unidades %}
 
-        <div class="unidad-card">
+    <div class="unidad-card">
 
-            <div class="unidad-nombre">
-                {{ item.cliente.nombre }}
-            </div>
+        <div class="unidad-nombre">
+            {{ item.cliente.nombre }}
+        </div>
 
-            <div class="unidad-dato">
-                <strong>Dirección:</strong><br>
-                {{ item.cliente.direccion }}
-            </div>
+        <div class="unidad-dato">
+            <strong>Dirección:</strong><br>
+            {{ item.cliente.direccion }}
+        </div>
 
-            <div class="unidad-dato">
-                <strong>Contrato:</strong>
-                {{ item.cliente.get_tipo_contrato_display }}
-            </div>
+        <div class="unidad-dato">
+            <strong>Contrato:</strong>
+            {{ item.cliente.get_tipo_contrato_display }}
+        </div>
 
-            <div class="unidad-dato">
-                <strong>Estado:</strong>
-                {% if item.cliente.activo %}
-                    Activa
-                {% else %}
-                    Inactiva
-                {% endif %}
-            </div>
+        <div class="unidad-dato">
+            <strong>Estado:</strong>
+            {% if item.cliente.activo %}
+                Activa
+            {% else %}
+                Inactiva
+            {% endif %}
+        </div>
 
-            <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;">
+        <div class="mini-kpis">
 
-            <div style="
-                display:grid;
-                grid-template-columns:repeat(2, 1fr);
-                gap:10px;
-                margin-bottom:14px;
-            ">
-
-                <div class="unidad-dato">
-                    <strong>Equipos</strong><br>
+            <div class="mini-kpi">
+                <span class="mini-kpi-label">Equipos</span>
+                <span class="mini-kpi-valor">
                     {{ item.equipos }}
-                </div>
-
-                <div class="unidad-dato">
-                    <strong>Correctivos</strong><br>
-                    {{ item.correctivos }}
-                </div>
-
-                <div class="unidad-dato">
-                    <strong>Preventivos</strong><br>
-                    {{ item.preventivos }}
-                </div>
-
-                <div class="unidad-dato">
-                    <strong>Cotizaciones</strong><br>
-                    {{ item.cotizaciones }}
-                </div>
-
+                </span>
             </div>
 
-            <a
-                href="{% url 'dashboard_cliente' item.cliente.id %}"
-                class="unidad-btn"
-            >
-                Ingresar a la unidad
-            </a>
+            <div class="mini-kpi">
+                <span class="mini-kpi-label">Correctivos</span>
+                <span class="mini-kpi-valor">
+                    {{ item.correctivos }}
+                </span>
+            </div>
+
+            <div class="mini-kpi">
+                <span class="mini-kpi-label">Preventivos</span>
+                <span class="mini-kpi-valor">
+                    {{ item.preventivos }}
+                </span>
+            </div>
+
+            <div class="mini-kpi">
+                <span class="mini-kpi-label">Cotizaciones</span>
+                <span class="mini-kpi-valor">
+                    {{ item.cotizaciones }}
+                </span>
+            </div>
 
         </div>
 
-        {% endfor %}
+        <a
+            href="{% url 'dashboard_cliente' item.cliente.id %}"
+            class="unidad-btn"
+        >
+            Ingresar a la unidad
+        </a>
+
+    </div>
+
+    {% endfor %}
 
     {% else %}
 

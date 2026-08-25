@@ -403,6 +403,11 @@
         </div>
 
         <div class="hero-actions">
+        {% if mostrar_volver_unidades %}
+<a class="btn btn-light" href="{% url 'portal_unidades' %}">
+    ← Mis Unidades
+</a>
+{% endif %}  
         <a class="btn btn-light" href="{% url 'hoja_vida' cliente.id %}">
             Hoja de vida
         </a>

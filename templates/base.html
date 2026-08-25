@@ -125,15 +125,27 @@ body{
         </div>
 
         <nav class="menu">
-            <a href="/">🏠 Inicio</a>
-            <a href="/gerencia/">📊 Dashboard</a>
-            <a href="/admin/operacion/cliente/">🏢 Clientes</a>
-            <a href="/admin/operacion/emergencia/">🚨 Emergencias</a>
-            <a href="/admin/operacion/equipounidad/">🔧 Equipos</a>
-            <a href="/admin/operacion/lavadotanque/">💧 Lavados</a>
-            <a href="/admin/">⚙ Administración</a>
-            <a href="/logout/">🚪 Cerrar sesión</a>
-        </nav>
+
+    {% if request.user.is_staff %}
+
+        <a href="/">🏠 Inicio</a>
+        <a href="/gerencia/">📊 Dashboard</a>
+        <a href="/admin/operacion/cliente/">🏢 Clientes</a>
+        <a href="/admin/operacion/emergencia/">🚨 Emergencias</a>
+        <a href="/admin/operacion/equipounidad/">🔧 Equipos</a>
+        <a href="/admin/operacion/lavadotanque/">💧 Lavados</a>
+        <a href="/admin/">⚙ Administración</a>
+
+    {% else %}
+
+        <a href="/">🏠 Inicio</a>
+        <a href="{% url 'portal_unidades' %}">🏢 Mis Unidades</a>
+
+    {% endif %}
+
+    <a href="/logout/">🚪 Cerrar sesión</a>
+
+</nav>
     </aside>
 
     <main class="content">

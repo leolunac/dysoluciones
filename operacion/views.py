@@ -3249,6 +3249,13 @@ def dashboard_cliente(request, cliente_id):
         ],
     }
 
+    usuario_administracion = UsuarioAdministracion.objects.filter(
+        user=request.user,
+        activo=True,
+    ).exists()
+
+    context["mostrar_volver_unidades"] = usuario_administracion
+
     return render(request, "dashboard_cliente.html", context)
 
 
