@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -341,21 +342,21 @@
         <div class="kpi-card kpi-green">
             <div class="kpi-label">Facturado este mes</div>
             <div class="kpi-value">
-                $ {{ facturado_mes|floatformat:0 }}
+                $ {{ facturado_mes|floatformat:"0g" }}
             </div>
         </div>
 
         <div class="kpi-card kpi-blue">
             <div class="kpi-label">Facturado este año</div>
             <div class="kpi-value">
-                $ {{ facturado_anio|floatformat:0 }}
+                $ {{ facturado_anio|floatformat:"0g" }}
             </div>
         </div>
 
         <div class="kpi-card kpi-orange">
             <div class="kpi-label">Pendiente por facturar</div>
             <div class="kpi-value">
-                $ {{ pendiente_facturar|floatformat:0 }}
+                $ {{ pendiente_facturar|floatformat:"0g" }}
             </div>
         </div>
 
