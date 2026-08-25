@@ -119,24 +119,33 @@ def login_view(request):
                 return redirect("/tecnico/")
 
             # =========================================
-            # GESTIÓN COMERCIAL
-            # Auxiliar, Coordinador y Facturación
-            # =========================================
-            if es_usuario_gestion_comercial(user):
-                return redirect("/gestion-comercial/")
+# COORDINADOR OPERATIVO
+# =========================================
+    if user.groups.filter(
+    name="GESTION_COORDINADOR"
+    ).exists():
+        return redirect("escritorio_coordinador")
 
-            # =========================================
-            # OTROS USUARIOS INTERNOS
-            # =========================================
-            if user.is_staff:
-                return redirect("/")
+# =========================================
+# GESTIÓN COMERCIAL
+# =========================================
+# Auxiliar y Facturación
+# =========================================
+    if es_usuario_gestion_comercial(user):
+        return redirect("/gestion-comercial/")
 
-            # =========================================
-            # USUARIOS CLIENTE
-            # =========================================
-            return redirect("/mis-unidades/")
+# =========================================
+# OTROS USUARIOS INTERNOS
+# =========================================
+    if user.is_staff:
+        return redirect("/")
 
-        return render(
+# =========================================
+# USUARIOS CLIENTE
+# =========================================
+    return redirect("/mis-unidades/")
+
+    return render(
             request,
             "login.html",
             {
@@ -184,6 +193,10 @@ def home(request):
     # =========================================
     # GESTIÓN COMERCIAL
     # =========================================
+    if request.user.groups.filter(
+        name="GESTION_COORDINADOR"
+    ).exists():
+        return redirect("escritorio_coordinador")
     if es_usuario_gestion_comercial(request.user):
         return redirect("/gestion-comercial/")
 
@@ -2617,6 +2630,15 @@ def escritorio_coordinador(request):
     cerrados = servicios_noche.filter(estado="CERRADA").count()
 
     servicios_revision = servicios_noche.order_by("-fecha_llamada")
+        # =========================================
+    # SERVICIOS PENDIENTES DE ASIGNACIÓN
+    # =========================================
+    servicios_sin_asignar = (
+        Emergencia.objects
+        .filter(tecnico__isnull=True)
+        .exclude(estado="CERRADA")
+        .order_by("-fecha_llamada")
+    )
 
     context = {
         "total_noche": total_noche,
@@ -2627,6 +2649,7 @@ def escritorio_coordinador(request):
         "servicios_revision": servicios_revision,
         "inicio_noche": inicio_noche,
         "fin_noche": fin_noche,
+        "servicios_sin_asignar": servicios_sin_asignar,
     }
 
     return render(request, "escritorio_coordinador.html", context)
@@ -3526,7 +3549,55 @@ def accion_servicio(request, servicio_id, accion):
             "El técnico informó que terminó la reparación.",
         ),
     }
+        # Evitar registrar dos veces la misma acción
+    titulos_accion = {
+        "salida": "Técnico salió",
+        "llegada": "Llegó al sitio",
+        "reparando": "Reparación iniciada",
+        "terminado": "Servicio finalizado",
+    }
 
+    titulo_esperado = titulos_accion.get(accion)
+
+    if titulo_esperado and servicio.eventos.filter(
+        titulo=titulo_esperado
+    ).exists():
+        return redirect(
+            "servicio_tecnico",
+            servicio_id=servicio.id,
+        )
+        # =========================================
+    # EVITAR ACCIONES DUPLICADAS
+    # =========================================
+    titulos_accion = {
+        "salida": "Técnico salió",
+        "llegada": "Llegó al sitio",
+        "reparando": "Reparación iniciada",
+        "terminado": "Servicio finalizado",
+    }
+
+    titulo_esperado = titulos_accion.get(accion)
+
+    if titulo_esperado and servicio.eventos.filter(
+        titulo=titulo_esperado
+    ).exists():
+        return redirect(
+            "servicio_tecnico",
+            servicio_id=servicio.id,
+        )
+        # =========================================
+    # NO PERMITIR TERMINAR SIN ACTIVIDAD TÉCNICA
+    # =========================================
+    if accion == "terminado":
+        tiene_actividad = ActividadTecnico.objects.filter(
+            servicio=servicio,
+            tecnico=servicio.tecnico,
+        ).exists()
+
+        if not tiene_actividad:
+            return HttpResponseForbidden(
+                "Debe registrar al menos una actividad técnica antes de terminar la atención."
+            )
     if accion in acciones:
 
         icono, titulo, descripcion = acciones[accion]
@@ -3551,9 +3622,10 @@ def accion_servicio(request, servicio_id, accion):
 
         servicio.save()
 
+    
     return redirect(
-        "gestionar_servicio",
-        servicio_id=servicio.id,
+        "servicio_tecnico",
+    servicio_id=servicio.id,
     )
 # =========================================
 # EXPORTAR CSV

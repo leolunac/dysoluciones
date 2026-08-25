@@ -127,6 +127,42 @@ th{
 </div>
 
 <div class="card">
+ <div class="card">
+    <h2>Servicios pendientes de asignación</h2>
+    <p>Casos registrados que todavía no tienen técnico asignado.</p>
+</div>
+
+<table>
+<tr>
+    <th>Caso</th>
+    <th>Cliente</th>
+    <th>Tipo</th>
+    <th>Prioridad</th>
+    <th>Falla reportada</th>
+    <th>Acción</th>
+</tr>
+
+{% for s in servicios_sin_asignar %}
+<tr>
+    <td>{{ s.numero_caso|default:s.id }}</td>
+    <td>{{ s.cliente.nombre }}</td>
+    <td>{{ s.get_tipo_servicio_display }}</td>
+    <td>{{ s.get_prioridad_display }}</td>
+    <td>{{ s.descripcion_falla|truncatechars:70 }}</td>
+    <td>
+        <a class="btn" href="{% url 'gestionar_servicio' s.id %}">
+            Asignar técnico
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6">No hay servicios pendientes de asignación.</td>
+</tr>
+{% endfor %}
+</table>
+
+<br>   
     <h2>🔔 Servicios para revisar</h2>
     <p>
         Periodo revisado:
@@ -180,8 +216,8 @@ th{
 
 <br>
 
-<a class="btn" href="/centro-operaciones/">🚨 Ir al Centro de Operaciones</a>
-<a class="btn" href="/admin/operacion/emergencia/add/">+ Nuevo servicio</a>
+<a class="btn" href="/centro-operaciones/">Ir al Centro de Operaciones</a>
+<a class="btn" href="{% url 'nueva_llamada' %}">+ Nuevo servicio</a>
 
 </body>
 </html>
