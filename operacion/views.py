@@ -2173,17 +2173,38 @@ def dashboard(request):
             "No está autorizado para acceder al Panel de Gerencia."
         )
 
-    total_emergencias = Emergencia.objects.count()
+        # =====================================================
+    # INDICADORES OPERATIVOS 7X24
+    # =====================================================
+
+    total_servicios = Emergencia.objects.count()
+
     pendientes = Emergencia.objects.filter(
-    estado="PENDIENTE"
+        estado="PENDIENTE"
     ).count()
 
     atendidas = Emergencia.objects.filter(
-    estado="ATENDIDA"
+        estado="ATENDIDA"
     ).count()
 
     clientes = Cliente.objects.filter(
-    activo=True
+        activo=True
+    ).count()
+
+    emergencias = Emergencia.objects.filter(
+        tipo_servicio="EMERGENCIA"
+    ).count()
+
+    correctivos = Emergencia.objects.filter(
+        tipo_servicio="CORRECTIVO"
+    ).count()
+
+    garantias = Emergencia.objects.filter(
+        tipo_servicio="GARANTIA"
+    ).count()
+
+    revisiones = Emergencia.objects.filter(
+        tipo_servicio="REVISION"
     ).count()
         # =====================================================
     # INDICADORES DE FACTURACIÓN
@@ -2229,32 +2250,45 @@ def dashboard(request):
         fecha_facturacion__month=hoy.month,
     ).count()
     # =====================================================
-    # GRÁFICA 1: EMERGENCIAS ÚLTIMOS 12 MESES
+        # =====================================================
+    # GRÁFICA 1: SERVICIOS 7X24 ÚLTIMOS 12 MESES
     # =====================================================
-    hoy = timezone.now().date()
-    inicio = (hoy.replace(day=1) - timedelta(days=365)).replace(day=1)
 
-    qs_emergencias = (
+    hoy = timezone.now().date()
+
+    inicio = (
+        hoy.replace(day=1)
+        - timedelta(days=365)
+    ).replace(day=1)
+
+    qs_servicios = (
         Emergencia.objects
-        .filter(fecha_llamada__date__gte=inicio)
-        .annotate(mes=TruncMonth("fecha_llamada"))
+        .filter(
+            fecha_llamada__date__gte=inicio
+        )
+        .annotate(
+            mes=TruncMonth("fecha_llamada")
+        )
         .values("mes")
-        .annotate(total=Count("id"))
+        .annotate(
+            total=Count("id")
+        )
         .order_by("mes")
     )
 
-    emergencias_dict = {
+    servicios_dict = {
         x["mes"].strftime("%Y-%m"): x["total"]
-        for x in qs_emergencias
+        for x in qs_servicios
     }
 
-    labels_emergencias = []
-    data_emergencias = []
+    labels_servicios = []
+    data_servicios = []
 
     anio = hoy.year
     mes = hoy.month
 
     for i in range(11, -1, -1):
+
         m = mes - i
         y = anio
 
@@ -2264,11 +2298,11 @@ def dashboard(request):
 
         key = f"{y:04d}-{m:02d}"
 
-        labels_emergencias.append(key)
-        data_emergencias.append(
-            emergencias_dict.get(key, 0)
-        )
+        labels_servicios.append(key)
 
+        data_servicios.append(
+            servicios_dict.get(key, 0)
+        )
     # =====================================================
     # GRÁFICA 2: ESTADO GENERAL DE EQUIPOS
     # =====================================================
@@ -2365,26 +2399,32 @@ def dashboard(request):
             facturacion_dict.get(key, 0)
         )
     context = {
-        "total_emergencias": total_emergencias,
-        "pendientes": pendientes,
-        "atendidas": atendidas,
-        "clientes": clientes,
+        "total_servicios": total_servicios,
+    "pendientes": pendientes,
+    "atendidas": atendidas,
+    "clientes": clientes,
 
-        "labels_emergencias": labels_emergencias,
-        "data_emergencias": data_emergencias,
+    "emergencias": emergencias,
+    "correctivos": correctivos,
+    "garantias": garantias,
+    "revisiones": revisiones,
 
-        "labels_equipos": labels_equipos,
-        "data_equipos": data_equipos,
+    "labels_servicios": labels_servicios,
+    "data_servicios": data_servicios,
 
-        "labels_cotizaciones": labels_cotizaciones,
-        "data_cotizaciones": data_cotizaciones,
-                "facturado_mes": facturado_mes,
-        "facturado_anio": facturado_anio,
-        "pendiente_facturar": pendiente_facturar,
-        "facturas_mes": facturas_mes,
+    "labels_equipos": labels_equipos,
+    "data_equipos": data_equipos,
 
-        "labels_facturacion": labels_facturacion,
-        "data_facturacion": data_facturacion,
+    "labels_cotizaciones": labels_cotizaciones,
+    "data_cotizaciones": data_cotizaciones,
+
+    "facturado_mes": facturado_mes,
+    "facturado_anio": facturado_anio,
+    "pendiente_facturar": pendiente_facturar,
+    "facturas_mes": facturas_mes,
+
+    "labels_facturacion": labels_facturacion,
+    "data_facturacion": data_facturacion,
     }
 
     return render(

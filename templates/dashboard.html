@@ -316,8 +316,8 @@
 
     <section class="kpi-grid">
         <div class="kpi-card kpi-blue">
-            <div class="kpi-label">Emergencias registradas</div>
-            <div class="kpi-value">{{ total_emergencias }}</div>
+            <div class="kpi-label">Servicios 7x24 registrados</div>
+            <div class="kpi-value">{{ total_servicios }}</div>
         </div>
 
         <div class="kpi-card kpi-orange">
@@ -335,6 +335,27 @@
             <div class="kpi-value">{{ clientes }}</div>
         </div>
     </section>
+    <section class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+        <div class="kpi-label">Emergencias</div>
+        <div class="kpi-value">{{ emergencias }}</div>
+    </div>
+
+    <div class="kpi-card kpi-orange">
+        <div class="kpi-label">Correctivos</div>
+        <div class="kpi-value">{{ correctivos }}</div>
+    </div>
+
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Garantías</div>
+        <div class="kpi-value">{{ garantias }}</div>
+    </div>
+
+    <div class="kpi-card kpi-teal">
+        <div class="kpi-label">Revisiones</div>
+        <div class="kpi-value">{{ revisiones }}</div>
+    </div>
+</section>
         <h2 class="section-title">Indicadores de facturación</h2>
 
     <section class="kpi-grid">
@@ -372,40 +393,44 @@
     <h2 class="section-title">Indicadores gerenciales</h2>
 
     <section class="charts-grid">
-        <div class="chart-card">
-            <h3>Emergencias — últimos 12 meses</h3>
-            <p>Evolución mensual de las atenciones registradas.</p>
-            <div class="chart-wrap">
-                <canvas id="graficaEmergencias"></canvas>
-            </div>
-        </div>
 
-        <div class="chart-card">
-            <h3>Estado general de equipos</h3>
-            <p>Distribución de equipos operativos, en reparación y fuera de servicio.</p>
-            <div class="chart-wrap">
-                <canvas id="graficaEquipos"></canvas>
-            </div>
-        </div>
+    <div class="chart-card">
+        <h3>Servicios 7x24 — últimos 12 meses</h3>
+        <p>Evolución mensual de los servicios registrados.</p>
 
-        <div class="chart-card chart-wide">
-            <h3>Cotizaciones comerciales por estado</h3>
-            <p>Situación actual de las propuestas comerciales registradas en SIGOB.</p>
-            <div class="chart-wrap">
-                <canvas id="graficaCotizaciones"></canvas>
-            </div>
+        <div class="chart-wrap">
+            <canvas id="graficaServicios"></canvas>
         </div>
-             <div class="chart-card chart-wide">
-            <h3>Facturación — últimos 12 meses</h3>
-            <p>
-                Evolución mensual de las liquidaciones efectivamente facturadas.
-            </p>
+    </div>
 
-            <div class="chart-wrap">
-                <canvas id="graficaFacturacion"></canvas>
-            </div>
-        </div>   
-    </section>
+    <div class="chart-card">
+        <h3>Estado general de equipos</h3>
+        <p>Distribución de equipos operativos, en reparación y fuera de servicio.</p>
+
+        <div class="chart-wrap">
+            <canvas id="graficaEquipos"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card chart-wide">
+        <h3>Cotizaciones comerciales por estado</h3>
+        <p>Situación actual de las propuestas comerciales registradas en SIGOB.</p>
+
+        <div class="chart-wrap">
+            <canvas id="graficaCotizaciones"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card chart-wide">
+        <h3>Facturación — últimos 12 meses</h3>
+        <p>Evolución mensual de las liquidaciones efectivamente facturadas.</p>
+
+        <div class="chart-wrap">
+            <canvas id="graficaFacturacion"></canvas>
+        </div>
+    </div>
+
+</section>
 
     <h2 class="section-title">Operación 7x24</h2>
 
@@ -535,8 +560,8 @@
 </div>
 
 <script>
-    const labelsEmergencias = {{ labels_emergencias|safe }};
-    const dataEmergencias = {{ data_emergencias|safe }};
+    const labelsServicios = {{ labels_servicios|safe }};
+    const dataServicios = {{ data_servicios|safe }};
     const labelsEquipos = {{ labels_equipos|safe }};
     const dataEquipos = {{ data_equipos|safe }};
     const labelsCotizaciones = {{ labels_cotizaciones|safe }};
@@ -544,17 +569,17 @@
     const labelsFacturacion = {{ labels_facturacion|safe }};
     const dataFacturacion = {{ data_facturacion|safe }};
 
-    new Chart(document.getElementById("graficaEmergencias"), {
-        type: "line",
-        data: {
-            labels: labelsEmergencias,
-            datasets: [{
-                label: "Emergencias",
-                data: dataEmergencias,
-                fill: true,
-                tension: 0.3
-            }]
-        },
+    new Chart(document.getElementById("graficaServicios"), {
+    type: "line",
+    data: {
+        labels: labelsServicios,
+        datasets: [{
+            label: "Servicios 7x24",
+            data: dataServicios,
+            fill: true,
+            tension: 0.3
+        }]
+    },
         options: {
             responsive: true,
             maintainAspectRatio: false,
