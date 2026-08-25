@@ -2,8 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
-from operacion.models import UsuarioCliente
-
+from operacion.models import UsuarioCliente, Cliente
+from operacion.views import usuario_puede_ver_cliente
 from .forms import DocumentoClienteForm
 from .models import DocumentoCliente
 
@@ -129,18 +129,44 @@ def editar_documento(request, documento_id):
         },
     )
 
-
 @login_required
-def mis_documentos(request):
-    usuario_cliente = get_object_or_404(
-        UsuarioCliente,
-        user=request.user,
-    )
+def mis_documentos(request, cliente_id=None):
+
+    # =========================================
+    # USUARIO DE ADMINISTRACION / MULTIUNIDAD
+    # =========================================
+    if cliente_id is not None:
+
+        if not usuario_puede_ver_cliente(
+            request.user,
+            cliente_id,
+        ):
+            raise PermissionDenied(
+                "No está autorizado para consultar los documentos de esta unidad."
+            )
+
+        cliente = get_object_or_404(
+            Cliente,
+            id=cliente_id,
+            activo=True,
+        )
+
+    else:
+
+        # =========================================
+        # CLIENTE TRADICIONAL
+        # =========================================
+        usuario_cliente = get_object_or_404(
+            UsuarioCliente,
+            user=request.user,
+        )
+
+        cliente = usuario_cliente.cliente
 
     documentos = (
         DocumentoCliente.objects
         .filter(
-            cliente=usuario_cliente.cliente,
+            cliente=cliente,
             estado="PUBLICADO",
         )
         .order_by("-fecha_documento", "-id")
@@ -151,6 +177,6 @@ def mis_documentos(request):
         "portal_cliente/documentos/mis_documentos.html",
         {
             "documentos": documentos,
-            "cliente": usuario_cliente.cliente,
+            "cliente": cliente,
         },
     )

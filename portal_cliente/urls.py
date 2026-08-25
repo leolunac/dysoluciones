@@ -17,6 +17,11 @@ urlpatterns = [
         views.mis_documentos,
         name="mis_documentos",
     ),
+    path(
+    "mis-documentos/<int:cliente_id>/",
+        views.mis_documentos,
+        name="mis_documentos_unidad",
+    ),
 
     path(
         "documentos/nuevo/",

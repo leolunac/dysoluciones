@@ -416,9 +416,21 @@
             Descargar Hoja de Vida
         </a>
 
-        <a class="btn btn-light" href="{% url 'mis_documentos' %}">
+        {% if mostrar_volver_unidades %}
+    <a
+        class="btn btn-light"
+        href="{% url 'mis_documentos_unidad' cliente.id %}"
+    >
+        Mis documentos
+    </a>
+    {% else %}
+        <a
+            class="btn btn-light"
+            href="{% url 'mis_documentos' %}"
+        >
             Mis documentos
-        </a>
+    </a>
+    {% endif %}
 
         <a class="btn btn-light" href="{% url 'logout' %}">
         Cerrar sesión
