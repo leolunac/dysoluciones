@@ -2,7 +2,209 @@
 
 {% block content %}
 
+<style>
+    .unidades-header{
+        margin-bottom:24px;
+    }
+
+    .unidades-header h2{
+        margin-bottom:6px;
+        color:#0f4c81;
+        font-weight:700;
+    }
+
+    .unidades-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+        gap:20px;
+    }
+
+    .unidad-card{
+        background:#ffffff;
+        border-radius:14px;
+        padding:22px;
+        box-shadow:0 4px 14px rgba(0,0,0,.08);
+        border:1px solid #dbe5ee;
+        transition:.2s ease;
+    }
+
+    .unidad-card:hover{
+        transform:translateY(-3px);
+        box-shadow:0 8px 20px rgba(0,0,0,.12);
+    }
+
+    .unidad-nombre{
+        font-size:18px;
+        font-weight:700;
+        color:#0f4c81;
+        margin-bottom:12px;
+    }
+
+    .unidad-dato{
+        margin-bottom:8px;
+        color:#475569;
+        font-size:14px;
+    }
+
+    .unidad-dato strong{
+        color:#1e293b;
+    }
+
+    .unidad-btn{
+        display:block;
+        margin-top:18px;
+        text-align:center;
+        background:#0f5b8d;
+        color:white;
+        text-decoration:none;
+        padding:11px 14px;
+        border-radius:8px;
+        font-weight:700;
+    }
+
+    .unidad-btn:hover{
+        background:#0b456d;
+        color:white;
+    }
+
+    .sin-unidades{
+        background:white;
+        border-radius:12px;
+        padding:30px;
+        text-align:center;
+        box-shadow:0 3px 10px rgba(0,0,0,.06);
+    }
+.portal-admin-header{
+    background:linear-gradient(135deg, #0f4c81, #176b9c);
+    color:#ffffff;
+    border-radius:14px;
+    padding:22px 26px;
+    margin-bottom:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 5px 15px rgba(0,0,0,.10);
+}
+
+.portal-admin-titulo{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 5px 0;
+}
+
+.portal-admin-nombre{
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:4px;
+}
+
+.portal-admin-resumen{
+    font-size:13px;
+    opacity:.9;
+}
+
+.portal-admin-usuario{
+    text-align:right;
+    background:rgba(255,255,255,.12);
+    padding:10px 16px;
+    border-radius:10px;
+    min-width:180px;
+}
+
+.portal-admin-usuario small{
+    display:block;
+    opacity:.85;
+    margin-bottom:3px;
+}
+
+.portal-admin-usuario strong{
+    display:block;
+    font-size:14px;
+}
+
+@media (max-width:700px){
+    .portal-admin-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .portal-admin-usuario{
+        text-align:left;
+        width:100%;
+    }
+}    
+</style>
+
 <div class="container mt-4">
+
+    {% if administracion %}
+
+<div class="portal-admin-header">
+
+    <div>
+        <div class="portal-admin-titulo">
+            Portal de Administración
+        </div>
+
+        <div class="portal-admin-nombre">
+            {{ administracion.nombre }}
+        </div>
+
+        <div class="portal-admin-resumen">
+            {{ total_unidades }} unidad{{ total_unidades|pluralize:"es" }} activa{{ total_unidades|pluralize:"s" }} bajo administración
+        </div>
+    </div>
+
+    <div class="portal-admin-usuario">
+        <small>Sesión de administración</small>
+        <strong>{{ request.user.username }}</strong>
+    </div>
+
+</div>
+
+{% endif %}
+
+<div class="unidades-header">
+<div class="unidades-grid" style="margin-bottom:22px;">
+
+    <div class="unidad-card">
+        <div class="unidad-dato">
+            <strong>Unidades activas</strong>
+        </div>
+        <div style="font-size:30px; font-weight:700; color:#0f4c81;">
+            {{ total_unidades }}
+        </div>
+    </div>
+
+    <div class="unidad-card">
+        <div class="unidad-dato">
+            <strong>Correctivos</strong>
+        </div>
+        <div style="font-size:30px; font-weight:700; color:#0f4c81;">
+            {{ total_correctivos }}
+        </div>
+    </div>
+
+    <div class="unidad-card">
+        <div class="unidad-dato">
+            <strong>Preventivos</strong>
+        </div>
+        <div style="font-size:30px; font-weight:700; color:#0f4c81;">
+            {{ total_preventivos }}
+        </div>
+    </div>
+
+    <div class="unidad-card">
+        <div class="unidad-dato">
+            <strong>Cotizaciones</strong>
+        </div>
+        <div style="font-size:30px; font-weight:700; color:#0f4c81;">
+            {{ total_cotizaciones }}
+        </div>
+    </div>
+
+</div>    
 
     <h2>Mis Unidades</h2>
 
@@ -10,40 +212,137 @@
         Seleccione la unidad que desea consultar.
     </p>
 
-    <div class="row">
+</div>
 
-        {% for cliente in clientes %}
+    {% if clientes %}
 
-        <div class="col-md-6 col-lg-4 mb-3">
+<div class="unidades-grid">
 
-            <div class="card shadow-sm h-100">
+    {% if resumen_unidades %}
 
-                <div class="card-body">
+        {% for item in resumen_unidades %}
 
-                    <h5 class="card-title">
-                        {{ cliente.nombre }}
-                    </h5>
+        <div class="unidad-card">
 
-                    <p class="card-text">
-                        {{ cliente.direccion }}
-                    </p>
+            <div class="unidad-nombre">
+                {{ item.cliente.nombre }}
+            </div>
 
-                    <a
-                        href="{% url 'dashboard_cliente' cliente.id %}"
-                        class="btn btn-primary w-100"
-                    >
-                        Ingresar
-                    </a>
+            <div class="unidad-dato">
+                <strong>Dirección:</strong><br>
+                {{ item.cliente.direccion }}
+            </div>
 
+            <div class="unidad-dato">
+                <strong>Contrato:</strong>
+                {{ item.cliente.get_tipo_contrato_display }}
+            </div>
+
+            <div class="unidad-dato">
+                <strong>Estado:</strong>
+                {% if item.cliente.activo %}
+                    Activa
+                {% else %}
+                    Inactiva
+                {% endif %}
+            </div>
+
+            <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;">
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(2, 1fr);
+                gap:10px;
+                margin-bottom:14px;
+            ">
+
+                <div class="unidad-dato">
+                    <strong>Equipos</strong><br>
+                    {{ item.equipos }}
+                </div>
+
+                <div class="unidad-dato">
+                    <strong>Correctivos</strong><br>
+                    {{ item.correctivos }}
+                </div>
+
+                <div class="unidad-dato">
+                    <strong>Preventivos</strong><br>
+                    {{ item.preventivos }}
+                </div>
+
+                <div class="unidad-dato">
+                    <strong>Cotizaciones</strong><br>
+                    {{ item.cotizaciones }}
                 </div>
 
             </div>
+
+            <a
+                href="{% url 'dashboard_cliente' item.cliente.id %}"
+                class="unidad-btn"
+            >
+                Ingresar a la unidad
+            </a>
 
         </div>
 
         {% endfor %}
 
+    {% else %}
+
+        {% for cliente in clientes %}
+
+        <div class="unidad-card">
+
+            <div class="unidad-nombre">
+                {{ cliente.nombre }}
+            </div>
+
+            <div class="unidad-dato">
+                <strong>Dirección:</strong><br>
+                {{ cliente.direccion }}
+            </div>
+
+            <div class="unidad-dato">
+                <strong>Contrato:</strong>
+                {{ cliente.get_tipo_contrato_display }}
+            </div>
+
+            <div class="unidad-dato">
+                <strong>Estado:</strong>
+                {% if cliente.activo %}
+                    Activa
+                {% else %}
+                    Inactiva
+                {% endif %}
+            </div>
+
+            <a
+                href="{% url 'dashboard_cliente' cliente.id %}"
+                class="unidad-btn"
+            >
+                Ingresar a la unidad
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+</div>
+
+    {% else %}
+
+    <div class="sin-unidades">
+        <h4>No hay unidades activas asignadas</h4>
+        <p>
+            Actualmente esta administración no tiene unidades disponibles para consultar.
+        </p>
     </div>
+
+    {% endif %}
 
 </div>
 

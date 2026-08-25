@@ -40,6 +40,8 @@ from .models import (
     Tecnico,
     UsuarioCliente,
     ClienteAsignado,
+    AdministracionUnidad,
+    UsuarioAdministracion,
     BitacoraOperativa,
     RemisionTecnico,
     DetalleRemision,
@@ -50,6 +52,7 @@ from .models import (
     MantenimientoPreventivo,
     RevisionComponentePreventivo,
     RevisionTanquePreventivo,
+    
 
 )                    
 
@@ -65,6 +68,7 @@ GRUPOS_GESTION_COMERCIAL = {
     "GESTION_COORDINADOR",
     "GESTION_FACTURACION",
     "GESTION_GERENCIA",
+    
 }
 
 
@@ -117,6 +121,15 @@ def login_view(request):
                 activo=True,
             ).exists():
                 return redirect("/tecnico/")
+    # =========================================
+# SUPERVISOR
+# =========================================
+    if user.groups.filter(
+        name="GESTION_SUPERVISOR"
+    ).exists():
+        return redirect(
+        "gestion_comercial:lista_cotizaciones"
+    )        
 
             # =========================================
 # COORDINADOR OPERATIVO
@@ -127,9 +140,15 @@ def login_view(request):
         return redirect("escritorio_coordinador")
 
 # =========================================
-# GESTIÓN COMERCIAL
+# FACTURACIÓN
 # =========================================
-# Auxiliar y Facturación
+    if user.groups.filter(
+    name="GESTION_FACTURACION"
+    ).exists():
+        return redirect("gestion_comercial:panel")
+
+# =========================================
+# GESTIÓN COMERCIAL
 # =========================================
     if es_usuario_gestion_comercial(user):
         return redirect("/gestion-comercial/")
@@ -181,6 +200,15 @@ def home(request):
     ):
         return redirect("/gerencia/")
 
+# =========================================
+# SUPERVISOR
+# =========================================
+    if request.user.groups.filter(
+        name="GESTION_SUPERVISOR"
+    ).exists():
+        return redirect(
+        "gestion_comercial:lista_cotizaciones"
+    )
     # =========================================
     # TÉCNICO
     # =========================================
@@ -194,9 +222,21 @@ def home(request):
     # GESTIÓN COMERCIAL
     # =========================================
     if request.user.groups.filter(
-        name="GESTION_COORDINADOR"
+    name="GESTION_COORDINADOR"
     ).exists():
         return redirect("escritorio_coordinador")
+
+# =========================================
+# FACTURACIÓN
+# =========================================
+    if request.user.groups.filter(
+    name="GESTION_FACTURACION"
+    ).exists():
+        return redirect("gestion_comercial:panel")
+
+# =========================================
+# GESTIÓN COMERCIAL
+# =========================================
     if es_usuario_gestion_comercial(request.user):
         return redirect("/gestion-comercial/")
 
@@ -1972,30 +2012,54 @@ def preventivo_pdf(request, programacion_id):
 # VALIDAR ACCESO DEL CLIENTE
 # =========================================
 def usuario_puede_ver_cliente(user, cliente_id):
+
     """
-    Comprueba si el usuario tiene autorización para consultar una unidad.
-    El personal interno puede consultar cualquier cliente.
+        Comprueba si el usuario tiene autorización para consultar una unidad.
+        El personal interno puede consultar cualquier cliente.
     """
 
     if user.is_staff:
         return True
 
-    usuario_cliente = UsuarioCliente.objects.filter(user=user).first()
+    # =========================================
+    # USUARIO DE ADMINISTRACION
+    # =========================================
+    usuario_administracion = UsuarioAdministracion.objects.filter(
+        user=user,
+        activo=True,
+    ).select_related(
+        "administracion",
+    ).first()
+
+    if usuario_administracion:
+        return AdministracionUnidad.objects.filter(
+            administracion=usuario_administracion.administracion,
+            cliente_id=cliente_id,
+            activo=True,
+            fecha_fin__isnull=True,
+            cliente__activo=True,
+        ).exists()
+
+    # =========================================
+    # USUARIO CLIENTE TRADICIONAL
+    # =========================================
+    usuario_cliente = UsuarioCliente.objects.filter(
+        user=user,
+    ).first()
 
     if not usuario_cliente:
         return False
 
-    # Mantiene compatibilidad con la unidad original.
+    # Unidad principal del usuario cliente.
     if usuario_cliente.cliente_id == cliente_id:
         return True
 
-    # Comprueba las unidades adicionales asignadas.
+    # Unidades adicionales activas.
     return ClienteAsignado.objects.filter(
         usuario_cliente=usuario_cliente,
         cliente_id=cliente_id,
         activo=True,
     ).exists()
-
 def usuario_puede_gestionar_servicio(user, servicio):
     """
     Personal interno puede gestionar servicios.
@@ -2039,10 +2103,12 @@ def usuario_puede_gestionar_servicio(user, servicio):
 # PORTAL DE UNIDADES DEL CLIENTE
 # =========================================
 @login_required
+@login_required
 def portal_unidades(request):
 
-    # Personal interno:
-    # puede consultar todas las unidades activas.
+    # =========================================
+    # PERSONAL INTERNO
+    # =========================================
     if request.user.is_staff:
         clientes = Cliente.objects.filter(
             activo=True
@@ -2057,6 +2123,97 @@ def portal_unidades(request):
             }
         )
 
+    # =========================================
+    # USUARIO DE ADMINISTRACION
+    # =========================================
+    usuario_administracion = UsuarioAdministracion.objects.filter(
+        user=request.user,
+        activo=True,
+    ).select_related(
+        "administracion",
+    ).first()
+
+    if usuario_administracion:
+
+        clientes_ids = list(
+            AdministracionUnidad.objects.filter(
+                administracion=usuario_administracion.administracion,
+                activo=True,
+                fecha_fin__isnull=True,
+                cliente__activo=True,
+            ).values_list(
+                "cliente_id",
+                flat=True,
+            )
+        )
+
+        clientes = Cliente.objects.filter(
+            id__in=clientes_ids,
+            activo=True,
+        ).order_by("nombre")
+
+        total_unidades = clientes.count()
+
+        total_correctivos = Emergencia.objects.filter(
+            cliente_id__in=clientes_ids,
+            tipo_servicio="CORRECTIVO",
+        ).count()
+
+        total_preventivos = ProgramacionMantenimientoPreventivo.objects.filter(
+            cliente_id__in=clientes_ids,
+        ).count()
+
+        total_cotizaciones = Cotizacion.objects.filter(
+            cliente_id__in=clientes_ids,
+        ).count()
+
+        # Resumen individual de cada unidad
+        resumen_unidades = []
+
+        for cliente in clientes:
+
+            resumen_unidades.append(
+                {
+                    "cliente": cliente,
+
+                    "equipos": EquipoUnidad.objects.filter(
+                        cliente=cliente
+                    ).count(),
+
+                    "correctivos": Emergencia.objects.filter(
+                        cliente=cliente,
+                        tipo_servicio="CORRECTIVO",
+                    ).count(),
+
+                    "preventivos": ProgramacionMantenimientoPreventivo.objects.filter(
+                        cliente=cliente
+                    ).count(),
+
+                    "cotizaciones": Cotizacion.objects.filter(
+                        cliente=cliente
+                    ).count(),
+                }
+            )
+
+        return render(
+            request,
+            "mis_unidades.html",
+            {
+                "clientes": clientes,
+                "resumen_unidades": resumen_unidades,
+                "usuario_cliente": None,
+                "usuario_administracion": usuario_administracion,
+                "administracion": usuario_administracion.administracion,
+                "total_unidades": total_unidades,
+                "total_correctivos": total_correctivos,
+                "total_preventivos": total_preventivos,
+                "total_cotizaciones": total_cotizaciones,
+            }
+        )
+
+    # =========================================
+    # USUARIO CLIENTE TRADICIONAL
+    # =========================================
     usuario_cliente = UsuarioCliente.objects.filter(
         user=request.user,
     ).first()
@@ -2068,11 +2225,11 @@ def portal_unidades(request):
 
     clientes_ids = set()
 
-    # Unidad original.
     if usuario_cliente.cliente_id:
-        clientes_ids.add(usuario_cliente.cliente_id)
+        clientes_ids.add(
+            usuario_cliente.cliente_id
+        )
 
-    # Unidades adicionales.
     clientes_asignados = ClienteAsignado.objects.filter(
         usuario_cliente=usuario_cliente,
         activo=True,
@@ -2081,22 +2238,14 @@ def portal_unidades(request):
         flat=True,
     )
 
-    clientes_ids.update(clientes_asignados)
+    clientes_ids.update(
+        clientes_asignados
+    )
 
     clientes = Cliente.objects.filter(
         id__in=clientes_ids,
         activo=True,
     ).order_by("nombre")
-
-    # Cliente con una sola unidad:
-    # entra directamente a su dashboard.
-    if clientes.count() == 1:
-        cliente = clientes.first()
-
-        return redirect(
-            "dashboard_cliente",
-            cliente_id=cliente.id,
-        )
 
     return render(
         request,
@@ -2106,6 +2255,7 @@ def portal_unidades(request):
             "usuario_cliente": usuario_cliente,
         }
     )
+    
     
 # =========================================
 # NUEVA LLAMADA

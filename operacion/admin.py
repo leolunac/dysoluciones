@@ -10,10 +10,14 @@ from .models import (
     CotizacionEquipo,
     UsuarioCliente,
     ClienteAsignado,
+    UsuarioAdministracion,
     TanqueUnidad,
     DistribucionUnidad,
     EventoServicio,
     BitacoraOperativa,
+    Administracion,
+    AdministracionUnidad,
+    
 )
 
 
@@ -90,7 +94,84 @@ class ClienteAdmin(admin.ModelAdmin):
         DistribucionUnidadInline,
     ]
 
+# =========================
+# ADMINISTRACIONES
+# =========================
 
+class AdministracionUnidadInline(admin.TabularInline):
+    model = AdministracionUnidad
+    extra = 1
+
+    fields = (
+        "cliente",
+        "fecha_inicio",
+        "fecha_fin",
+        "activo",
+    )
+
+    autocomplete_fields = (
+        "cliente",
+    )
+
+
+@admin.register(Administracion)
+class AdministracionAdmin(admin.ModelAdmin):
+    list_display = (
+        "nombre",
+        "nit",
+        "telefono",
+        "email",
+        "activo",
+    )
+
+    search_fields = (
+        "nombre",
+        "nit",
+        "email",
+    )
+
+    list_filter = (
+        "activo",
+    )
+
+    ordering = (
+        "nombre",
+    )
+
+    inlines = [
+        AdministracionUnidadInline,
+    ]
+
+
+@admin.register(AdministracionUnidad)
+class AdministracionUnidadAdmin(admin.ModelAdmin):
+    list_display = (
+        "administracion",
+        "cliente",
+        "fecha_inicio",
+        "fecha_fin",
+        "activo",
+    )
+
+    list_filter = (
+        "activo",
+        "administracion",
+    )
+
+    search_fields = (
+        "administracion__nombre",
+        "cliente__nombre",
+    )
+
+    autocomplete_fields = (
+        "administracion",
+        "cliente",
+    )
+
+    ordering = (
+        "-activo",
+        "-fecha_inicio",
+    )
 # =========================
 # TECNICO
 # =========================
@@ -292,6 +373,39 @@ class UsuarioClienteAdmin(admin.ModelAdmin):
         "cliente__nombre",
     )
 
+# =========================
+# USUARIO ADMINISTRACION
+# =========================
+
+@admin.register(UsuarioAdministracion)
+class UsuarioAdministracionAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "administracion",
+        "activo",
+    )
+
+    list_filter = (
+        "activo",
+        "administracion",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "administracion__nombre",
+    )
+
+    autocomplete_fields = (
+        "user",
+        "administracion",
+    )
+
+    ordering = (
+        "administracion__nombre",
+        "user__username",
+    )
 
 # =========================
 # CLIENTES ASIGNADOS

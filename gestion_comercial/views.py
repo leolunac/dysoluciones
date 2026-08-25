@@ -30,6 +30,7 @@ GRUPO_AUXILIAR = "GESTION_AUXILIAR"
 GRUPO_COORDINADOR = "GESTION_COORDINADOR"
 GRUPO_FACTURACION = "GESTION_FACTURACION"
 GRUPO_GERENCIA = "GESTION_GERENCIA"
+GRUPO_SUPERVISOR = "GESTION_SUPERVISOR"
 
 
 def _pertenece(user, *grupos):
@@ -826,6 +827,7 @@ def lista_cotizaciones(request):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     cotizaciones = (
@@ -841,12 +843,16 @@ def lista_cotizaciones(request):
     )
 
     return render(
-        request,
-        "gestion_comercial/cotizaciones/lista.html",
-        {
-            "cotizaciones": cotizaciones,
-        },
-    )
+    request,
+    "gestion_comercial/cotizaciones/lista.html",
+    {
+        "cotizaciones": cotizaciones,
+        "es_supervisor": _pertenece(
+            request.user,
+            GRUPO_SUPERVISOR,
+        ),
+    },
+)
 
 
 @login_required
@@ -857,6 +863,7 @@ def nueva_cotizacion(request):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     if request.method == "POST":
@@ -892,6 +899,7 @@ def editar_cotizacion(request, cotizacion_id):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     cotizacion = get_object_or_404(
@@ -980,6 +988,7 @@ def finalizar_elaboracion_cotizacion(request, cotizacion_id):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     cotizacion = get_object_or_404(
@@ -1017,6 +1026,7 @@ def generar_pdf_cotizacion(request, cotizacion_id):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     from io import BytesIO
@@ -1513,6 +1523,7 @@ def marcar_cotizacion_enviada(request, cotizacion_id):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     cotizacion = get_object_or_404(
@@ -1605,6 +1616,7 @@ def eliminar_detalle_cotizacion(request, detalle_id):
         GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
+        GRUPO_SUPERVISOR,
     )
 
     detalle = get_object_or_404(

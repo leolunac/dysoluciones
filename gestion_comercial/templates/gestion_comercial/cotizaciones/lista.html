@@ -206,13 +206,14 @@
 
         <div class="header-actions">
 
-            <a
-                href="{% url 'gestion_comercial:panel' %}"
-                class="btn btn-light"
-            >
-                Gestión Comercial
-            </a>
-
+            {% if not request.user.groups.all|join:","|stringformat:"s" == "GESTION_SUPERVISOR" %}
+<a
+    href="{% url 'gestion_comercial:panel' %}"
+    class="btn btn-light"
+>
+    Gestión Comercial
+</a>
+{% endif %}
             <a
                 href="{% url 'gestion_comercial:nueva_cotizacion' %}"
                 class="btn btn-light"

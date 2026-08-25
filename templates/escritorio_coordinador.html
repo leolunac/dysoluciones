@@ -96,7 +96,17 @@ th{
     <h1>📋 Escritorio del Coordinador</h1>
     <p>Resumen operativo de servicios nocturnos y pendientes de seguimiento</p>
 </div>
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
 
+    <a class="btn" href="{% url 'gestion_comercial:panel' %}">
+        Gestión Comercial / Revisión
+    </a>
+
+    <a class="btn" href="{% url 'logout' %}">
+        Cerrar sesión
+    </a>
+
+</div>
 <div class="grid">
 
     <div class="card dark">
