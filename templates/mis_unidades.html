@@ -240,6 +240,21 @@
     <p class="text-muted">
         Seleccione la unidad que desea consultar.
     </p>
+   <div style="margin:18px 0 22px 0;">
+    <input
+        type="text"
+        id="buscarUnidad"
+        placeholder="Buscar unidad por nombre o dirección..."
+        style="
+            width:100%;
+            padding:12px 14px;
+            border:1px solid #cbd5e1;
+            border-radius:10px;
+            font-size:14px;
+            box-sizing:border-box;
+        "
+    >
+</div> 
 
 </div>
 
@@ -251,7 +266,7 @@
 
     {% for item in resumen_unidades %}
 
-    <div class="unidad-card">
+    <div class="unidad-card tarjeta-unidad">
 
         <div class="unidad-nombre">
             {{ item.cliente.nombre }}
@@ -323,7 +338,7 @@
 
         {% for cliente in clientes %}
 
-        <div class="unidad-card">
+        <div class="unidad-card tarjeta-unidad">
 
             <div class="unidad-nombre">
                 {{ cliente.nombre }}
@@ -375,5 +390,37 @@
     {% endif %}
 
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    const buscador = document.getElementById("buscarUnidad");
+    const tarjetas = document.querySelectorAll(".tarjeta-unidad");
+
+    if (!buscador) {
+        return;
+    }
+
+    buscador.addEventListener("input", function () {
+
+        const texto = buscador.value
+            .toLowerCase()
+            .trim();
+
+        tarjetas.forEach(function (tarjeta) {
+
+            const contenido = tarjeta.textContent
+                .toLowerCase();
+
+            if (contenido.includes(texto)) {
+                tarjeta.style.display = "";
+            } else {
+                tarjeta.style.display = "none";
+            }
+
+        });
+
+    });
+
+});
+</script>
 {% endblock %}
