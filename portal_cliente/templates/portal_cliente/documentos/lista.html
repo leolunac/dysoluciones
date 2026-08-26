@@ -647,107 +647,106 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-        const buscador = document.getElementById("buscadorDocumentos");
-        const filtroTipo = document.getElementById("filtroTipo");
-        const filtroEstado = document.getElementById("filtroEstado");
+    const buscador = document.getElementById("buscadorDocumentos");
+    const filtroTipo = document.getElementById("filtroTipo");
+    const filtroEstado = document.getElementById("filtroEstado");
+    const cantidadResultados = document.getElementById("cantidadResultados");
+
+    function normalizar(texto) {
+        return (texto || "")
+            .toString()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
+    function filtrarDocumentos() {
+
+        const texto = normalizar(
+            buscador ? buscador.value : ""
+        );
+
+        const tipo = normalizar(
+            filtroTipo ? filtroTipo.value : ""
+        );
+
+        const estado = normalizar(
+            filtroEstado ? filtroEstado.value : ""
+        );
+
         const tarjetas = document.querySelectorAll(".documento-card");
-        const cantidadResultados =
-            document.getElementById("cantidadResultados");
 
-        function normalizarTexto(texto) {
-            return String(texto || "")
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .trim();
-        }
+        let visibles = 0;
 
-        function filtrarDocumentos() {
-            const textoBuscado = normalizarTexto(
-                buscador ? buscador.value : ""
+        tarjetas.forEach(function (tarjeta) {
+
+            const contenido = normalizar(
+                tarjeta.textContent
             );
 
-            const tipoBuscado = normalizarTexto(
-                filtroTipo ? filtroTipo.value : ""
+            const tipoTarjeta = normalizar(
+                tarjeta.dataset.tipo
             );
 
-            const estadoBuscado = normalizarTexto(
-                filtroEstado ? filtroEstado.value : ""
+            const estadoTarjeta = normalizar(
+                tarjeta.dataset.estado
             );
 
-            let visibles = 0;
+            const coincideTexto =
+                texto === "" ||
+                contenido.includes(texto);
 
-            tarjetas.forEach(function (tarjeta) {
-                const titulo = normalizarTexto(
-                    tarjeta.dataset.titulo
-                );
+            const coincideTipo =
+                tipo === "" ||
+                tipoTarjeta === tipo;
 
-                const cliente = normalizarTexto(
-                    tarjeta.dataset.cliente
-                );
+            const coincideEstado =
+                estado === "" ||
+                estadoTarjeta === estado;
 
-                const tipoDocumento = normalizarTexto(
-                    tarjeta.dataset.tipo
-                );
-
-                const estadoDocumento = normalizarTexto(
-                    tarjeta.dataset.estado
-                );
-
-                const coincideTexto =
-                    textoBuscado === "" ||
-                    titulo.includes(textoBuscado) ||
-                    cliente.includes(textoBuscado);
-
-                const coincideTipo =
-                    tipoBuscado === "" ||
-                    tipoDocumento === tipoBuscado;
-
-                const coincideEstado =
-                    estadoBuscado === "" ||
-                    estadoDocumento === estadoBuscado;
-
-                const mostrar =
-                    coincideTexto &&
-                    coincideTipo &&
-                    coincideEstado;
-
-                tarjeta.hidden = !mostrar;
-
-                if (mostrar) {
-                    visibles++;
-                }
-            });
-
-            if (cantidadResultados) {
-                cantidadResultados.textContent = visibles;
+            if (
+                coincideTexto &&
+                coincideTipo &&
+                coincideEstado
+            ) {
+                tarjeta.style.display = "";
+                visibles++;
+            } else {
+                tarjeta.style.display = "none";
             }
-        }
+        });
 
-        if (buscador) {
-            buscador.addEventListener(
-                "input",
-                filtrarDocumentos
-            );
+        if (cantidadResultados) {
+            cantidadResultados.textContent = visibles;
         }
+    }
 
-        if (filtroTipo) {
-            filtroTipo.addEventListener(
-                "change",
-                filtrarDocumentos
-            );
-        }
+    if (buscador) {
+        buscador.addEventListener(
+            "input",
+            filtrarDocumentos
+        );
+    }
 
-        if (filtroEstado) {
-            filtroEstado.addEventListener(
-                "change",
-                filtrarDocumentos
-            );
-        }
+    if (filtroTipo) {
+        filtroTipo.addEventListener(
+            "change",
+            filtrarDocumentos
+        );
+    }
 
-        filtrarDocumentos();
-    });
+    if (filtroEstado) {
+        filtroEstado.addEventListener(
+            "change",
+            filtrarDocumentos
+        );
+    }
+
+    filtrarDocumentos();
+
+});
 </script>
 {% endblock %}

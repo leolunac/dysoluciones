@@ -394,27 +394,33 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     const buscador = document.getElementById("buscarUnidad");
-    const tarjetas = document.querySelectorAll(".tarjeta-unidad");
 
     if (!buscador) {
         return;
     }
 
+    function normalizar(texto) {
+        return (texto || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
     buscador.addEventListener("input", function () {
 
-        const texto = buscador.value
-            .toLowerCase()
-            .trim();
+        const textoBuscado = normalizar(buscador.value);
 
-        tarjetas.forEach(function (tarjeta) {
+        document.querySelectorAll(".tarjeta-unidad").forEach(function (tarjeta) {
 
-            const contenido = tarjeta.textContent
-                .toLowerCase();
+            const contenidoTarjeta = normalizar(
+                tarjeta.innerText
+            );
 
-            if (contenido.includes(texto)) {
-                tarjeta.style.display = "";
+            if (contenidoTarjeta.includes(textoBuscado)) {
+                tarjeta.hidden = false;
             } else {
-                tarjeta.style.display = "none";
+                tarjeta.hidden = true;
             }
 
         });
@@ -422,5 +428,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
 </script>
 {% endblock %}
