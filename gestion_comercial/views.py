@@ -598,6 +598,7 @@ def marcar_facturada(request, liquidacion_id):
 def consolidado_facturacion(request):
     _exigir(
         request.user,
+        GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
     )
@@ -668,6 +669,7 @@ def consolidado_facturacion(request):
 def exportar_facturacion_excel(request):
     _exigir(
         request.user,
+        GRUPO_COORDINADOR,
         GRUPO_FACTURACION,
         GRUPO_GERENCIA,
     )

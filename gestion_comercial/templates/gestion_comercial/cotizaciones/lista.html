@@ -214,13 +214,20 @@
     Gestión Comercial
 </a>
 {% endif %}
-            <a
-                href="{% url 'gestion_comercial:nueva_cotizacion' %}"
-                class="btn btn-light"
-            >
-                + Nueva cotización
-            </a>
 
+<a
+    href="{% url 'lista_documentos' %}"
+    class="btn btn-light"
+>
+    Documentos
+</a>
+
+<a
+    href="{% url 'gestion_comercial:nueva_cotizacion' %}"
+    class="btn btn-light"
+>
+    + Nueva cotización
+</a>
         </div>
 
     </header>

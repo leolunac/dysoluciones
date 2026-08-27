@@ -87,6 +87,23 @@ def es_usuario_gestion_comercial(user):
         name__in=GRUPOS_GESTION_COMERCIAL
     ).exists()
 
+def es_coordinador_operativo(user):
+    """
+    Permite acceso a la operación 7x24 al Coordinador,
+    Gerencia y superusuarios.
+    """
+    if not user.is_authenticated:
+        return False
+
+    if user.is_superuser:
+        return True
+
+    return user.groups.filter(
+        name__in=[
+            "GESTION_COORDINADOR",
+            "GESTION_GERENCIA",
+        ]
+    ).exists()
 def login_view(request):
 
     if request.method == "POST":
@@ -2262,6 +2279,12 @@ def portal_unidades(request):
 # =========================================
 @login_required
 def nueva_llamada(request):
+
+    if not es_coordinador_operativo(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para registrar llamadas."
+        )
+
     if request.method == "POST":
         form = NuevaLlamadaForm(request.POST)
 
@@ -2280,7 +2303,11 @@ def nueva_llamada(request):
     else:
         form = NuevaLlamadaForm()
 
-    return render(request, "nueva_llamada.html", {"form": form})
+    return render(
+        request,
+        "nueva_llamada.html",
+        {"form": form},
+    )
 @login_required
 def levantamiento_equipo(request):
 
@@ -2601,6 +2628,12 @@ def dashboard(request):
 # =========================================
 @login_required
 def centro_operaciones(request):
+
+    if not es_coordinador_operativo(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para acceder al centro de operaciones."
+        )
+
     ahora = timezone.now()
     hoy = ahora.date()
     ayer = hoy - timedelta(days=1)
@@ -2751,6 +2784,12 @@ def centro_operaciones(request):
 # =========================================
 @login_required
 def escritorio_coordinador(request):
+
+    if not es_coordinador_operativo(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para acceder al escritorio del coordinador."
+        )
+
     ahora = timezone.now()
     hoy = ahora.date()
     ayer = hoy - timedelta(days=1)

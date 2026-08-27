@@ -7,12 +7,23 @@ from operacion.views import usuario_puede_ver_cliente
 from .forms import DocumentoClienteForm
 from .models import DocumentoCliente
 
-
 def validar_usuario_interno(request):
     """
-    Permite administrar documentos únicamente a usuarios internos.
+    Permite administrar documentos a los perfiles internos autorizados.
     """
-    if not request.user.is_staff:
+    grupos_autorizados = [
+        "GESTION_SUPERVISOR",
+        "GESTION_GERENCIA",
+    ]
+
+    autorizado = (
+        request.user.is_superuser
+        or request.user.groups.filter(
+            name__in=grupos_autorizados
+        ).exists()
+    )
+
+    if not autorizado:
         raise PermissionDenied(
             "No tiene permisos para administrar documentos."
         )
