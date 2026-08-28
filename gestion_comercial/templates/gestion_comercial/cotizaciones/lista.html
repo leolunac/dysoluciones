@@ -240,34 +240,140 @@
 
     </header>
 
+    <section class="card">
+    <h3 style="margin-bottom:16px;">Historial de cotizaciones</h3>
+
+    <form method="get"
+          style="
+              display:grid;
+              grid-template-columns:2fr 1fr auto auto;
+              gap:12px;
+              align-items:end;
+          ">
+
+        <div>
+            <label style="
+                display:block;
+                font-weight:bold;
+                margin-bottom:6px;
+                color:#475569;
+            ">
+                Buscar
+            </label>
+
+            <input
+                type="text"
+                name="buscar"
+                value="{{ request.GET.buscar }}"
+                placeholder="Número, cliente/unidad o asunto"
+                style="
+                    width:100%;
+                    padding:11px 12px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                    font-size:14px;
+                "
+            >
+        </div>
+
+        <div>
+            <label style="
+                display:block;
+                font-weight:bold;
+                margin-bottom:6px;
+                color:#475569;
+            ">
+                Estado
+            </label>
+
+            <select
+                name="estado"
+                style="
+                    width:100%;
+                    padding:11px 12px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                    background:white;
+                    font-size:14px;
+                "
+            >
+                <option value="">Todos</option>
+
+                <option value="BORRADOR"
+                    {% if request.GET.estado == "BORRADOR" %}selected{% endif %}>
+                    Borrador
+                </option>
+
+                <option value="ELABORADA"
+                    {% if request.GET.estado == "ELABORADA" %}selected{% endif %}>
+                    Elaborada
+                </option>
+
+                <option value="LISTA_ENVIAR"
+                    {% if request.GET.estado == "LISTA_ENVIAR" %}selected{% endif %}>
+                    Lista para enviar
+                </option>
+
+                <option value="ENVIADA"
+                    {% if request.GET.estado == "ENVIADA" %}selected{% endif %}>
+                    Enviada
+                </option>
+
+                <option value="APROBADA"
+                    {% if request.GET.estado == "APROBADA" %}selected{% endif %}>
+                    Aprobada
+                </option>
+
+                <option value="RECHAZADA"
+                    {% if request.GET.estado == "RECHAZADA" %}selected{% endif %}>
+                    Rechazada
+                </option>
+
+                <option value="ANULADA"
+                    {% if request.GET.estado == "ANULADA" %}selected{% endif %}>
+                    Anulada
+                </option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Buscar
+        </button>
+
+        <a
+            href="{% url 'gestion_comercial:lista_cotizaciones' %}"
+            class="btn btn-light"
+            style="border:1px solid #cbd5e1;"
+        >
+            Limpiar
+        </a>
+
+    </form>
+</section>
 
     <section class="summary">
 
-        <div class="kpi">
-            <small>Total</small>
-            <strong>{{ cotizaciones|length }}</strong>
-        </div>
+    <div class="kpi">
+        <small>Total histórico</small>
+        <strong>{{ resumen.total }}</strong>
+    </div>
 
-        <div class="kpi">
-            <small>Borradores</small>
-            <strong>
-                {% with total=0 %}
-                    {{ cotizaciones|length }}
-                {% endwith %}
-            </strong>
-        </div>
+    <div class="kpi">
+        <small>Borradores</small>
+        <strong>{{ resumen.borradores }}</strong>
+    </div>
 
-        <div class="kpi">
-            <small>Enviadas</small>
-            <strong>—</strong>
-        </div>
+    <div class="kpi">
+        <small>Listas para enviar</small>
+        <strong>{{ resumen.listas_enviar }}</strong>
+    </div>
 
-        <div class="kpi">
-            <small>Aprobadas</small>
-            <strong>—</strong>
-        </div>
+    <div class="kpi">
+        <small>Enviadas</small>
+        <strong>{{ resumen.enviadas }}</strong>
+    </div>
 
-    </section>
+</section>
 
 
     {% for cotizacion in cotizaciones %}

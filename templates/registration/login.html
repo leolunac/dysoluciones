@@ -124,6 +124,26 @@
             color: #718391;
             line-height: 1.5;
         }
+    .password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 48px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+}    
     </style>
 </head>
 
@@ -181,13 +201,25 @@
                     Contraseña
                 </label>
 
-                <input
-                    type="password"
-                    name="password"
-                    id="id_password"
-                    autocomplete="current-password"
-                    required
-                >
+                <div class="password-wrapper">
+    <input
+        type="password"
+        name="password"
+        id="id_password"
+        autocomplete="current-password"
+        required
+    >
+
+    <button
+        type="button"
+        class="password-toggle"
+        id="togglePassword"
+        aria-label="Mostrar contraseña"
+        title="Mostrar contraseña"
+    >
+       &#128065;  
+    </button>
+</div>
             </div>
 
             {% if next %}
@@ -214,6 +246,25 @@
     </div>
 
 </div>
+<script>
+    const passwordInput = document.getElementById("id_password");
+    const togglePassword = document.getElementById("togglePassword");
 
+    togglePassword.addEventListener("click", function () {
+        const mostrar = passwordInput.type === "password";
+
+        passwordInput.type = mostrar ? "text" : "password";
+
+        this.setAttribute(
+            "title",
+            mostrar ? "Ocultar contraseña" : "Mostrar contraseña"
+        );
+
+        this.setAttribute(
+            "aria-label",
+            mostrar ? "Ocultar contraseña" : "Mostrar contraseña"
+        );
+    });
+</script>
 </body>
 </html>

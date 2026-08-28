@@ -1,6 +1,7 @@
 from pathlib import Path
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse
 from django.utils import timezone
@@ -842,21 +843,52 @@ def lista_cotizaciones(request):
             "actividad",
             "bitacora",
         )
-        .all()
-    )
+    .all()
+)
+
+    buscar = request.GET.get("buscar", "").strip()
+    estado = request.GET.get("estado", "").strip()
+
+    if buscar:
+        cotizaciones = cotizaciones.filter(
+            Q(numero_cotizacion__icontains=buscar)
+            | Q(cliente__nombre__icontains=buscar)
+            | Q(asunto__icontains=buscar)
+        )
+
+    if estado:
+        cotizaciones = cotizaciones.filter(
+            estado=estado
+        )
+
+    cotizaciones = cotizaciones.order_by("-fecha_creacion")
+
+    resumen = {
+        "total": Cotizacion.objects.count(),
+        "borradores": Cotizacion.objects.filter(
+            estado="BORRADOR"
+    ).count(),
+    "enviadas": Cotizacion.objects.filter(
+        estado="ENVIADA"
+    ).count(),
+    "listas_enviar": Cotizacion.objects.filter(
+        estado="LISTA_ENVIAR"
+    ).count(),
+}
+    
 
     return render(
-    request,
-    "gestion_comercial/cotizaciones/lista.html",
-    {
-        "cotizaciones": cotizaciones,
-        "es_supervisor": _pertenece(
-            request.user,
-            GRUPO_SUPERVISOR,
+        request,
+        "gestion_comercial/cotizaciones/lista.html",
+        {
+            "cotizaciones": cotizaciones,
+            "resumen": resumen,
+            "es_supervisor": _pertenece(
+                request.user,
+                GRUPO_SUPERVISOR,
         ),
     },
 )
-
 
 @login_required
 def nueva_cotizacion(request):
