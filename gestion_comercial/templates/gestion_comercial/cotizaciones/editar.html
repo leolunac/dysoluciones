@@ -598,6 +598,80 @@
                         {{ cotizacion.observaciones }}
                     </p>
                 {% endif %}
+                <hr style="margin:24px 0; border:0; border-top:1px solid #d9e1e7;">
+
+<h3>Fotografías de la cotización</h3>
+
+{% if cotizacion.imagenes.all %}
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:12px;
+        margin-bottom:18px;
+    ">
+        {% for foto in cotizacion.imagenes.all %}
+            <div style="
+                border:1px solid #d9e1e7;
+                border-radius:8px;
+                padding:8px;
+                background:#fff;
+            ">
+                <img
+                    src="{{ foto.imagen.url }}"
+                    alt="Fotografía cotización"
+                    style="
+                        width:100%;
+                        height:160px;
+                        object-fit:cover;
+                        border-radius:6px;
+                    "
+                >
+
+                {% if foto.descripcion %}
+                    <div style="margin-top:7px; font-size:13px;">
+                        {{ foto.descripcion }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p style="color:#718391;">
+        No hay fotografías adjuntas.
+    </p>
+{% endif %}
+
+{% if cotizacion.estado == "BORRADOR" %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="agregar_imagen">
+
+        <div class="campo-grupo">
+            <label>Seleccionar fotografía</label>
+            <input
+                type="file"
+                name="imagen"
+                accept="image/jpeg,image/png,image/webp"
+                required
+            >
+        </div>
+
+        <div class="campo-grupo">
+            <label>Descripción de la fotografía (opcional)</label>
+            <input
+                type="text"
+                name="descripcion"
+                maxlength="200"
+                class="campo"
+                placeholder="Ej.: Estado actual del tablero de control"
+            >
+        </div>
+
+        <button type="submit" class="btn btn-secundario">
+            + Adjuntar fotografía
+        </button>
+    </form>
+{% endif %}
 
                 <div class="acciones">
 
@@ -609,23 +683,7 @@
                                 ✓ Finalizar elaboración
                             </button>
                         </form>
-                    {% elif cotizacion.estado == "ELABORADA" %}
-                        <a
-                            href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
-                            target="_blank"
-                            class="btn btn-secundario"
-                        >
-                            Generar PDF
-                        </a>
-
-                        <form method="post"
-                              action="{% url 'gestion_comercial:marcar_cotizacion_enviada' cotizacion.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-principal">
-                                Marcar como enviada
-                            </button>
-                        </form>
-                    {% elif cotizacion.estado == "ENVIADA" %}
+                                        {% elif cotizacion.estado == "ELABORADA" %}
                         <a
                             href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
                             target="_blank"
@@ -634,23 +692,50 @@
                             Ver PDF
                         </a>
 
+                        {% if puede_aprobar_cotizacion %}
+                            <form method="post"
+                                  action="{% url 'gestion_comercial:aprobar_cotizacion' cotizacion.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-principal">
+                                    Aprobar internamente
+                                </button>
+                            </form>
+
+                            <form method="post"
+                                  action="{% url 'gestion_comercial:rechazar_cotizacion' cotizacion.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-rojo">
+                                    Devolver / Rechazar
+                                </button>
+                            </form>
+                        {% endif %}
+
+                    {% elif cotizacion.estado == "LISTA_ENVIAR" %}
+                        <a
+                            href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
+                            target="_blank"
+                            class="btn btn-secundario"
+                        >
+                            Ver PDF aprobado
+                        </a>
+
                         <form method="post"
-                              action="{% url 'gestion_comercial:aprobar_cotizacion' cotizacion.id %}">
+                              action="{% url 'gestion_comercial:marcar_cotizacion_enviada' cotizacion.id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-principal">
-                                Marcar aprobada
+                                Marcar como enviada al cliente
                             </button>
                         </form>
 
-                        <form method="post"
-                              action="{% url 'gestion_comercial:rechazar_cotizacion' cotizacion.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-rojo">
-                                Marcar rechazada
-                            </button>
-                        </form>
+                    
+                        <a
+                            href="{% url 'gestion_comercial:generar_pdf_cotizacion' cotizacion.id %}"
+                            target="_blank"
+                            class="btn btn-secundario"
+                        >
+                            Ver PDF
+                        </a>
                     {% endif %}
-
                     <a
                         href="{% url 'gestion_comercial:lista_cotizaciones' %}"
                         class="btn btn-secundario"

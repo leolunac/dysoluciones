@@ -19,6 +19,7 @@ from .models import (
     DetalleLiquidacion,
     Cotizacion,
     DetalleCotizacion,
+    ImagenCotizacion,
 )
 
 
@@ -932,7 +933,6 @@ def editar_cotizacion(request, cotizacion_id):
                     "gestion_comercial:editar_cotizacion",
                     cotizacion_id=cotizacion.id,
                 )
-
         elif accion == "agregar_detalle":
             form_detalle = DetalleCotizacionForm(request.POST)
 
@@ -954,6 +954,21 @@ def editar_cotizacion(request, cotizacion_id):
                     cotizacion_id=cotizacion.id,
                 )
 
+        elif accion == "agregar_imagen":
+            imagen = request.FILES.get("imagen")
+            descripcion = request.POST.get("descripcion", "").strip()
+
+            if imagen:
+                ImagenCotizacion.objects.create(
+                    cotizacion=cotizacion,
+                    imagen=imagen,
+                    descripcion=descripcion,
+                )
+
+                return redirect(
+                    "gestion_comercial:editar_cotizacion",
+                    cotizacion_id=cotizacion.id,
+                )
     detalles = (
         cotizacion.detalles
         .select_related("catalogo")
@@ -976,11 +991,13 @@ def editar_cotizacion(request, cotizacion_id):
             "form_detalle": form_detalle,
             "detalles": detalles,
             "catalogos": catalogos,
+            "puede_aprobar_cotizacion": _pertenece(
+                request.user,
+                GRUPO_COORDINADOR,
+                GRUPO_GERENCIA,
+            ),
         },
     )
-
-
-
 
 @login_required
 def finalizar_elaboracion_cotizacion(request, cotizacion_id):
@@ -1241,6 +1258,7 @@ def generar_pdf_cotizacion(request, cotizacion_id):
     )
     story.append(Spacer(1, 6))
 
+ 
     contacto = (
         getattr(cotizacion.cliente, "administrador", "")
         or getattr(cotizacion.cliente, "contacto", "")
@@ -1479,21 +1497,123 @@ def generar_pdf_cotizacion(request, cotizacion_id):
         )
 
     story.append(Spacer(1, 12))
+    imagenes = cotizacion.imagenes.all()
+
+    if imagenes:
+        story.append(PageBreak())
+
+        story.append(
+            Paragraph(
+                "5. REGISTRO FOTOGRÁFICO",
+                section,
+            )
+        )
+
+        story.append(Spacer(1, 6))
+
+        for foto in imagenes:
+            try:
+                ruta_imagen = foto.imagen.path
+
+                img = Image(
+                    ruta_imagen,
+                    width=95 * mm,
+                    height=70 * mm,
+                )
+
+                contenido_foto = [
+                    [img],
+                ]
+
+                if foto.descripcion:
+                    contenido_foto.append(
+                        [
+                            Paragraph(
+                                foto.descripcion,
+                                normal_left,
+                            )
+                        ]
+                    )
+
+                tabla_foto = Table(
+                    contenido_foto,
+                    colWidths=[105 * mm],
+                )
+
+                tabla_foto.setStyle(
+                    TableStyle([
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("BOX", (0, 0), (-1, -1), 0.5, gris_borde),
+                        ("TOPPADDING", (0, 0), (-1, -1), 7),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                    ])
+                )
+
+                story.append(tabla_foto)
+                story.append(Spacer(1, 10))
+
+            except Exception:
+                pass
+
+        story.append(Spacer(1, 10))
 
     # =====================================================
     # CIERRE
     # =====================================================
 
-    story.append(Paragraph("Cordialmente,", normal_left))
-    story.append(Spacer(1, 18))
-
-    story.append(
-        Paragraph(
-            "<b>D&amp;S SOLUCIONES EN BOMBEO S.A.S.</b>",
-            normal_left,
-        )
+        elaborado_nombre = (
+        cotizacion.elaborado_por.get_full_name().strip()
+        or cotizacion.elaborado_por.username
     )
 
+    aprobado_nombre = ""
+
+    if cotizacion.aprobado_por:
+        aprobado_nombre = (
+            cotizacion.aprobado_por.get_full_name().strip()
+            or cotizacion.aprobado_por.username
+        )
+
+    firma_realizado = Paragraph(
+        f"<b>Realizado por:</b><br/>"
+        f"{elaborado_nombre}<br/>"
+        f"Supervisor Técnico<br/>"
+        f"D&amp;S SOLUCIONES EN BOMBEO S.A.S.",
+        normal_left,
+    )
+
+    if aprobado_nombre:
+        firma_aprobado = Paragraph(
+            f"<b>Aprobado por:</b><br/>"
+            f"{aprobado_nombre}<br/>"
+            f"Coordinador Técnico<br/>"
+            f"D&amp;S SOLUCIONES EN BOMBEO S.A.S.",
+            normal_left,
+        )
+    else:
+        firma_aprobado = Paragraph(
+            "<b>Aprobado por:</b><br/>Pendiente de aprobación",
+            normal_left,
+        )
+
+    tabla_firmas = Table(
+        [[firma_realizado, firma_aprobado]],
+        colWidths=[90 * mm, 90 * mm],
+    )
+
+    tabla_firmas.setStyle(
+        TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ])
+    )
+
+    story.append(Spacer(1, 8))
+    story.append(tabla_firmas)
     story.append(Spacer(1, 10))
     story.append(
         Paragraph(
@@ -1533,7 +1653,7 @@ def marcar_cotizacion_enviada(request, cotizacion_id):
         id=cotizacion_id,
     )
 
-    if request.method == "POST" and cotizacion.estado == "ELABORADA":
+    if request.method == "POST" and cotizacion.estado == "LISTA_ENVIAR":
         cotizacion.estado = "ENVIADA"
         cotizacion.fecha_envio = timezone.now()
         cotizacion.save(
@@ -1563,13 +1683,20 @@ def aprobar_cotizacion(request, cotizacion_id):
         id=cotizacion_id,
     )
 
-    if request.method == "POST" and cotizacion.estado == "ENVIADA":
-        cotizacion.estado = "APROBADA"
-        cotizacion.fecha_respuesta = timezone.now()
+    if request.method == "POST" and cotizacion.estado == "ELABORADA":
+        ahora = timezone.now()
+
+        cotizacion.estado = "LISTA_ENVIAR"
+        cotizacion.fecha_respuesta = ahora
+        cotizacion.aprobado_por = request.user
+        cotizacion.fecha_aprobacion = ahora
+
         cotizacion.save(
             update_fields=[
                 "estado",
                 "fecha_respuesta",
+                "aprobado_por",
+                "fecha_aprobacion",
                 "fecha_actualizacion",
             ]
         )

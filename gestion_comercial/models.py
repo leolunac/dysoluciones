@@ -16,7 +16,8 @@ class Liquidacion(models.Model):
         ("LISTA_FACTURAR", "Lista para facturar"),
         ("FACTURADA", "Facturada"),
         ("ANULADA", "Anulada"),
-    ]
+]
+    
 
     cliente = models.ForeignKey(
         Cliente,
@@ -370,6 +371,7 @@ class Cotizacion(models.Model):
     ESTADOS = [
         ("BORRADOR", "Borrador"),
         ("ELABORADA", "Elaborada"),
+        ("LISTA_ENVIAR", "Lista para enviar al cliente"),
         ("ENVIADA", "Enviada al cliente"),
         ("APROBADA", "Aprobada"),
         ("RECHAZADA", "Rechazada"),
@@ -499,14 +501,29 @@ class Cotizacion(models.Model):
         related_name="cotizaciones_elaboradas",
     )
 
+    aprobado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="cotizaciones_aprobadas",
+        null=True,
+        blank=True,
+    )
+
+    fecha_aprobacion = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
     )
+
     fecha_emision = models.DateField(
         null=True,
         blank=True,
         verbose_name="Fecha de emisión",
     )
+
     fecha_actualizacion = models.DateTimeField(
         auto_now=True,
     )
@@ -548,7 +565,6 @@ class Cotizacion(models.Model):
         verbose_name="Forma de pago",
         help_text="Ej.: 50% anticipo y 50% contra entrega.",
     )
-
     class Meta:
         ordering = ["-fecha_creacion"]
         verbose_name = "Cotización"
@@ -607,7 +623,33 @@ class Cotizacion(models.Model):
             f"Cotización #{self.pk} - "
             f"{self.cliente}"
         )
+class ImagenCotizacion(models.Model):
+    cotizacion = models.ForeignKey(
+        Cotizacion,
+        on_delete=models.CASCADE,
+        related_name="imagenes",
+    )
 
+    imagen = models.ImageField(
+        upload_to="cotizaciones/%Y/%m/",
+    )
+
+    descripcion = models.CharField(
+        max_length=200,
+        blank=True,
+    )
+
+    fecha_carga = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["fecha_carga"]
+        verbose_name = "Imagen de cotización"
+        verbose_name_plural = "Imágenes de cotización"
+
+    def __str__(self):
+        return f"Imagen cotización {self.cotizacion_id}"
 
 # =========================================================
 # DETALLE DE COTIZACIÓN

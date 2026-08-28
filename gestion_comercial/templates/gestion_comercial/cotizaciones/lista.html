@@ -206,7 +206,7 @@
 
         <div class="header-actions">
 
-            {% if not request.user.groups.all|join:","|stringformat:"s" == "GESTION_SUPERVISOR" %}
+            {% if not es_supervisor %}
 <a
     href="{% url 'gestion_comercial:panel' %}"
     class="btn btn-light"
@@ -228,6 +228,14 @@
 >
     + Nueva cotización
 </a>
+<form method="post"
+      action="{% url 'logout' %}"
+      style="margin:0;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-light">
+        Cerrar sesión
+    </button>
+</form>
         </div>
 
     </header>
