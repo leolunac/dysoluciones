@@ -17,6 +17,7 @@ from .models import (
     BitacoraOperativa,
     Administracion,
     AdministracionUnidad,
+    ContratoPase,
     
 )
 
@@ -69,6 +70,23 @@ class DistribucionUnidadInline(admin.TabularInline):
     )
 
 
+class ContratoPaseInline(admin.TabularInline):
+    model = ContratoPase
+    extra = 0
+    show_change_link = True
+
+    fields = (
+        "numero_pase",
+        "nombre_servicio",
+        "tipo",
+        "valor_cuota",
+        "periodicidad",
+        "estado_valor",
+        "dia_limite_facturacion",
+        "activo",
+    )
+
+
 # =========================
 # CLIENTE
 # =========================
@@ -77,6 +95,7 @@ class DistribucionUnidadInline(admin.TabularInline):
 class ClienteAdmin(admin.ModelAdmin):
     list_display = (
         "nombre",
+        "nit",
         "direccion",
         "tipo_contrato",
         "frecuencia_lavado",
@@ -84,15 +103,49 @@ class ClienteAdmin(admin.ModelAdmin):
         "activo",
     )
 
-    search_fields = ("nombre", "direccion")
+    search_fields = ("nombre", "nit", "direccion")
     list_filter = ("tipo_contrato", "frecuencia_lavado", "activo")
     ordering = ("nombre",)
 
     inlines = [
+        ContratoPaseInline,
         EquipoUnidadInline,
         TanqueUnidadInline,
         DistribucionUnidadInline,
     ]
+
+@admin.register(ContratoPase)
+class ContratoPaseAdmin(admin.ModelAdmin):
+    list_display = (
+        "numero_pase",
+        "cliente",
+        "tipo",
+        "valor_cuota",
+        "periodicidad",
+        "estado_valor",
+        "dia_limite_facturacion",
+        "activo",
+    )
+
+    search_fields = (
+        "numero_pase",
+        "cliente__nombre",
+        "cliente__nit",
+        "nombre_servicio",
+    )
+
+    list_filter = (
+        "tipo",
+        "periodicidad",
+        "estado_valor",
+        "activo",
+    )
+
+    autocomplete_fields = ("cliente",)
+    list_select_related = ("cliente",)
+    ordering = ("cliente__nombre", "numero_pase")
+    readonly_fields = ("creado", "actualizado")
+
 
 # =========================
 # ADMINISTRACIONES

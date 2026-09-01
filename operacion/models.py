@@ -22,6 +22,7 @@ class Cliente(models.Model):
     ]
 
     nombre = models.CharField(max_length=200)
+    nit = models.CharField(max_length=30, unique=True, null=True, blank=True)
     direccion = models.CharField(max_length=250)
     telefono_porteria = models.CharField(max_length=50)
     administrador = models.CharField(max_length=200)
@@ -33,6 +34,107 @@ class Cliente(models.Model):
 
     def __str__(self):
         return self.nombre
+
+# =========================================
+# CONTRATOS / PASES
+# =========================================
+
+class ContratoPase(models.Model):
+
+    TIPO = [
+        ("7X24", "Contrato 7x24"),
+        ("PREVENTIVO", "Contrato preventivo"),
+        ("OTRO", "Otro"),
+    ]
+
+    PERIODICIDAD = [
+        ("MENSUAL", "Mensual"),
+        ("BIMESTRAL", "Bimestral"),
+        ("TRIMESTRAL", "Trimestral"),
+        ("CUATRIMESTRAL", "Cada 4 meses"),
+    ]
+
+    ESTADO_VALOR = [
+        ("PROVISIONAL", "Provisional"),
+        ("DEFINITIVO", "Definitivo"),
+        ("PENDIENTE_ACTUALIZACION", "Pendiente de actualizacion"),
+    ]
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name="contratos_pases",
+    )
+
+    numero_pase = models.CharField(
+        max_length=30,
+        unique=True,
+    )
+
+    nombre_servicio = models.CharField(
+        max_length=250,
+    )
+
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO,
+        default="PREVENTIVO",
+    )
+
+    valor_cuota = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    periodicidad = models.CharField(
+        max_length=20,
+        choices=PERIODICIDAD,
+    )
+
+    estado_valor = models.CharField(
+        max_length=30,
+        choices=ESTADO_VALOR,
+        default="DEFINITIVO",
+    )
+
+    direccion_servicio = models.CharField(
+        max_length=250,
+        blank=True,
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    fecha_inicio_facturacion = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    dia_limite_facturacion = models.PositiveSmallIntegerField(
+        default=15,
+    )
+
+    activo = models.BooleanField(
+        default=True,
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["cliente__nombre", "numero_pase"]
+        verbose_name = "Contrato o pase"
+        verbose_name_plural = "Contratos o pases"
+
+    def __str__(self):
+        return f"{self.numero_pase} - {self.cliente.nombre}"
+
 
 # =========================================
 # ADMINISTRACIONES
