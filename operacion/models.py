@@ -137,6 +137,101 @@ class ContratoPase(models.Model):
 
 
 # =========================================
+# PROGRAMACION Y CONTROL DE FACTURACION
+# =========================================
+
+class FacturacionPase(models.Model):
+
+    ESTADO = [
+        ("POR_CONFIRMAR", "Por confirmar en Siigo"),
+        ("PENDIENTE", "Pendiente"),
+        ("FACTURADA", "Facturada"),
+        ("APLAZADA", "Aplazada"),
+        ("NO_FACTURAR", "No facturar"),
+    ]
+
+    contrato = models.ForeignKey(
+        ContratoPase,
+        on_delete=models.PROTECT,
+        related_name="facturaciones",
+    )
+
+    periodo = models.DateField(
+        help_text="Primer dia del mes que corresponde facturar.",
+    )
+
+    fecha_limite = models.DateField()
+
+    valor_programado = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    estado = models.CharField(
+        max_length=25,
+        choices=ESTADO,
+        default="PENDIENTE",
+    )
+
+    numero_factura = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    fecha_factura = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    valor_facturado = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    observaciones = models.TextField(
+        blank=True,
+    )
+
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="facturaciones_pases_registradas",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["periodo", "contrato__cliente__nombre"]
+        verbose_name = "Facturacion de pase"
+        verbose_name_plural = "Facturaciones de pases"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contrato", "periodo"],
+                name="facturacion_unica_por_pase_periodo",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["periodo", "estado"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.contrato.numero_pase} - "
+            f"{self.periodo:%Y-%m} - {self.get_estado_display()}"
+        )
+
+
+# =========================================
 # ADMINISTRACIONES
 # =========================================
 
