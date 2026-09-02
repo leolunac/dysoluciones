@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGOB | Facturacion de pases</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef4f7;color:#15384f;font:12px Arial,sans-serif}.contenedor{width:96%;max-width:1550px;margin:18px auto}.encabezado{background:linear-gradient(110deg,#0b4770,#0873ad);color:#fff;border-radius:13px;padding:15px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}.encabezado h1{font-size:21px;margin:0 0 3px}.encabezado p{margin:0;opacity:.9}.btn{display:inline-block;border:0;border-radius:7px;padding:8px 12px;text-decoration:none;font-weight:bold;cursor:pointer}.btn-blanco{background:#fff;color:#07517d}.btn-azul{background:#0873ad;color:#fff}.tarjetas{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:11px 0}.tarjeta{background:#fff;border-radius:10px;padding:11px;border-left:4px solid #1681c4}.tarjeta span{display:block;color:#687c8b;font-size:10px;font-weight:bold}.tarjeta strong{font-size:20px;color:#064a75}.amarilla{border-color:#e9a700}.verde{border-color:#1d9a54}.roja{border-color:#db3b3b}.panel{background:#fff;border-radius:12px;padding:13px;margin-top:10px}.filtros{display:grid;grid-template-columns:160px 1fr 190px auto;gap:8px;align-items:end}.campo{width:100%;border:1px solid #bfd0dc;border-radius:6px;padding:8px;background:#fff}.grupo label{display:block;font-weight:bold;font-size:10px;margin-bottom:4px}.resumen{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;color:#496274}.tabla{overflow-x:auto}table{width:100%;border-collapse:collapse}th{background:#eaf3f8;text-align:left;padding:8px 7px;font-size:10px;white-space:nowrap}td{padding:8px 7px;border-bottom:1px solid #e2ebf0;vertical-align:middle}.valor{white-space:nowrap;font-weight:bold}.estado{padding:4px 7px;border-radius:12px;font-size:9px;font-weight:bold;white-space:nowrap}.PENDIENTE{background:#fff0c9;color:#755300}.POR_CONFIRMAR{background:#e5e8eb;color:#45535e}.FACTURADA{background:#d9f4e5;color:#14713a}.APLAZADA{background:#dcecff;color:#175b99}.NO_FACTURAR{background:#ffdede;color:#9a2020}.provisional{color:#9a6200;font-weight:bold}.paginacion{display:flex;justify-content:center;gap:7px;align-items:center;margin-top:12px}@media(max-width:1100px){.tarjetas{grid-template-columns:repeat(4,1fr)}}@media(max-width:720px){.tarjetas{grid-template-columns:repeat(2,1fr)}.filtros{grid-template-columns:1fr}.encabezado{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body><div class="contenedor">
+<div class="encabezado"><div><h1>Facturacion de contratos y pases</h1><p>Programacion mensual y registro de las facturas elaboradas en Siigo.</p></div><div><a class="btn btn-blanco" href="{% url 'gestion_comercial:lista_contratos_pases' %}">Contratos</a> <a class="btn btn-blanco" href="{% url 'gestion_comercial:panel' %}">Volver al panel</a></div></div>
+<div class="tarjetas">
+<div class="tarjeta"><span>PROGRAMADAS</span><strong>{{ indicadores.programadas }}</strong></div>
+<div class="tarjeta amarilla"><span>PENDIENTES</span><strong>{{ indicadores.pendientes }}</strong></div>
+<div class="tarjeta roja"><span>VENCIDAS</span><strong>{{ indicadores.vencidas }}</strong></div>
+<div class="tarjeta verde"><span>FACTURADAS</span><strong>{{ indicadores.facturadas }}</strong></div>
+<div class="tarjeta"><span>POR CONFIRMAR</span><strong>{{ indicadores.por_confirmar }}</strong></div>
+<div class="tarjeta amarilla"><span>VALOR PROVISIONAL</span><strong>{{ indicadores.provisionales }}</strong></div>
+<div class="tarjeta"><span>PROXIMAS</span><strong>{{ indicadores.proximas }}</strong></div>
+</div>
+<div class="panel">
+<form method="get" class="filtros">
+<div class="grupo"><label>MES</label><input class="campo" type="month" name="mes" value="{{ mes_valor }}"></div>
+<div class="grupo"><label>BUSCAR</label><input class="campo" name="q" value="{{ busqueda }}" placeholder="Pase, unidad, NIT o factura"></div>
+<div class="grupo"><label>ESTADO</label><select class="campo" name="estado"><option value="">Todos</option>{% for codigo,nombre in estados %}<option value="{{ codigo }}" {% if estado_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>{% endfor %}</select></div>
+<button class="btn btn-azul" type="submit">Filtrar</button>
+</form>
+<div class="resumen"><span>Periodo: <strong>{{ periodo|date:"F Y" }}</strong> · Resultados: <strong>{{ pagina.paginator.count }}</strong></span><span>Programado: <strong>${{ total_programado|floatformat:2 }}</strong> · Facturado: <strong>${{ total_facturado|floatformat:2 }}</strong></span></div>
+<div class="tabla"><table><thead><tr><th>Pase</th><th>Unidad / cliente</th><th>NIT</th><th>Limite</th><th>Valor programado</th><th>Estado valor</th><th>Estado</th><th>Factura Siigo</th><th>Valor facturado</th><th>Accion</th></tr></thead><tbody>
+{% for r in pagina %}<tr><td><strong>{{ r.contrato.numero_pase }}</strong></td><td>{{ r.contrato.cliente.nombre }}</td><td>{{ r.contrato.cliente.nit|default:"-" }}</td><td>{{ r.fecha_limite|date:"d/m/Y" }}</td><td class="valor">${{ r.valor_programado|floatformat:2 }}</td><td>{% if r.contrato.estado_valor == "PROVISIONAL" %}<span class="provisional">Provisional</span>{% else %}Definitivo{% endif %}</td><td><span class="estado {{ r.estado }}">{{ r.get_estado_display }}</span></td><td>{{ r.numero_factura|default:"-" }}</td><td class="valor">{% if r.valor_facturado != None %}${{ r.valor_facturado|floatformat:2 }}{% else %}-{% endif %}</td><td><a class="btn btn-azul" href="{% url 'gestion_comercial:registrar_factura_pase' r.id %}">Gestionar</a></td></tr>
+{% empty %}<tr><td colspan="10" style="text-align:center;padding:25px;color:#71818b">No hay registros para los filtros seleccionados.</td></tr>{% endfor %}
+</tbody></table></div>
+{% if pagina.paginator.num_pages > 1 %}<div class="paginacion">{% if pagina.has_previous %}<a class="btn btn-azul" href="?mes={{ mes_valor }}&q={{ busqueda|urlencode }}&estado={{ estado_filtro }}&pagina={{ pagina.previous_page_number }}">Anterior</a>{% endif %}<span>Pagina {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>{% if pagina.has_next %}<a class="btn btn-azul" href="?mes={{ mes_valor }}&q={{ busqueda|urlencode }}&estado={{ estado_filtro }}&pagina={{ pagina.next_page_number }}">Siguiente</a>{% endif %}</div>{% endif %}
+</div></div></body></html>

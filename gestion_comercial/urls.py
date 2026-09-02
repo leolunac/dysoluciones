@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from . import facturacion_pases
 
 
 app_name = "gestion_comercial"
@@ -18,6 +19,28 @@ urlpatterns = [
         name="panel",
     ),
 
+
+    # =====================================================
+    # FACTURACION RECURRENTE DE CONTRATOS / PASES
+    # =====================================================
+
+    path(
+        "facturacion-pases/",
+        facturacion_pases.consolidado_facturacion_pases,
+        name="consolidado_facturacion_pases",
+    ),
+
+    path(
+        "facturacion-pases/mes/<str:mes>/",
+        facturacion_pases.consolidado_facturacion_pases,
+        name="consolidado_facturacion_pases_mes",
+    ),
+
+    path(
+        "facturacion-pases/<int:facturacion_id>/registrar/",
+        facturacion_pases.registrar_factura_pase,
+        name="registrar_factura_pase",
+    ),
 
     # =====================================================
     # CONTRATOS / PASES
