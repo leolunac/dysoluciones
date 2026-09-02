@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB | {{ titulo }}</title>
+    <style>
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:Arial,Helvetica,sans-serif; background:#eef4f7; color:#12344d; font-size:13px; }
+        .contenedor { width:94%; max-width:1050px; margin:18px auto; }
+        .encabezado { background:linear-gradient(110deg,#0b4770,#0873ad); color:#fff; border-radius:14px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+        h1 { margin:0 0 4px; font-size:22px; } .subtitulo { margin:0; opacity:.9; }
+        .btn { display:inline-block; padding:9px 13px; border-radius:7px; text-decoration:none; font-weight:bold; border:0; cursor:pointer; font-size:12px; }
+        .btn-blanco { background:#fff; color:#064b77; } .btn-azul { background:#0873ad; color:#fff; }
+        .panel { margin-top:12px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; }
+        .ancho { grid-column:1/-1; }
+        label { display:block; font-weight:bold; font-size:11px; color:#405f73; margin-bottom:5px; }
+        .campo { width:100%; min-height:40px; padding:9px 10px; border:1px solid #c8d6df; border-radius:7px; background:#fff; color:#16394f; }
+        textarea.campo { resize:vertical; }
+        .check { width:18px; height:18px; vertical-align:middle; }
+        .errorlist { margin:5px 0 0; padding-left:17px; color:#a51c1c; font-size:11px; }
+        .acciones { display:flex; gap:8px; margin-top:18px; }
+        .exito { margin-top:12px; background:#dff5e6; color:#176c39; padding:11px 13px; border-radius:8px; font-weight:bold; }
+        .ayuda { color:#6d7d88; font-size:11px; margin-top:4px; }
+        .alerta-pases { display:none; grid-column:1/-1; background:#fff4ce; color:#735400; border-left:4px solid #e3a400; padding:11px 13px; border-radius:7px; line-height:1.45; }
+        @media(max-width:700px){ .grid{grid-template-columns:1fr} .ancho{grid-column:auto} }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+    <div class="encabezado">
+        <div><h1>{{ titulo }}</h1><p class="subtitulo">Información comercial y programación básica del contrato.</p></div>
+        <a class="btn btn-blanco" href="{% url 'gestion_comercial:lista_contratos_pases' %}">Volver al listado</a>
+    </div>
+
+    {% if guardado %}<div class="exito">Los cambios se guardaron correctamente.</div>{% endif %}
+
+    <form method="post" class="panel" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="grid">
+            <div class="ancho"><label>{{ form.cliente.label }}</label>{{ form.cliente }}{{ form.cliente.errors }}</div>
+            <div id="alerta-pases" class="alerta-pases"></div>
+            <div><label>{{ form.numero_pase.label }}</label>{{ form.numero_pase }}{{ form.numero_pase.errors }}</div>
+            <div><label>{{ form.tipo.label }}</label>{{ form.tipo }}{{ form.tipo.errors }}</div>
+            <div class="ancho"><label>{{ form.nombre_servicio.label }}</label>{{ form.nombre_servicio }}{{ form.nombre_servicio.errors }}</div>
+            <div><label>{{ form.valor_cuota.label }}</label>{{ form.valor_cuota }}{{ form.valor_cuota.errors }}</div>
+            <div><label>{{ form.estado_valor.label }}</label>{{ form.estado_valor }}{{ form.estado_valor.errors }}</div>
+            <div><label>{{ form.periodicidad.label }}</label>{{ form.periodicidad }}{{ form.periodicidad.errors }}</div>
+            <div><label>{{ form.dia_limite_facturacion.label }}</label>{{ form.dia_limite_facturacion }}{{ form.dia_limite_facturacion.errors }}</div>
+            <div><label>{{ form.fecha_inicio_facturacion.label }}</label>{{ form.fecha_inicio_facturacion }}{{ form.fecha_inicio_facturacion.errors }}<div class="ayuda">Se utilizará después para calcular los meses de facturación.</div></div>
+            <div><label>{{ form.direccion_servicio.label }}</label>{{ form.direccion_servicio }}{{ form.direccion_servicio.errors }}</div>
+            <div class="ancho"><label>{{ form.observaciones.label }}</label>{{ form.observaciones }}{{ form.observaciones.errors }}</div>
+            <div class="ancho"><label>{{ form.activo }} {{ form.activo.label }}</label>{{ form.activo.errors }}</div>
+        </div>
+        <div class="acciones">
+            <button class="btn btn-azul" type="submit">Guardar contrato</button>
+            <a class="btn btn-blanco" style="background:#e4edf2" href="{% url 'gestion_comercial:lista_contratos_pases' %}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{{ pases_por_cliente|json_script:"pases-por-cliente" }}
+<script>
+(function () {
+    const selector = document.getElementById("id_cliente");
+    const alerta = document.getElementById("alerta-pases");
+    const datosElemento = document.getElementById("pases-por-cliente");
+
+    if (!selector || !alerta || !datosElemento) return;
+
+    const pasesPorCliente = JSON.parse(datosElemento.textContent);
+
+    function actualizarAlerta() {
+        const pases = pasesPorCliente[String(selector.value)] || [];
+
+        if (!selector.value || pases.length === 0) {
+            alerta.style.display = "none";
+            alerta.textContent = "";
+            return;
+        }
+
+        const numeros = pases.map(function (pase) {
+            return pase.numero;
+        }).join(", ");
+
+        alerta.textContent = "Atención: esta unidad ya tiene "
+            + pases.length
+            + (pases.length === 1 ? " pase activo: " : " pases activos: ")
+            + numeros
+            + ". Puede agregar otro pase si corresponde a un servicio diferente.";
+        alerta.style.display = "block";
+    }
+
+    selector.addEventListener("change", actualizarAlerta);
+    actualizarAlerta();
+})();
+</script>
+</body>
+</html>

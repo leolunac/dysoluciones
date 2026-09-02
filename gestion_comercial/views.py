@@ -1,6 +1,7 @@
 from pathlib import Path
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse
@@ -13,7 +14,10 @@ from .forms import (
     CotizacionForm,
     DatosComercialesCotizacionForm,
     DetalleCotizacionForm,
+    ContratoPaseForm,
 )
+from operacion.models import Cliente, ContratoPase
+
 from .models import (
     Liquidacion,
     CatalogoPrecio,
@@ -103,6 +107,12 @@ def panel_gestion_comercial(request):
         "puede_revisar": _puede_revisar(request.user),
         "puede_facturar": _puede_facturar(request.user),
         "puede_consultar": _puede_consultar(request.user),
+        "puede_ver_contratos": _pertenece(
+            request.user,
+            GRUPO_COORDINADOR,
+            GRUPO_FACTURACION,
+            GRUPO_GERENCIA,
+        ),
         "puede_ver_consolidado": _pertenece(
             request.user,
             GRUPO_FACTURACION,
@@ -1792,4 +1802,191 @@ def eliminar_detalle_cotizacion(request, detalle_id):
     return redirect(
         "gestion_comercial:editar_cotizacion",
         cotizacion_id=cotizacion.id,
+    )
+
+
+# =========================================================
+# CONTRATOS / PASES
+# =========================================================
+
+def _actualizar_tipo_contrato_cliente(cliente):
+    if not cliente:
+        return
+
+    pases = cliente.contratos_pases.filter(activo=True)
+    if pases.filter(tipo="7X24").exists():
+        nuevo_tipo = "7X24"
+    elif pases.exists():
+        nuevo_tipo = "PREVENTIVO"
+    else:
+        nuevo_tipo = "SIN_CONTRATO"
+
+    if cliente.tipo_contrato != nuevo_tipo:
+        cliente.tipo_contrato = nuevo_tipo
+        cliente.save(update_fields=["tipo_contrato"])
+
+
+def _pases_activos_por_cliente():
+    mapa = {}
+    pases = (
+        ContratoPase.objects
+        .filter(activo=True)
+        .order_by("numero_pase")
+        .values("cliente_id", "numero_pase", "tipo", "periodicidad")
+    )
+    for pase in pases:
+        clave = str(pase["cliente_id"])
+        mapa.setdefault(clave, []).append(
+            {
+                "numero": pase["numero_pase"],
+                "tipo": pase["tipo"],
+                "periodicidad": pase["periodicidad"],
+            }
+        )
+    return mapa
+
+
+@login_required
+def lista_contratos_pases(request):
+    _exigir(
+        request.user,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    contratos = ContratoPase.objects.select_related("cliente").all()
+
+    busqueda = request.GET.get("q", "").strip()
+    tipo = request.GET.get("tipo", "").strip()
+    periodicidad = request.GET.get("periodicidad", "").strip()
+    estado_valor = request.GET.get("estado_valor", "").strip()
+    vigencia = request.GET.get("vigencia", "ACTIVOS").strip()
+
+    if busqueda:
+        contratos = contratos.filter(
+            Q(numero_pase__icontains=busqueda)
+            | Q(cliente__nombre__icontains=busqueda)
+            | Q(cliente__nit__icontains=busqueda)
+            | Q(nombre_servicio__icontains=busqueda)
+        )
+    if tipo:
+        contratos = contratos.filter(tipo=tipo)
+    if periodicidad:
+        contratos = contratos.filter(periodicidad=periodicidad)
+    if estado_valor:
+        contratos = contratos.filter(estado_valor=estado_valor)
+    if vigencia == "ACTIVOS":
+        contratos = contratos.filter(activo=True)
+    elif vigencia == "INACTIVOS":
+        contratos = contratos.filter(activo=False)
+
+    contratos = contratos.order_by("cliente__nombre", "numero_pase")
+    pagina = Paginator(contratos, 50).get_page(request.GET.get("page"))
+
+    activos = ContratoPase.objects.filter(activo=True)
+    contexto = {
+        "pagina": pagina,
+        "total_filtrado": contratos.count(),
+        "total_activos": activos.count(),
+        "clientes_con_pase": Cliente.objects.filter(
+            activo=True,
+            contratos_pases__activo=True,
+        ).distinct().count(),
+        "clientes_sin_contrato": Cliente.objects.filter(
+            activo=True,
+            tipo_contrato="SIN_CONTRATO",
+        ).count(),
+        "valores_provisionales": activos.filter(
+            estado_valor="PROVISIONAL"
+        ).count(),
+        "tipos": ContratoPase.TIPO,
+        "periodicidades": ContratoPase.PERIODICIDAD,
+        "estados_valor": ContratoPase.ESTADO_VALOR,
+        "q": busqueda,
+        "tipo_seleccionado": tipo,
+        "periodicidad_seleccionada": periodicidad,
+        "estado_seleccionado": estado_valor,
+        "vigencia_seleccionada": vigencia,
+    }
+    return render(
+        request,
+        "gestion_comercial/contratos/lista.html",
+        contexto,
+    )
+
+
+@login_required
+def nuevo_contrato_pase(request):
+    _exigir(
+        request.user,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    if request.method == "POST":
+        form = ContratoPaseForm(request.POST)
+        if form.is_valid():
+            contrato = form.save()
+            _actualizar_tipo_contrato_cliente(contrato.cliente)
+            return redirect(
+                "gestion_comercial:editar_contrato_pase_guardado",
+                contrato_id=contrato.id,
+                guardado="1",
+            )
+    else:
+        form = ContratoPaseForm()
+
+    return render(
+        request,
+        "gestion_comercial/contratos/formulario.html",
+        {
+            "form": form,
+            "contrato": None,
+            "titulo": "Nuevo contrato o pase",
+            "pases_por_cliente": _pases_activos_por_cliente(),
+        },
+    )
+
+
+@login_required
+def editar_contrato_pase(request, contrato_id, guardado=None):
+    _exigir(
+        request.user,
+        GRUPO_COORDINADOR,
+        GRUPO_FACTURACION,
+        GRUPO_GERENCIA,
+    )
+
+    contrato = get_object_or_404(
+        ContratoPase.objects.select_related("cliente"),
+        id=contrato_id,
+    )
+    cliente_anterior = contrato.cliente
+
+    if request.method == "POST":
+        form = ContratoPaseForm(request.POST, instance=contrato)
+        if form.is_valid():
+            contrato = form.save()
+            _actualizar_tipo_contrato_cliente(cliente_anterior)
+            _actualizar_tipo_contrato_cliente(contrato.cliente)
+            return redirect(
+                "gestion_comercial:editar_contrato_pase_guardado",
+                contrato_id=contrato.id,
+                guardado="1",
+            )
+    else:
+        form = ContratoPaseForm(instance=contrato)
+
+    return render(
+        request,
+        "gestion_comercial/contratos/formulario.html",
+        {
+            "form": form,
+            "contrato": contrato,
+            "titulo": "Modificar contrato o pase",
+            "guardado": guardado == "1",
+            "pases_por_cliente": _pases_activos_por_cliente(),
+        },
     )

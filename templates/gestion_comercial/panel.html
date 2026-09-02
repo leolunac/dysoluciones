@@ -225,6 +225,13 @@
             </a>
             {% endif %}
 
+            {% if puede_ver_contratos %}
+            <a href="{% url 'gestion_comercial:lista_contratos_pases' %}"
+               class="btn btn-blanco">
+                Contratos y pases
+            </a>
+            {% endif %}
+
             {% if puede_ver_consolidado %}
             <a href="{% url 'gestion_comercial:consolidado_facturacion' %}"
                class="btn btn-blanco">

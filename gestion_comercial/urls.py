@@ -18,6 +18,35 @@ urlpatterns = [
         name="panel",
     ),
 
+
+    # =====================================================
+    # CONTRATOS / PASES
+    # =====================================================
+
+    path(
+        "contratos/",
+        views.lista_contratos_pases,
+        name="lista_contratos_pases",
+    ),
+
+    path(
+        "contratos/nuevo/",
+        views.nuevo_contrato_pase,
+        name="nuevo_contrato_pase",
+    ),
+
+    path(
+        "contratos/<int:contrato_id>/editar/",
+        views.editar_contrato_pase,
+        name="editar_contrato_pase",
+    ),
+
+    path(
+        "contratos/<int:contrato_id>/editar/<str:guardado>/",
+        views.editar_contrato_pase,
+        name="editar_contrato_pase_guardado",
+    ),
+
     # =====================================================
     # LIQUIDACIONES
     # =====================================================

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB | Contratos y pases</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin:0; font-family:Arial,Helvetica,sans-serif; background:#eef4f7; color:#12344d; font-size:13px; }
+        .contenedor { width:96%; max-width:1550px; margin:16px auto; }
+        .encabezado { background:linear-gradient(110deg,#0b4770,#0873ad); color:#fff; border-radius:14px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+        h1 { margin:0 0 4px; font-size:22px; } .subtitulo { margin:0; opacity:.9; }
+        .acciones { display:flex; gap:8px; flex-wrap:wrap; }
+        .btn { display:inline-block; padding:9px 13px; border-radius:7px; text-decoration:none; font-weight:bold; border:0; cursor:pointer; font-size:12px; }
+        .btn-blanco { background:#fff; color:#064b77; } .btn-azul { background:#0873ad; color:#fff; } .btn-gris { background:#dfe8ed; color:#29495e; }
+        .indicadores { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0; }
+        .indicador { background:#fff; border-radius:11px; padding:13px 15px; border-left:4px solid #1775d1; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+        .indicador .titulo { color:#617487; font-weight:bold; font-size:11px; margin-bottom:6px; }
+        .indicador .numero { color:#073f66; font-size:23px; font-weight:bold; }
+        .amarillo { border-left-color:#e5a000; } .verde { border-left-color:#18864b; } .gris { border-left-color:#71808b; }
+        .panel { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+        .filtros { display:grid; grid-template-columns:2fr repeat(4,1fr) auto; gap:8px; align-items:end; margin-bottom:13px; }
+        label { display:block; font-size:10px; font-weight:bold; color:#597083; margin-bottom:4px; }
+        .campo { width:100%; min-height:37px; padding:8px 9px; border:1px solid #cbd9e2; border-radius:7px; background:#fff; color:#17384f; }
+        .tabla { overflow-x:auto; } table { width:100%; border-collapse:collapse; }
+        th { background:#edf4f8; color:#31546b; padding:9px 7px; font-size:11px; text-align:left; white-space:nowrap; }
+        td { padding:9px 7px; border-bottom:1px solid #e6edf1; vertical-align:middle; }
+        .valor { white-space:nowrap; font-weight:bold; } .muted { color:#6d7f8b; font-size:11px; }
+        .estado { display:inline-block; padding:4px 8px; border-radius:14px; font-size:10px; font-weight:bold; }
+        .PROVISIONAL { background:#fff0c7; color:#7c5900; } .DEFINITIVO { background:#dff5e6; color:#176c39; } .PENDIENTE_ACTUALIZACION { background:#ffdede; color:#971d1d; }
+        .paginacion { display:flex; justify-content:center; align-items:center; gap:8px; margin-top:14px; }
+        .vacio { text-align:center; padding:28px; color:#71818d; }
+        @media(max-width:1050px){ .filtros{grid-template-columns:repeat(3,1fr)} .indicadores{grid-template-columns:repeat(2,1fr)} }
+        @media(max-width:650px){ .filtros{grid-template-columns:1fr} .indicadores{grid-template-columns:1fr} }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+    <div class="encabezado">
+        <div><h1>Contratos y pases</h1><p class="subtitulo">Control de unidades, valores y periodicidades de facturación.</p></div>
+        <div class="acciones">
+            <a class="btn btn-blanco" href="{% url 'gestion_comercial:nuevo_contrato_pase' %}">+ Nuevo contrato</a>
+            <a class="btn btn-blanco" href="{% url 'gestion_comercial:panel' %}">Gestión comercial</a>
+            <a class="btn btn-blanco" href="/">Inicio</a>
+        </div>
+    </div>
+
+    <div class="indicadores">
+        <div class="indicador verde"><div class="titulo">Pases activos</div><div class="numero">{{ total_activos }}</div></div>
+        <div class="indicador"><div class="titulo">Clientes con pase</div><div class="numero">{{ clientes_con_pase }}</div></div>
+        <div class="indicador gris"><div class="titulo">Clientes sin contrato</div><div class="numero">{{ clientes_sin_contrato }}</div></div>
+        <div class="indicador amarillo"><div class="titulo">Valores provisionales</div><div class="numero">{{ valores_provisionales }}</div></div>
+    </div>
+
+    <div class="panel">
+        <form method="get" class="filtros">
+            <div><label>Buscar</label><input class="campo" name="q" value="{{ q }}" placeholder="Pase, unidad o NIT"></div>
+            <div><label>Tipo</label><select class="campo" name="tipo"><option value="">Todos</option>{% for valor,etiqueta in tipos %}<option value="{{ valor }}" {% if tipo_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select></div>
+            <div><label>Periodicidad</label><select class="campo" name="periodicidad"><option value="">Todas</option>{% for valor,etiqueta in periodicidades %}<option value="{{ valor }}" {% if periodicidad_seleccionada == valor %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select></div>
+            <div><label>Estado del valor</label><select class="campo" name="estado_valor"><option value="">Todos</option>{% for valor,etiqueta in estados_valor %}<option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select></div>
+            <div><label>Vigencia</label><select class="campo" name="vigencia"><option value="ACTIVOS" {% if vigencia_seleccionada == 'ACTIVOS' %}selected{% endif %}>Activos</option><option value="INACTIVOS" {% if vigencia_seleccionada == 'INACTIVOS' %}selected{% endif %}>Inactivos</option><option value="TODOS" {% if vigencia_seleccionada == 'TODOS' %}selected{% endif %}>Todos</option></select></div>
+            <button class="btn btn-azul" type="submit">Filtrar</button>
+        </form>
+
+        <p class="muted">Resultados: {{ total_filtrado }}</p>
+        <div class="tabla">
+        {% if pagina.object_list %}
+            <table>
+                <thead><tr><th>Pase</th><th>Unidad / Cliente</th><th>NIT</th><th>Tipo</th><th>Valor</th><th>Periodicidad</th><th>Estado valor</th><th>Límite</th><th>Acción</th></tr></thead>
+                <tbody>
+                {% for contrato in pagina.object_list %}
+                    <tr>
+                        <td><strong>{{ contrato.numero_pase }}</strong></td>
+                        <td>{{ contrato.cliente.nombre }}<div class="muted">{{ contrato.nombre_servicio }}</div></td>
+                        <td>{{ contrato.cliente.nit|default:"—" }}</td>
+                        <td>{{ contrato.get_tipo_display }}</td>
+                        <td class="valor">$ {{ contrato.valor_cuota|floatformat:2 }}</td>
+                        <td>{{ contrato.get_periodicidad_display }}</td>
+                        <td><span class="estado {{ contrato.estado_valor }}">{{ contrato.get_estado_valor_display }}</span></td>
+                        <td>Día {{ contrato.dia_limite_facturacion }}</td>
+                        <td><a class="btn btn-gris" href="{% url 'gestion_comercial:editar_contrato_pase' contrato.id %}">Modificar</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}<div class="vacio">No hay contratos que coincidan con los filtros.</div>{% endif %}
+        </div>
+
+        {% if pagina.paginator.num_pages > 1 %}
+        <div class="paginacion">
+            {% if pagina.has_previous %}<a class="btn btn-gris" href="?page={{ pagina.previous_page_number }}&q={{ q }}&tipo={{ tipo_seleccionado }}&periodicidad={{ periodicidad_seleccionada }}&estado_valor={{ estado_seleccionado }}&vigencia={{ vigencia_seleccionada }}">Anterior</a>{% endif %}
+            <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+            {% if pagina.has_next %}<a class="btn btn-gris" href="?page={{ pagina.next_page_number }}&q={{ q }}&tipo={{ tipo_seleccionado }}&periodicidad={{ periodicidad_seleccionada }}&estado_valor={{ estado_seleccionado }}&vigencia={{ vigencia_seleccionada }}">Siguiente</a>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

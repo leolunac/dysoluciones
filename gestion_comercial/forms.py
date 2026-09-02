@@ -1,5 +1,7 @@
 from django import forms
 
+from operacion.models import Cliente, ContratoPase
+
 from .models import (
     Liquidacion,
     DetalleLiquidacion,
@@ -425,3 +427,88 @@ class DetalleCotizacionForm(forms.ModelForm):
             ""
         )
         return descripcion.strip()
+
+# =========================================================
+# CONTRATOS / PASES
+# =========================================================
+
+class ContratoPaseForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["cliente"].queryset = (
+            Cliente.objects.filter(activo=True).order_by("nombre")
+        )
+        self.fields["cliente"].empty_label = "Seleccione una unidad / cliente"
+
+    class Meta:
+        model = ContratoPase
+        fields = [
+            "cliente",
+            "numero_pase",
+            "nombre_servicio",
+            "tipo",
+            "valor_cuota",
+            "periodicidad",
+            "estado_valor",
+            "direccion_servicio",
+            "observaciones",
+            "fecha_inicio_facturacion",
+            "dia_limite_facturacion",
+            "activo",
+        ]
+        widgets = {
+            "cliente": forms.Select(attrs={"class": "campo"}),
+            "numero_pase": forms.TextInput(
+                attrs={"class": "campo", "placeholder": "Ej.: PASE260"}
+            ),
+            "nombre_servicio": forms.TextInput(
+                attrs={
+                    "class": "campo",
+                    "placeholder": "Nombre de la unidad o servicio contratado",
+                }
+            ),
+            "tipo": forms.Select(attrs={"class": "campo"}),
+            "valor_cuota": forms.NumberInput(
+                attrs={"class": "campo", "step": "0.01", "min": "0"}
+            ),
+            "periodicidad": forms.Select(attrs={"class": "campo"}),
+            "estado_valor": forms.Select(attrs={"class": "campo"}),
+            "direccion_servicio": forms.TextInput(
+                attrs={"class": "campo", "placeholder": "Opcional"}
+            ),
+            "observaciones": forms.Textarea(
+                attrs={"class": "campo", "rows": 3}
+            ),
+            "fecha_inicio_facturacion": forms.DateInput(
+                attrs={"class": "campo", "type": "date"},
+                format="%Y-%m-%d",
+            ),
+            "dia_limite_facturacion": forms.NumberInput(
+                attrs={"class": "campo", "min": "1", "max": "31"}
+            ),
+            "activo": forms.CheckboxInput(attrs={"class": "check"}),
+        }
+        labels = {
+            "cliente": "Unidad / Cliente",
+            "numero_pase": "Número de pase",
+            "nombre_servicio": "Nombre del servicio",
+            "tipo": "Tipo de contrato",
+            "valor_cuota": "Valor de la cuota",
+            "periodicidad": "Periodicidad de facturación",
+            "estado_valor": "Estado del valor",
+            "direccion_servicio": "Dirección del servicio",
+            "observaciones": "Observaciones",
+            "fecha_inicio_facturacion": "Fecha base de facturación",
+            "dia_limite_facturacion": "Día límite mensual",
+            "activo": "Contrato activo",
+        }
+
+    def clean_numero_pase(self):
+        return self.cleaned_data["numero_pase"].strip().upper()
+
+    def clean_dia_limite_facturacion(self):
+        dia = self.cleaned_data["dia_limite_facturacion"]
+        if dia < 1 or dia > 31:
+            raise forms.ValidationError("El día límite debe estar entre 1 y 31.")
+        return dia
