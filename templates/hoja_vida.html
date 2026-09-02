@@ -206,107 +206,79 @@ th{
         </div>
     </div>
 
+    {% for grupo in grupos_torres %}
     <div class="card">
-        <h2>Equipos instalados</h2>
+        <h2>{{ grupo.nombre }}</h2>
 
+        <div class="kpis" style="margin-bottom:16px;">
+            <div class="kpi">Equipos<br><span>{{ grupo.equipos|length }}</span></div>
+            <div class="kpi">Tanques<br><span>{{ grupo.tanques|length }}</span></div>
+            <div class="kpi">Distribuciones<br><span>{{ grupo.distribuciones|length }}</span></div>
+        </div>
+
+        {% if grupo.equipos %}
+        <h3>Equipos instalados</h3>
         <table>
             <tr>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Torre</th>
-                <th>Ubicación</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Potencia</th>
-                <th>Voltaje</th>
-                <th>Estado</th>
+                <th>Tipo</th><th>Cantidad</th><th>Ubicacion</th>
+                <th>Marca</th><th>Modelo</th><th>Potencia</th>
+                <th>Voltaje</th><th>Estado</th>
             </tr>
-
-            {% for e in equipos %}
+            {% for e in grupo.equipos %}
             <tr>
-                <td>{{ e.get_tipo_display }}</td>
-                <td>{{ e.cantidad }}</td>
-                <td>{{ e.torre }}</td>
-                <td>{{ e.ubicacion }}</td>
-                <td>{{ e.marca }}</td>
-                <td>{{ e.modelo }}</td>
-                <td>{{ e.potencia }}</td>
-                <td>{{ e.voltaje }}</td>
+                <td>{{ e.get_tipo_display }}</td><td>{{ e.cantidad }}</td>
+                <td>{{ e.ubicacion|default:"-" }}</td><td>{{ e.marca|default:"-" }}</td>
+                <td>{{ e.modelo|default:"-" }}</td><td>{{ e.potencia|default:"-" }}</td>
+                <td>{{ e.voltaje|default:"-" }}</td>
                 <td>
                     {% if e.estado == "OPERATIVO" %}
-                        <span class="estado operativo">{{ e.get_estado_display }}</span>
+                    <span class="estado operativo">{{ e.get_estado_display }}</span>
                     {% elif e.estado == "EN_REPARACION" %}
-                        <span class="estado reparacion">{{ e.get_estado_display }}</span>
+                    <span class="estado reparacion">{{ e.get_estado_display }}</span>
                     {% else %}
-                        <span class="estado fuera">{{ e.get_estado_display }}</span>
+                    <span class="estado fuera">{{ e.get_estado_display }}</span>
                     {% endif %}
                 </td>
             </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9">No hay equipos registrados.</td>
-            </tr>
             {% endfor %}
         </table>
-    </div>
+        {% endif %}
 
-    <div class="card">
-        <h2>Tanques</h2>
-
+        {% if grupo.tanques %}
+        <h3 style="margin-top:20px;">Tanques</h3>
         <table>
+            <tr><th>Tipo</th><th>Cantidad</th><th>Ubicacion</th><th>Material</th><th>Capacidad</th></tr>
+            {% for t in grupo.tanques %}
             <tr>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Torre</th>
-                <th>Ubicación</th>
-                <th>Material</th>
-                <th>Capacidad</th>
-            </tr>
-
-            {% for t in tanques %}
-            <tr>
-                <td>{{ t.get_tipo_tanque_display }}</td>
-                <td>{{ t.cantidad }}</td>
-                <td>{{ t.torre }}</td>
-                <td>{{ t.ubicacion }}</td>
-                <td>{{ t.material }}</td>
-                <td>{{ t.capacidad }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">No hay tanques registrados.</td>
+                <td>{{ t.get_tipo_tanque_display }}</td><td>{{ t.cantidad }}</td>
+                <td>{{ t.ubicacion|default:"-" }}</td><td>{{ t.material|default:"-" }}</td>
+                <td>{{ t.capacidad|default:"-" }}</td>
             </tr>
             {% endfor %}
         </table>
-    </div>
+        {% endif %}
 
-    <div class="card">
-        <h2>Distribución</h2>
-
+        {% if grupo.distribuciones %}
+        <h3 style="margin-top:20px;">Distribucion</h3>
         <table>
+            <tr><th>Pisos</th><th>Presion</th><th>Gravedad</th><th>Observaciones</th></tr>
+            {% for d in grupo.distribuciones %}
             <tr>
-                <th>Torre</th>
-                <th>Pisos</th>
-                <th>Presión</th>
-                <th>Gravedad</th>
-                <th>Observaciones</th>
-            </tr>
-
-            {% for d in distribuciones %}
-            <tr>
-                <td>{{ d.torre }}</td>
-                <td>{{ d.cantidad_pisos }}</td>
-                <td>{{ d.presion_desde }} - {{ d.presion_hasta }}</td>
-                <td>{{ d.gravedad_desde }} - {{ d.gravedad_hasta }}</td>
-                <td>{{ d.observaciones }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No hay distribución registrada.</td>
+                <td>{{ d.cantidad_pisos|default:"-" }}</td>
+                <td>{{ d.presion_desde|default:"-" }} - {{ d.presion_hasta|default:"-" }}</td>
+                <td>{{ d.gravedad_desde|default:"-" }} - {{ d.gravedad_hasta|default:"-" }}</td>
+                <td>{{ d.observaciones|default:"-" }}</td>
             </tr>
             {% endfor %}
         </table>
+        {% endif %}
     </div>
+    {% empty %}
+    <div class="card">
+        <h2>Activos de la unidad</h2>
+        <p>No hay equipos, tanques ni distribuciones registrados.</p>
+    </div>
+    {% endfor %}
 
 </div>
 

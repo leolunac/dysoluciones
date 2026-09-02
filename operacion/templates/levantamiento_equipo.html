@@ -143,6 +143,60 @@
                 text-align:center;
             }
         }
+
+        .mensaje-exito {
+            background: #dff5e7;
+            color: #176b38;
+            border-left: 4px solid #23a45a;
+            border-radius: 8px;
+            padding: 11px 13px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .contexto-torre {
+            background: #edf6fb;
+            border: 1px solid #c7dce8;
+            border-radius: 9px;
+            padding: 11px 13px;
+            margin-bottom: 12px;
+        }
+
+        .contexto-torre strong { color: #075783; }
+
+        .btn-otra { background: #e6eef3; color: #17445f; }
+        .btn-finalizar { background: #18864b; color: white; }
+
+        .resumen-equipos {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 14px;
+            box-shadow: 0 2px 9px rgba(0,0,0,.06);
+        }
+
+        .resumen-equipos h2 {
+            margin: 0 0 10px;
+            color: #075783;
+            font-size: 18px;
+        }
+
+        .tabla-contenedor { overflow-x: auto; }
+        .tabla-equipos { width: 100%; border-collapse: collapse; }
+        .tabla-equipos th {
+            background: #edf4f8;
+            color: #31546b;
+            padding: 8px;
+            text-align: left;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        .tabla-equipos td {
+            border-bottom: 1px solid #e3ebef;
+            padding: 8px;
+            font-size: 12px;
+        }
+
     </style>
 </head>
 
@@ -163,6 +217,22 @@
             Registre la información disponible del equipo.
             Los datos podrán ser complementados posteriormente.
         </div>
+
+
+        {% if guardado %}
+        <div class="mensaje-exito">
+            Equipo guardado correctamente. Puede continuar con la misma torre,
+            iniciar otra torre o finalizar el levantamiento.
+        </div>
+        {% endif %}
+
+        {% if cliente_seleccionado %}
+        <div class="contexto-torre">
+            Unidad: <strong>{{ cliente_seleccionado.nombre }}</strong>
+            &nbsp;|&nbsp;
+            Torre actual: <strong>{{ torre_actual|default:"Nueva torre por indicar" }}</strong>
+        </div>
+        {% endif %}
 
         <form method="post">
 
@@ -274,8 +344,26 @@
 
                 <button
                     type="submit"
+                    name="accion"
+                    value="misma_torre"
                     class="btn btn-guardar">
-                    Guardar equipo
+                    Guardar y continuar en esta torre
+                </button>
+
+                <button
+                    type="submit"
+                    name="accion"
+                    value="otra_torre"
+                    class="btn btn-otra">
+                    Guardar y agregar otra torre
+                </button>
+
+                <button
+                    type="submit"
+                    name="accion"
+                    value="finalizar"
+                    class="btn btn-finalizar">
+                    Guardar y finalizar levantamiento
                 </button>
 
                 <a
@@ -289,6 +377,50 @@
         </form>
 
     </div>
+
+    {% if cliente_seleccionado %}
+    <div class="resumen-equipos">
+        <h2>
+            Equipos registrados
+            {% if torre_actual %}en {{ torre_actual }}{% else %}en la unidad{% endif %}
+        </h2>
+
+        <div class="tabla-contenedor">
+            <table class="tabla-equipos">
+                <thead>
+                    <tr>
+                        <th>Torre</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Ubicacion</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipo in equipos_registrados %}
+                    <tr>
+                        <td>{{ equipo.torre|default:"Sin torre" }}</td>
+                        <td>{{ equipo.get_tipo_display }}</td>
+                        <td>{{ equipo.cantidad }}</td>
+                        <td>{{ equipo.ubicacion|default:"-" }}</td>
+                        <td>{{ equipo.marca|default:"-" }}</td>
+                        <td>{{ equipo.modelo|default:"-" }}</td>
+                        <td>{{ equipo.get_estado_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; color:#71818b;">
+                            Aun no hay equipos registrados para esta seleccion.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 

@@ -2311,30 +2311,79 @@ def nueva_llamada(request):
 @login_required
 def levantamiento_equipo(request):
 
+    cliente_id = request.GET.get("cliente", "").strip()
+    torre_actual = request.GET.get("torre", "").strip()
+    guardado = request.GET.get("guardado") == "1"
+
     if request.method == "POST":
         form = LevantamientoEquipoForm(request.POST)
 
         if form.is_valid():
             equipo = form.save()
+            accion = request.POST.get("accion", "misma_torre")
+
+            if accion == "finalizar":
+                return redirect(
+                    "hoja_vida",
+                    cliente_id=equipo.cliente_id,
+                )
+
+            parametros = [
+                f"cliente={equipo.cliente_id}",
+                "guardado=1",
+            ]
+
+            if accion == "misma_torre" and equipo.torre:
+                from urllib.parse import quote_plus
+                parametros.append(
+                    f"torre={quote_plus(equipo.torre)}"
+                )
 
             return redirect(
-                 "levantamiento_equipo"
-                
+                request.path + "?" + "&".join(parametros)
             )
 
     else:
-        form = LevantamientoEquipoForm(
-            initial={
-                "ultima_revision": timezone.now().date(),
-                "fecha_levantamiento": timezone.now().date(),
-            }
-        )
+        inicial = {
+            "ultima_revision": timezone.now().date(),
+        }
+        if cliente_id:
+            inicial["cliente"] = cliente_id
+        if torre_actual:
+            inicial["torre"] = torre_actual
+        form = LevantamientoEquipoForm(initial=inicial)
+
+    cliente_seleccionado = None
+    equipos_registrados = EquipoUnidad.objects.none()
+
+    if cliente_id:
+        cliente_seleccionado = Cliente.objects.filter(
+            id=cliente_id
+        ).first()
+
+        if cliente_seleccionado:
+            equipos_registrados = EquipoUnidad.objects.filter(
+                cliente=cliente_seleccionado
+            )
+            if torre_actual:
+                equipos_registrados = equipos_registrados.filter(
+                    torre__iexact=torre_actual
+                )
+            equipos_registrados = equipos_registrados.order_by(
+                "torre",
+                "tipo",
+                "id",
+            )
 
     return render(
         request,
         "levantamiento_equipo.html",
         {
             "form": form,
+            "cliente_seleccionado": cliente_seleccionado,
+            "torre_actual": torre_actual,
+            "equipos_registrados": equipos_registrados,
+            "guardado": guardado,
         }
     )
 
@@ -3301,19 +3350,78 @@ def dashboard_cliente(request, cliente_id):
 # =========================================
 # HOJA DE VIDA HTML
 # =========================================
+def _agrupar_activos_por_torre(equipos, tanques, distribuciones):
+    import re
+
+    grupos = {}
+
+    def datos_torre(valor):
+        original = str(valor or "").strip()
+        if not original:
+            return "sin torre", "Sin torre especificada"
+
+        clave = " ".join(original.lower().split())
+        if clave.startswith("torre") or clave.startswith("bloque"):
+            nombre = original
+        else:
+            nombre = f"Torre {original}"
+        return clave, nombre
+
+    def obtener(valor):
+        clave, nombre = datos_torre(valor)
+        return grupos.setdefault(
+            clave,
+            {
+                "clave": clave,
+                "nombre": nombre,
+                "equipos": [],
+                "tanques": [],
+                "distribuciones": [],
+            },
+        )
+
+    for equipo in equipos:
+        obtener(equipo.torre)["equipos"].append(equipo)
+    for tanque in tanques:
+        obtener(tanque.torre)["tanques"].append(tanque)
+    for distribucion in distribuciones:
+        obtener(distribucion.torre)["distribuciones"].append(distribucion)
+
+    def orden(grupo):
+        partes = re.split(r"(\d+)", grupo["nombre"].lower())
+        return [
+            (0, int(p)) if p.isdigit() else (1, p)
+            for p in partes
+        ]
+
+    return sorted(grupos.values(), key=orden)
+
+
 @login_required
 def hoja_vida(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
 
-    equipos = EquipoUnidad.objects.filter(cliente=cliente)
-    tanques = TanqueUnidad.objects.filter(cliente=cliente)
-    distribuciones = DistribucionUnidad.objects.filter(cliente=cliente)
+    equipos = list(
+        EquipoUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    tanques = list(
+        TanqueUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    distribuciones = list(
+        DistribucionUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    grupos_torres = _agrupar_activos_por_torre(
+        equipos,
+        tanques,
+        distribuciones,
+    )
 
     context = {
         "cliente": cliente,
         "equipos": equipos,
         "tanques": tanques,
         "distribuciones": distribuciones,
+        "grupos_torres": grupos_torres,
     }
 
     return render(request, "hoja_vida.html", context)
@@ -3326,9 +3434,20 @@ def hoja_vida(request, cliente_id):
 def hoja_vida_pdf(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
 
-    equipos = EquipoUnidad.objects.filter(cliente=cliente)
-    tanques = TanqueUnidad.objects.filter(cliente=cliente)
-    distribuciones = DistribucionUnidad.objects.filter(cliente=cliente)
+    equipos = list(
+        EquipoUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    tanques = list(
+        TanqueUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    distribuciones = list(
+        DistribucionUnidad.objects.filter(cliente=cliente).order_by("torre", "id")
+    )
+    grupos_torres = _agrupar_activos_por_torre(
+        equipos,
+        tanques,
+        distribuciones,
+    )
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
@@ -3442,187 +3561,116 @@ def hoja_vida_pdf(request, cliente_id):
     y -= 28
 
     y = seccion("RESUMEN EJECUTIVO", y)
-    fila_texto("Equipos:", equipos.count(), 40, y)
-    fila_texto("Tanques:", tanques.count(), 200, y)
+    fila_texto("Equipos:", len(equipos), 40, y)
+    fila_texto("Tanques:", len(tanques), 200, y)
     fila_texto(
         "Distribuciones:",
-        distribuciones.count(),
+        len(distribuciones),
         360,
         y,
     )
     y -= 30
 
-    y = seccion("EQUIPOS INSTALADOS", y)
-
-    pdf.setFont("Helvetica-Bold", 8)
-    columnas = [40, 145, 210, 275, 340, 405, 480]
-    headers = [
-        "Tipo",
-        "Marca",
-        "Modelo",
-        "Potencia",
-        "Voltaje",
-        "Cantidad",
-        "Estado",
-    ]
-
-    for x, header in zip(columnas, headers):
-        pdf.drawString(x, y, header)
-
-    y -= 10
-    pdf.line(40, y, width - 40, y)
-    y -= 12
-
-    pdf.setFont("Helvetica", 8)
-
-    for equipo in equipos:
-        if y < 70:
+    for grupo in grupos_torres:
+        if y < 145:
             y = nueva_pagina()
 
-        pdf.drawString(
-            40,
+        y = seccion(grupo["nombre"].upper(), y)
+        fila_texto("Equipos:", len(grupo["equipos"]), 40, y)
+        fila_texto("Tanques:", len(grupo["tanques"]), 200, y)
+        fila_texto(
+            "Distribuciones:",
+            len(grupo["distribuciones"]),
+            360,
             y,
-            str(equipo.get_tipo_display() or "-")[:22],
         )
-        pdf.drawString(
-            145,
-            y,
-            str(equipo.marca or "-")[:12],
-        )
-        pdf.drawString(
-            210,
-            y,
-            str(equipo.modelo or "-")[:12],
-        )
-        pdf.drawString(
-            275,
-            y,
-            str(equipo.potencia or "-")[:12],
-        )
-        pdf.drawString(
-            340,
-            y,
-            str(equipo.voltaje or "-")[:10],
-        )
-        pdf.drawString(
-            405,
-            y,
-            str(equipo.cantidad or "-"),
-        )
-        pdf.drawString(
-            480,
-            y,
-            str(equipo.get_estado_display() or "-")[:18],
-        )
-        y -= 14
+        y -= 24
 
-    y -= 18
-    y = seccion("TANQUES", y)
+        if grupo["equipos"]:
+            y = seccion("EQUIPOS INSTALADOS", y)
+            pdf.setFont("Helvetica-Bold", 8)
+            columnas = [40, 145, 210, 275, 340, 405, 480]
+            headers = [
+                "Tipo", "Marca", "Modelo", "Potencia",
+                "Voltaje", "Cantidad", "Estado",
+            ]
+            for x, header in zip(columnas, headers):
+                pdf.drawString(x, y, header)
+            y -= 10
+            pdf.line(40, y, width - 40, y)
+            y -= 12
+            pdf.setFont("Helvetica", 8)
 
-    pdf.setFont("Helvetica-Bold", 8)
-    columnas = [40, 180, 255, 330, 430]
-    headers = [
-        "Tipo",
-        "Material",
-        "Capacidad",
-        "Ubicación",
-        "Cantidad",
-    ]
+            for equipo in grupo["equipos"]:
+                if y < 70:
+                    y = nueva_pagina()
+                pdf.drawString(40, y, str(equipo.get_tipo_display() or "-")[:22])
+                pdf.drawString(145, y, str(equipo.marca or "-")[:12])
+                pdf.drawString(210, y, str(equipo.modelo or "-")[:12])
+                pdf.drawString(275, y, str(equipo.potencia or "-")[:12])
+                pdf.drawString(340, y, str(equipo.voltaje or "-")[:10])
+                pdf.drawString(405, y, str(equipo.cantidad or "-"))
+                pdf.drawString(480, y, str(equipo.get_estado_display() or "-")[:18])
+                y -= 14
+            y -= 12
 
-    for x, header in zip(columnas, headers):
-        pdf.drawString(x, y, header)
+        if grupo["tanques"]:
+            y = seccion("TANQUES", y)
+            pdf.setFont("Helvetica-Bold", 8)
+            columnas = [40, 180, 255, 330, 430]
+            headers = ["Tipo", "Material", "Capacidad", "Ubicacion", "Cantidad"]
+            for x, header in zip(columnas, headers):
+                pdf.drawString(x, y, header)
+            y -= 10
+            pdf.line(40, y, width - 40, y)
+            y -= 12
+            pdf.setFont("Helvetica", 8)
 
-    y -= 10
-    pdf.line(40, y, width - 40, y)
-    y -= 12
+            for tanque in grupo["tanques"]:
+                if y < 70:
+                    y = nueva_pagina()
+                pdf.drawString(40, y, str(tanque.get_tipo_tanque_display() or "-")[:28])
+                pdf.drawString(180, y, str(tanque.material or "-")[:14])
+                pdf.drawString(255, y, str(tanque.capacidad or "-")[:14])
+                pdf.drawString(330, y, str(tanque.ubicacion or "-")[:18])
+                pdf.drawString(430, y, str(tanque.cantidad or "-"))
+                y -= 14
+            y -= 12
 
-    pdf.setFont("Helvetica", 8)
+        if grupo["distribuciones"]:
+            y = seccion("DISTRIBUCION", y)
+            pdf.setFont("Helvetica-Bold", 8)
+            columnas = [40, 110, 210, 330]
+            headers = ["Pisos", "Presion", "Gravedad", "Observaciones"]
+            for x, header in zip(columnas, headers):
+                pdf.drawString(x, y, header)
+            y -= 10
+            pdf.line(40, y, width - 40, y)
+            y -= 12
+            pdf.setFont("Helvetica", 8)
 
-    for tanque in tanques:
-        if y < 70:
-            y = nueva_pagina()
+            for distribucion in grupo["distribuciones"]:
+                if y < 70:
+                    y = nueva_pagina()
+                pdf.drawString(40, y, str(distribucion.cantidad_pisos or "-"))
+                pdf.drawString(
+                    110, y,
+                    f"{distribucion.presion_desde or '-'} - "
+                    f"{distribucion.presion_hasta or '-'}",
+                )
+                pdf.drawString(
+                    210, y,
+                    f"{distribucion.gravedad_desde or '-'} - "
+                    f"{distribucion.gravedad_hasta or '-'}",
+                )
+                pdf.drawString(
+                    330, y,
+                    str(distribucion.observaciones or "-")[:38],
+                )
+                y -= 14
+            y -= 12
 
-        pdf.drawString(
-            40,
-            y,
-            str(tanque.get_tipo_tanque_display() or "-")[:28],
-        )
-        pdf.drawString(
-            180,
-            y,
-            str(tanque.material or "-")[:14],
-        )
-        pdf.drawString(
-            255,
-            y,
-            str(tanque.capacidad or "-")[:14],
-        )
-        pdf.drawString(
-            330,
-            y,
-            str(tanque.ubicacion or "-")[:18],
-        )
-        pdf.drawString(
-            430,
-            y,
-            str(tanque.cantidad or "-"),
-        )
-        y -= 14
-
-    y -= 18
-    y = seccion("DISTRIBUCIÓN", y)
-
-    pdf.setFont("Helvetica-Bold", 8)
-    columnas = [40, 110, 190, 290, 400]
-    headers = [
-        "Torre",
-        "Pisos",
-        "Presión",
-        "Gravedad",
-        "Observaciones",
-    ]
-
-    for x, header in zip(columnas, headers):
-        pdf.drawString(x, y, header)
-
-    y -= 10
-    pdf.line(40, y, width - 40, y)
-    y -= 12
-
-    pdf.setFont("Helvetica", 8)
-
-    for distribucion in distribuciones:
-        if y < 70:
-            y = nueva_pagina()
-
-        pdf.drawString(
-            40,
-            y,
-            str(distribucion.torre or "-")[:10],
-        )
-        pdf.drawString(
-            110,
-            y,
-            str(distribucion.cantidad_pisos or "-"),
-        )
-        pdf.drawString(
-            190,
-            y,
-            f"{distribucion.presion_desde or '-'} - "
-            f"{distribucion.presion_hasta or '-'}",
-        )
-        pdf.drawString(
-            290,
-            y,
-            f"{distribucion.gravedad_desde or '-'} - "
-            f"{distribucion.gravedad_hasta or '-'}",
-        )
-        pdf.drawString(
-            400,
-            y,
-            str(distribucion.observaciones or "-")[:26],
-        )
-        y -= 14
+        y -= 8
 
     pie()
     pdf.save()
