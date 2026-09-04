@@ -1,3 +1,6 @@
+from django.db.models import DateField
+from django.db.models.functions import Coalesce, TruncDate
+from .sectores import filtrar_sector, sectores_en
 from django.db import transaction
 from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
@@ -2713,6 +2716,10 @@ def centro_operaciones(request):
         "tecnico",
     ).order_by("-fecha_llamada")
 
+    sectores_filtro = sectores_en(servicios)
+    filtro_sector = request.GET.get("sector", "").strip()
+    servicios = filtrar_sector(servicios, filtro_sector).select_related("sector")
+
     emergencias_activas = servicios.filter(
         tipo_servicio="EMERGENCIA",
     ).exclude(
@@ -2778,6 +2785,7 @@ def centro_operaciones(request):
     ).distinct().count()
 
     context = {
+        "sectores_filtro": sectores_filtro, "filtro_sector": filtro_sector,
         # Indicadores ejecutivos
         "emergencias_activas": emergencias_activas.count(),
         "correctivos_pendientes": correctivos_pendientes.count(),
@@ -2924,6 +2932,13 @@ def lista_bitacora(request):
         .all()
     )
 
+    registros = registros.select_related("origen_keep").annotate(
+        fecha_consulta=Coalesce("origen_keep__fecha_original", TruncDate("creado"), output_field=DateField())
+    )
+    sectores_filtro = sectores_en(registros)
+    filtro_sector = request.GET.get("sector", "").strip()
+    registros = filtrar_sector(registros, filtro_sector).select_related("sector")
+
     estado = request.GET.get("estado", "").strip()
     tipo = request.GET.get("tipo", "").strip()
     prioridad = request.GET.get("prioridad", "").strip()
@@ -2988,13 +3003,13 @@ def lista_bitacora(request):
     if errores_fechas:
         registros = registros.none()
     else:
-        # Django aplica la zona horaria activa al extraer la fecha de creado.
+        # Keep conserva la fecha del título; las notas normales usan la fecha de registro.
         if desde:
-            registros = registros.filter(creado__date__gte=desde)
+            registros = registros.filter(fecha_consulta__gte=desde)
         if hasta:
-            registros = registros.filter(creado__date__lte=hasta)
+            registros = registros.filter(fecha_consulta__lte=hasta)
         if desde or hasta:
-            registros = registros.order_by("-creado", "-pk")
+            registros = registros.order_by("-fecha_consulta", "-creado", "-pk")
 
     total = registros.count()
 
@@ -3059,6 +3074,7 @@ def lista_bitacora(request):
         {
             "puede_gestionar_bitacora": puede_gestionar_bitacora(request.user),
             "registros": registros,
+            "sectores_filtro": sectores_filtro, "filtro_sector": filtro_sector,
             "total": total,
             "pendientes": pendientes,
             "seguimiento": seguimiento,
@@ -3757,11 +3773,21 @@ def gestionar_servicio(request, servicio_id):
         form = GestionServicioForm(
             request.POST,
             instance=servicio,
+            puede_cambiar_sector=es_coordinador_operativo(request.user),
         )
 
         if form.is_valid():
 
+            sector_anterior = servicio.sector_id
+            # ModelForm ya contiene los valores validados; recuperar el anterior de la BD.
+            sector_anterior = Emergencia.objects.get(pk=servicio.pk).sector_id
             servicio = form.save()
+            if sector_anterior != servicio.sector_id:
+                from .models import SectorCliente
+                anterior = SectorCliente.objects.filter(pk=sector_anterior).first()
+                registrar_evento(servicio, "Sector actualizado",
+                    f"Antes: {anterior or 'Sin sector / por identificar'}. Después: {servicio.sector or 'Sin sector / por identificar'}.",
+                    request.user.username, "")
 
             registrar_evento(
                 servicio,
@@ -3785,6 +3811,7 @@ def gestionar_servicio(request, servicio_id):
     else:
         form = GestionServicioForm(
             instance=servicio,
+            puede_cambiar_sector=es_coordinador_operativo(request.user),
         )
 
     return render(

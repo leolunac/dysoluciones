@@ -9,7 +9,7 @@ CAMPOS = {
     "tecnico": "Técnico relacionado", "servicio": "Caso relacionado",
     "actividad": "Actividad relacionada", "responsable": "Responsable",
     "prioridad": "Prioridad", "estado": "Estado", "fecha_compromiso": "Compromiso",
-    "fecha_cierre": "Fecha de cierre",
+    "fecha_cierre": "Fecha de cierre", "sector": "Sector",
 }
 
 

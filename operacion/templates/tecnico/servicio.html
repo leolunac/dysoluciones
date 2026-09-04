@@ -199,7 +199,7 @@
             <div>
                 <div class="label">Cliente / Unidad</div>
                 <div class="value">
-                    {{ servicio.cliente.nombre }}
+                    {{ servicio.cliente.nombre }} <small>· Sector: {{ servicio.sector.nombre|default:"Sin sector / por identificar" }}</small>
                 </div>
             </div>
 

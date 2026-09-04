@@ -159,7 +159,7 @@ th{
 {% for s in servicios_sin_asignar %}
 <tr>
     <td>{{ s.numero_caso|default:s.id }}</td>
-    <td>{{ s.cliente.nombre }}</td>
+    <td>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></td>
     <td>{{ s.get_tipo_servicio_display }}</td>
     <td>{{ s.get_prioridad_display }}</td>
     <td>{{ s.descripcion_falla|truncatechars:70 }}</td>
@@ -200,7 +200,7 @@ th{
 {% for s in servicios_revision %}
 <tr>
     <td>{{ s.fecha_llamada|date:"d/m/Y H:i" }}</td>
-    <td>{{ s.cliente.nombre }}</td>
+    <td>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></td>
     <td>{{ s.tecnico|default:"Sin asignar" }}</td>
     <td>{{ s.get_prioridad_display }}</td>
     <td>

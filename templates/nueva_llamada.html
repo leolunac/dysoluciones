@@ -68,6 +68,12 @@ input, select, textarea{
 <form method="post">
     {% csrf_token %}
 
+    <div id="buscador-clientes" hidden style="margin-bottom:16px;padding:12px;background:#eef5fb;border-radius:8px;">
+        <label for="buscar-cliente">Buscar cliente</label>
+        <input type="search" id="buscar-cliente" placeholder="Escriba parte del nombre: Torres del Río" autocomplete="off" aria-controls="id_cliente" aria-describedby="resultado-clientes" style="box-sizing:border-box;">
+        <p id="resultado-clientes" role="status" aria-live="polite" style="font-size:13px;margin-bottom:0;">Escriba y después seleccione el cliente en la lista.</p>
+    </div>
+
     {{ form.as_p }}
 
     <button class="btn" type="submit">
@@ -80,6 +86,46 @@ input, select, textarea{
 </div>
 
 </div>
+
+{% include "sectores/selector.html" %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cliente = document.getElementById("id_cliente");
+    const buscar = document.getElementById("buscar-cliente");
+    const estado = document.getElementById("resultado-clientes");
+    if (!cliente || !buscar) return;
+    const opciones = [...cliente.options].map(o => ({valor:o.value, texto:o.text, deshabilitada:o.disabled}));
+    const normalizar = texto => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    function filtrar() {
+        const actual = cliente.value;
+        const palabras = normalizar(buscar.value).split(" ").filter(Boolean);
+        const coincidencias = opciones.filter(o => o.valor && palabras.every(p => normalizar(o.texto).includes(p)));
+        const vacia = opciones.find(o => !o.valor);
+        const seleccionada = opciones.find(o => o.valor === actual && o.valor);
+        const conservar = seleccionada && !coincidencias.some(o => o.valor === actual);
+        const fragmento = document.createDocumentFragment();
+        if (vacia) fragmento.appendChild(new Option(vacia.texto, ""));
+        if (conservar) fragmento.appendChild(new Option(seleccionada.texto + " (selección actual)", actual));
+        for (const opcion of coincidencias) {
+            const nodo = new Option(opcion.texto, opcion.valor);
+            nodo.disabled = opcion.deshabilitada;
+            fragmento.appendChild(nodo);
+        }
+        cliente.replaceChildren(fragmento);
+        cliente.value = actual;
+        estado.textContent = (coincidencias.length ? coincidencias.length + " coincidencia(s). Seleccione el cliente en la lista de abajo." : "No hay coincidencias. Pruebe otra parte del nombre.")
+            + (conservar ? " Se conserva el cliente actual hasta que seleccione otro." : "");
+    }
+    cliente.addEventListener("change", filtrar);
+    buscar.addEventListener("input", filtrar);
+    buscar.addEventListener("keydown", event => {
+        if (event.key === "Enter") { event.preventDefault(); cliente.focus(); }
+    });
+    document.getElementById("buscador-clientes").hidden = false;
+    filtrar();
+});
+</script>
 
 </body>
 </html>

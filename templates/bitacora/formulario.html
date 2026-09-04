@@ -107,6 +107,7 @@ dialog h2{margin-top:0;color:#073b6f}
 <p class="hint">Complete esta sección cuando la novedad corresponda a una unidad o atención.</p>
 <div class="grid">
 <div class="field"><label for="{{ form.cliente.id_for_label }}">Unidad o cliente</label>{{ form.cliente }}</div>
+<div class="field"><label for="{{ form.sector.id_for_label }}">Sector</label>{{ form.sector }}<small class="hint">Oficinas, Viviendas u otro sector configurado para esta unidad.</small></div>
 <div class="field"><label for="{{ form.servicio.id_for_label }}">Caso 7x24 relacionado</label>{{ form.servicio }}<small class="hint">Puede quedar vacío si no corresponde a un caso 7x24.</small></div>
 <div class="field"><label for="{{ form.actividad.id_for_label }}">Actividad técnica relacionada</label>{{ form.actividad }}<small class="hint">Seleccione una actividad para ver abajo lo que hizo el técnico.</small></div>
 <div class="field"><label for="{{ form.tecnico.id_for_label }}">Técnico relacionado</label>{{ form.tecnico }}<small class="hint">Se completa desde la actividad. Para asignarle acceso al técnico, seleccione también su usuario en Responsable.</small></div>
@@ -480,7 +481,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ["tipo", "Tipo"], ["prioridad", "Prioridad"],
             ["responsable", "Responsable"], ["estado", "Estado"],
             ["accion_pendiente", "Acción pendiente"], ["fecha_compromiso", "Fecha del compromiso"],
-            ["cliente", "Unidad / cliente"], ["servicio", "Caso 7x24"],
+            ["cliente", "Unidad / cliente"], ["sector", "Sector"], ["servicio", "Caso 7x24"],
             ["actividad", "Actividad técnica"], ["tecnico", "Técnico relacionado"]
         ];
         const lines = [];
@@ -574,5 +575,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 </script>
+{% include "sectores/selector.html" %}
 </body>
 </html>

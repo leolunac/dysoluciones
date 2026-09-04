@@ -163,6 +163,7 @@ input, select, textarea{
                     <p><strong>Estado:</strong> <span class="badge {{ servicio.estado }}">{{ servicio.get_estado_display }}</span></p>
                     <p><strong>Fecha llamada:</strong> {{ servicio.fecha_llamada|date:"d/m/Y H:i" }}</p>
                     <p><strong>Cliente:</strong> {{ servicio.cliente.nombre }}</p>
+<p><strong>Sector:</strong> {{ servicio.sector.nombre|default:"Sin sector / por identificar" }}</p>
                     <p><strong>Contrato:</strong> {{ servicio.cliente.get_tipo_contrato_display }}</p>
                     <p><strong>Prioridad:</strong> {{ servicio.get_prioridad_display }}</p>
                     <p><strong>Persona que llama:</strong> {{ servicio.persona_llama|default:"No registrado" }}</p>
@@ -184,6 +185,10 @@ input, select, textarea{
 
                 <form method="post">
                     {% csrf_token %}
+                    {{ form.errors }}
+                    <label for="{{ form.sector.id_for_label }}">Sector del servicio</label>
+                    {{ form.sector }}
+                    <small>El coordinador puede identificar el sector del servicio.</small>
 
                     <label>Estado del servicio</label>
 {{ form.estado }}
@@ -226,6 +231,7 @@ input, select, textarea{
 
 <button class="btn" type="submit">
     💾 Guardar seguimiento
+</button>
     <hr>
 
 <h3>🚦 Seguimiento del Técnico</h3>
@@ -249,7 +255,6 @@ input, select, textarea{
    href="{% url 'accion_servicio' servicio.id 'terminado' %}">
 ✅ Terminé
 </a>
-</button>
 
 <a class="btn btn-secondary" href="/centro-operaciones/">
     ⬅ Volver al Centro de Control

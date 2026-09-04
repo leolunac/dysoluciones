@@ -307,7 +307,7 @@
 
                 <div>
                     <div class="service-title">
-                        {{ servicio.cliente.nombre }}
+                        {{ servicio.cliente.nombre }} <small>· Sector: {{ servicio.sector.nombre|default:"Sin sector / por identificar" }}</small>
                     </div>
 
                     <div class="service-meta">
@@ -395,7 +395,7 @@
 
                 <div>
                     <div class="service-title">
-                        {{ preventivo.cliente.nombre }}
+                        {{ preventivo.cliente.nombre }} <small>· Sector: {{ preventivo.sector.nombre|default:"Sin sector / por identificar" }}</small>
                     </div>
 
                     <div class="service-meta">

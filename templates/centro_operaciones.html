@@ -284,10 +284,37 @@ body{
         justify-content:center;
     }
 }
+
+/* Filtro integrado dentro del Centro de Operaciones. */
+.sector-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:end;
+    gap:12px 18px;
+    background:white;
+    padding:18px;
+    margin:0 0 18px;
+    border:1px solid #dce5ef;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+}
+.sector-toolbar .field{min-width:0;}
+.sector-toolbar label{display:block;font-size:14px;font-weight:bold;color:#003366;margin-bottom:7px;}
+.sector-toolbar select{display:block;width:100%;min-width:0;max-width:100%;min-height:42px;padding:10px;border:1px solid #bdcddd;border-radius:8px;background:white;font:14px Arial,sans-serif;color:#1f2937;}
+.sector-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.sector-actions .btn{display:inline-flex;align-items:center;justify-content:center;margin:0;min-height:42px;border:1px solid #003366;cursor:pointer;font:14px Arial,sans-serif;}
+.sector-help{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;color:#536579;}
+@media(max-width:760px){
+    .sector-toolbar{grid-template-columns:minmax(0,1fr);padding:15px;}
+    .sector-actions .btn{flex:1;}
+}
+
 </style>
 </head>
 
 <body>
+
+
 
 <div class="container">
 
@@ -306,6 +333,16 @@ body{
             <a class="btn btn-light" href="/">Inicio</a>
         </div>
     </div>
+
+    <form method="get" class="sector-toolbar" aria-label="Filtrar servicios por sector">
+        {% include "sectores/filtro.html" %}
+        <div class="sector-actions">
+            <button class="btn" type="submit">Filtrar por sector</button>
+            <a class="btn btn-light" href="{% url 'centro_operaciones' %}">Ver consolidado</a>
+        </div>
+        <p class="sector-help">Los servicios, bandejas e indicadores de servicios corresponden al sector seleccionado.</p>
+    </form>
+
     <div class="grid">
 
     <div class="kpi-card pendiente">
@@ -458,7 +495,7 @@ body{
         {% for s in bandeja_no_conforme %}
         <div class="servicio-card" style="border-top:5px solid #dc2626;">
             <h3>🔴 Cliente no conforme</h3>
-            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p><strong>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></strong></p>
             <p>Servicio #{{ s.id }}</p>
             <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
             <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Abrir caso</a>
@@ -468,7 +505,7 @@ body{
         {% for s in bandeja_regreso %}
         <div class="servicio-card" style="border-top:5px solid #2563eb;">
             <h3>🔵 Requiere regreso</h3>
-            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p><strong>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></strong></p>
             <p>Servicio #{{ s.id }}</p>
             <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
             <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Programar / revisar</a>
@@ -478,7 +515,7 @@ body{
         {% for s in bandeja_cotizacion %}
         <div class="servicio-card" style="border-top:5px solid #f59e0b;">
             <h3>🟡 Requiere cotización</h3>
-            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p><strong>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></strong></p>
             <p>Servicio #{{ s.id }}</p>
             <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
             <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Elaborar cotización</a>
@@ -488,7 +525,7 @@ body{
         {% for s in bandeja_llamar_cliente %}
         <div class="servicio-card" style="border-top:5px solid #16a34a;">
             <h3>☎ Llamar cliente</h3>
-            <p><strong>{{ s.cliente.nombre }}</strong></p>
+            <p><strong>{{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small></strong></p>
             <p>Servicio #{{ s.id }}</p>
             <p>{{ s.descripcion_falla|truncatechars:90 }}</p>
             <a class="action action-primary" href="/servicio/{{ s.id }}/gestionar/">Registrar validación</a>
@@ -524,7 +561,7 @@ body{
             </div>
 
             <div class="cliente">
-                📍 {{ s.cliente.nombre }}
+                📍 {{ s.cliente.nombre }} <small>· Sector: {{ s.sector.nombre|default:"Sin sector / por identificar" }}</small>
             </div>
 
             <div class="info">

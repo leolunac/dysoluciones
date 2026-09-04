@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django import forms
 from .permisos_bitacora import responsables_permitidos
+from .sectores import FormularioSectorMixin
 
 from .models import (
     Emergencia,
@@ -16,11 +17,12 @@ from .models import (
     RevisionTanquePreventivo,
 )
 
-class NuevaLlamadaForm(forms.ModelForm):
+class NuevaLlamadaForm(FormularioSectorMixin, forms.ModelForm):
     class Meta:
         model = Emergencia
         fields = [
             "cliente",
+            "sector",
             "tipo_servicio",
             "persona_llama",
             "telefono_llama",
@@ -43,10 +45,11 @@ class NuevaLlamadaForm(forms.ModelForm):
         return servicio
 
 
-class GestionServicioForm(forms.ModelForm):
+class GestionServicioForm(FormularioSectorMixin, forms.ModelForm):
     class Meta:
         model = Emergencia
         fields = [
+            "sector",
             "estado",
             "fecha_atencion",
             "diagnostico",
@@ -191,7 +194,7 @@ class LevantamientoEquipoForm(forms.ModelForm):
                 )
 
         return cleaned_data
-class BitacoraOperativaForm(forms.ModelForm):
+class BitacoraOperativaForm(FormularioSectorMixin, forms.ModelForm):
 
     class Meta:
         model = BitacoraOperativa
@@ -203,6 +206,7 @@ class BitacoraOperativaForm(forms.ModelForm):
             "descripcion",
             "accion_pendiente",
             "cliente",
+            "sector",
             "tecnico",
             "servicio",
             "actividad",
@@ -287,6 +291,8 @@ class BitacoraOperativaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance.estado != "IMPORTADO":
+            self.fields["estado"].choices = [(valor, etiqueta) for valor, etiqueta in BitacoraOperativa.ESTADO if valor != "IMPORTADO"]
         self.fields["responsable"].queryset = responsables_permitidos(
             self.fields["responsable"].queryset
         )
@@ -944,5 +950,5 @@ class SeguimientoBitacoraForm(forms.Form):
     )
     estado = forms.ChoiceField(
         label="Estado después del seguimiento", required=False,
-        choices=[("", "Mantener estado actual")] + BitacoraOperativa.ESTADO,
+        choices=[("", "Mantener estado actual")] + [(valor, etiqueta) for valor, etiqueta in BitacoraOperativa.ESTADO if valor != "IMPORTADO"],
     )

@@ -1,3 +1,4 @@
+from .models import SectorCliente
 from .models import AdjuntoBitacora
 from django.urls import reverse
 from django.utils.html import format_html
@@ -271,6 +272,7 @@ class EmergenciaAdmin(admin.ModelAdmin):
     )
     search_fields = ("cliente__nombre", "descripcion_falla")
     list_filter = (
+        "sector",
         "estado",
         "prioridad",
         "es_nocturna",
@@ -547,6 +549,7 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        "sector",
         "tipo",
         "prioridad",
         "estado",
@@ -598,6 +601,7 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "cliente",
+                    "sector",
                     "tecnico",
                     "servicio",
                     "responsable",
@@ -731,6 +735,19 @@ class AdjuntoBitacoraAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(SectorCliente)
+class SectorClienteAdmin(admin.ModelAdmin):
+    list_display = ("cliente", "nombre")
+    search_fields = ("cliente__nombre", "nombre")
+    list_filter = ("cliente",)
+
+    def get_readonly_fields(self, request, obj=None):
+        return ("cliente", "nombre") if obj else ()
 
     def has_delete_permission(self, request, obj=None):
         return False

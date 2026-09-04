@@ -1,0 +1,8 @@
+<div class="field">
+<label for="filtro-sector">Sector del cliente</label>
+<select name="sector" id="filtro-sector">
+<option value="">Todos los sectores (consolidado)</option>
+<option value="sin_sector"{% if filtro_sector == "sin_sector" %} selected{% endif %}>Sin sector / por identificar</option>
+{% for opcion in sectores_filtro %}<option value="{{ opcion.pk }}"{% if filtro_sector == opcion.pk|stringformat:"s" %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+</select>
+</div>

@@ -1,0 +1,19 @@
+{{ form.sectores_disponibles|json_script:"sectores-del-formulario" }}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cliente = document.getElementById("id_cliente");
+    const sector = document.getElementById("id_sector");
+    if (!cliente || !sector) return;
+    const datos = JSON.parse(document.getElementById("sectores-del-formulario").textContent);
+    function actualizar(inicial) {
+        const anterior = inicial ? sector.value : "";
+        sector.replaceChildren(new Option("Sin sector / por identificar", ""));
+        for (const item of datos) if (String(item.cliente_id) === cliente.value) {
+            sector.add(new Option(item.nombre, String(item.id)));
+        }
+        if ([...sector.options].some(o => o.value === anterior)) sector.value = anterior;
+    }
+    cliente.addEventListener("change", () => actualizar(false));
+    actualizar(true);
+});
+</script>

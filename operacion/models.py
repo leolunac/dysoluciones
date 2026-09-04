@@ -1,5 +1,7 @@
 import uuid
 from django.db import models
+from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower, Trim
 from django.utils import timezone
 from datetime import time
 from decimal import Decimal
@@ -318,7 +320,46 @@ class Tecnico(models.Model):
 # EMERGENCIA / SERVICIO 7X24
 # =========================
 
+class SectorCliente(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="sectores")
+    nombre = models.CharField(max_length=80)
+
+    class Meta:
+        ordering = ("cliente__nombre", "nombre", "pk")
+        verbose_name = "Sector del cliente"
+        verbose_name_plural = "Sectores de clientes"
+        constraints = [models.UniqueConstraint(Lower(Trim("nombre")), "cliente", name="sector_cliente_nombre_unico")]
+
+    def clean(self):
+        super().clean()
+        self.nombre = self.nombre.strip()
+        if not self.nombre:
+            raise ValidationError({"nombre": "Escriba el nombre del sector."})
+        if self.pk:
+            previo = type(self).objects.filter(pk=self.pk).values("cliente_id", "nombre").first()
+            if previo and (previo["cliente_id"] != self.cliente_id or previo["nombre"] != self.nombre):
+                raise ValidationError("El cliente y el nombre de un sector guardado no se pueden cambiar; conservan la referencia histórica.")
+
+    def __str__(self):
+        return f"{self.cliente.nombre} — {self.nombre}"
+
+
+def validar_sector_cliente(registro):
+    if registro.sector_id:
+        cliente_sector = SectorCliente.objects.filter(pk=registro.sector_id).values_list("cliente_id", flat=True).first()
+        if cliente_sector is None or cliente_sector != registro.cliente_id:
+            raise ValidationError({"sector": "Seleccione un sector del cliente de este registro."})
+
+
 class Emergencia(models.Model):
+    sector = models.ForeignKey(SectorCliente, on_delete=models.PROTECT, null=True, blank=True, related_name="servicios")
+
+    def clean(self):
+        super().clean()
+        validar_sector_cliente(self)
+        if self.pk and self.bitacoras.exclude(sector_id=None).exclude(sector_id=self.sector_id).exists():
+            raise ValidationError({"sector": "Hay novedades relacionadas con otro sector. Revise sus vínculos antes de cambiar el sector del servicio."})
+
 
     ESTADO = [
         ('PENDIENTE', 'Pendiente'),
@@ -865,6 +906,21 @@ class EventoServicio(models.Model):
 # =========================
 
 class BitacoraOperativa(models.Model):
+    sector = models.ForeignKey(SectorCliente, on_delete=models.PROTECT, null=True, blank=True, related_name="bitacoras")
+
+    def clean(self):
+        super().clean()
+        validar_sector_cliente(self)
+        if self.sector_id:
+            casos = []
+            if self.servicio_id:
+                casos.append(self.servicio)
+            if self.actividad_id and self.actividad.servicio_id:
+                casos.append(self.actividad.servicio)
+            for caso in casos:
+                if caso.cliente_id != self.cliente_id or (caso.sector_id and caso.sector_id != self.sector_id):
+                    raise ValidationError({"sector": "El sector debe coincidir con el cliente y sector del servicio relacionado."})
+
 
     TIPO = [
         ("ACTIVIDAD_TECNICA", "Actividad técnica"),
@@ -890,6 +946,7 @@ class BitacoraOperativa(models.Model):
         ("PENDIENTE", "Pendiente"),
         ("EN_SEGUIMIENTO", "En seguimiento"),
         ("CERRADO", "Cerrado"),
+        ("IMPORTADO", "Importado / por revisar"),
     ]
 
     titulo = models.CharField(
@@ -1807,3 +1864,27 @@ class AdjuntoBitacora(models.Model):
 
     def __str__(self):
         return self.nombre_original
+
+
+class OrigenNotaKeep(models.Model):
+    """Origen conservado de una novedad importada; una entrada por día y referencia."""
+    bitacora = models.OneToOneField(BitacoraOperativa, on_delete=models.PROTECT, related_name="origen_keep")
+    clave = models.CharField(max_length=64, unique=True)
+    huella_texto = models.CharField(max_length=64)
+    fecha_original = models.DateField()
+    referencia_original = models.CharField(max_length=200)
+    archivo_original = models.CharField(max_length=500)
+    texto_original = models.TextField()
+    nota_original = models.JSONField()
+    posiciones = models.JSONField()
+    vinculo_importado = models.JSONField()
+    lote_sha256 = models.CharField(max_length=64)
+    importado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Origen de nota Keep"
+        verbose_name_plural = "Orígenes de notas Keep"
+        ordering = ("fecha_original", "pk")
+
+    def __str__(self):
+        return f"Keep {self.fecha_original}: {self.referencia_original}"

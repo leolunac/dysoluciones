@@ -294,7 +294,8 @@
         .filter-actions .btn:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
         @media(max-width:900px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filters .field{grid-column:span 1}.filter-actions{grid-column:1/-1}}
         @media(max-width:520px){.container{padding:12px}.filters{grid-template-columns:minmax(0,1fr)}.cards{grid-template-columns:minmax(0,1fr)}.brand{flex-wrap:wrap}.brand h1{font-size:23px}}
-    </style>
+    .IMPORTADO{background:#e8effa;color:#264c7a;}
+</style>
 </head>
 
 <body>
@@ -385,6 +386,7 @@
         </div>
         {% endif %}
         <form method="get" class="filters">
+{% include "sectores/filtro.html" %}
 
             <div class="field">
                 <label for="filtro-buscar">Buscar</label>
@@ -460,7 +462,7 @@
             </div>
 
         </form>
-        <p class="date-help" id="ayuda-fechas">Las fechas corresponden al registro de la novedad. Para consultar un solo día, use la misma fecha en Desde y Hasta. Los indicadores muestran los resultados de los filtros aplicados.</p>
+        <p class="date-help" id="ayuda-fechas">En las notas importadas de Keep se usa la fecha original de la nota; en las demás, la fecha de registro. Para consultar un solo día, use la misma fecha en Desde y Hasta. Los indicadores muestran los resultados de los filtros aplicados.</p>
     </section>
 
     <section class="cards">
@@ -497,6 +499,8 @@
                     <div>
                         <strong>Unidad:</strong>
                         {{ registro.cliente|default:"Sin unidad" }}
+{% if registro.origen_keep %}<br><strong>Fecha original Keep:</strong> {{ registro.origen_keep.fecha_original|date:"d/m/Y" }}{% endif %}
+<br><strong>Sector:</strong> {{ registro.sector.nombre|default:"Sin sector / por identificar" }}
                     </div>
 
                     <div>
