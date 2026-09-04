@@ -132,6 +132,16 @@ class ImportacionKeepTests(TestCase):
             call_command('importar_muestra_keep',archivo=self.path,usuario=self.coord.username,aplicar=True,desarrollo=True,confirmar='0'*64,stdout=StringIO())
         self.assertFalse(BitacoraOperativa.objects.exists())
 
+    @override_settings(DEBUG=False)
+    def test_comando_produccion_requiere_doble_confirmacion(self):
+        _,_,_,firma=self.plan()
+        args=dict(archivo=self.path,usuario=self.coord.username,aplicar=True,produccion=True,confirmar=firma,stdout=StringIO())
+        with self.assertRaises(CommandError):
+            call_command('importar_muestra_keep',**args)
+        self.assertFalse(BitacoraOperativa.objects.exists())
+        call_command('importar_muestra_keep',confirmar_produccion='IMPORTAR-KEEP-PRODUCCION',**args)
+        self.assertEqual(BitacoraOperativa.objects.count(),1)
+
     def test_fecha_original_filtra_sin_cambiar_fecha_registro(self):
         self.importar();self.client.force_login(self.coord)
         BitacoraOperativa.objects.create(titulo='Actual',descripcion='Manual',creado_por=self.coord)

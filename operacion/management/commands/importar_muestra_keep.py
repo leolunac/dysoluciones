@@ -1,4 +1,4 @@
-"""Vista previa por defecto; importación explícita y confirmada solo en desarrollo."""
+"""Vista previa por defecto; importación con revisión y confirmación explícitas."""
 from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,14 +14,26 @@ class Command(BaseCommand):
         parser.add_argument('--archivo', type=Path, required=True)
         parser.add_argument('--usuario', required=True)
         parser.add_argument('--aplicar', action='store_true')
-        parser.add_argument('--desarrollo', action='store_true')
+        modo = parser.add_mutually_exclusive_group()
+        modo.add_argument('--desarrollo', action='store_true')
+        modo.add_argument('--produccion', action='store_true')
         parser.add_argument('--confirmar', default='')
+        parser.add_argument('--confirmar-produccion', default='')
 
     def handle(self, *args, **options):
         if options['aplicar']:
-            host=settings.DATABASES['default'].get('HOST','')
-            if not options['desarrollo'] or not settings.DEBUG or host not in ('',None,'localhost','127.0.0.1','::1'):
-                raise CommandError('Esta prueba requiere --desarrollo, DEBUG=True y una base de datos local.')
+            if options['desarrollo']:
+                host=settings.DATABASES['default'].get('HOST','')
+                if not settings.DEBUG or host not in ('',None,'localhost','127.0.0.1','::1'):
+                    raise CommandError('El modo de desarrollo requiere DEBUG=True y una base de datos local.')
+            elif options['produccion']:
+                if settings.DEBUG or options['confirmar_produccion'] != 'IMPORTAR-KEEP-PRODUCCION':
+                    raise CommandError(
+                        'El modo de producción requiere DEBUG=False y '
+                        '--confirmar-produccion IMPORTAR-KEEP-PRODUCCION.'
+                    )
+            else:
+                raise CommandError('Para aplicar indique --desarrollo o --produccion.')
             if len(options['confirmar'])!=64:
                 raise CommandError('Falta --confirmar con la huella que muestra la vista previa.')
         User=get_user_model()

@@ -142,3 +142,13 @@ class SectoresClienteTests(TestCase):
     def test_configuracion_bloqueada_fuera_desarrollo(self):
         with self.assertRaises(CommandError):
             call_command('configurar_sectores_cliente',cliente=self.rio.pk,nombre_exacto=self.rio.nombre,aplicar=True,desarrollo=True,stdout=StringIO())
+
+    @override_settings(DEBUG=False)
+    def test_configuracion_produccion_requiere_frase_exacta(self):
+        cliente=Cliente.objects.create(nombre='Cliente producción',tipo_contrato='SIN_CONTRATO',frecuencia_lavado=4)
+        args=dict(cliente=cliente.pk,nombre_exacto=cliente.nombre,aplicar=True,produccion=True,stdout=StringIO())
+        with self.assertRaises(CommandError):
+            call_command('configurar_sectores_cliente',**args)
+        self.assertEqual(cliente.sectores.count(),0)
+        call_command('configurar_sectores_cliente',confirmar_produccion=f'CONFIGURAR-SECTORES-{cliente.pk}',**args)
+        self.assertEqual(cliente.sectores.count(),2)

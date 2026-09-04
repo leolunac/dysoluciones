@@ -1,4 +1,4 @@
-"""Prepara Oficinas/Viviendas únicamente para el cliente confirmado en desarrollo."""
+"""Prepara Oficinas/Viviendas para un cliente confirmado y con aplicación explícita."""
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -12,11 +12,25 @@ class Command(BaseCommand):
         parser.add_argument('--cliente', type=int, required=True)
         parser.add_argument('--nombre-exacto', required=True)
         parser.add_argument('--aplicar', action='store_true')
-        parser.add_argument('--desarrollo', action='store_true')
+        modo = parser.add_mutually_exclusive_group()
+        modo.add_argument('--desarrollo', action='store_true')
+        modo.add_argument('--produccion', action='store_true')
+        parser.add_argument('--confirmar-produccion', default='')
 
     def handle(self, *args, **options):
-        if options['aplicar'] and (not options['desarrollo'] or not settings.DEBUG):
-            raise CommandError('Aplicación exclusiva para desarrollo: requiere --desarrollo y DEBUG=True.')
+        if options['aplicar']:
+            if options['desarrollo']:
+                if not settings.DEBUG:
+                    raise CommandError('El modo de desarrollo requiere DEBUG=True.')
+            elif options['produccion']:
+                esperado = f"CONFIGURAR-SECTORES-{options['cliente']}"
+                if settings.DEBUG or options['confirmar_produccion'] != esperado:
+                    raise CommandError(
+                        'El modo de producción requiere DEBUG=False y '
+                        f'--confirmar-produccion {esperado}.'
+                    )
+            else:
+                raise CommandError('Para aplicar indique --desarrollo o --produccion.')
         with transaction.atomic():
             try:
                 cliente = Cliente.objects.select_for_update().get(pk=options['cliente'])
