@@ -31,6 +31,24 @@ textarea{resize:vertical}
 .summary-item small{display:block;color:#64748b;font-weight:bold;margin-bottom:4px}
 .summary-box{margin-top:10px}.materials-list{margin:8px 0 0;padding-left:18px}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.field.full,.technical-summary{grid-column:auto}.summary-grid{grid-template-columns:1fr 1fr}.header{display:block;text-align:center}.header a{margin-top:14px}}
+.voice-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}
+.voice-controls [role="status"]{font-size:13px;flex:1;min-width:180px;color:#334155}
+.voice-notice{margin-bottom:10px;line-height:1.5}
+button:disabled{opacity:.55;cursor:not-allowed}
+.btn-light{border:1px solid #cbd5e1}
+.btn:focus-visible,summary:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
+textarea[readonly]{background:#f1f5f9}
+.provisional{background:#eaf5ff;border-left:4px solid #0b5fa5;padding:12px;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.operation-details{border:1px solid #dbe4ee;border-radius:12px;padding:16px;margin-top:8px}
+.operation-details summary{font-weight:bold;color:#073b6f;cursor:pointer}
+.operation-details[open] summary{margin-bottom:12px}
+dialog{border:0;border-radius:16px;padding:24px;width:min(680px,94vw);max-height:88vh;color:#1f2937;box-shadow:0 16px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(7,25,45,.6)}
+dialog h2{margin-top:0;color:#073b6f}
+#resumen-guardado dt{font-weight:bold;color:#334155;margin-top:14px}
+#resumen-guardado dd{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;padding-bottom:10px;border-bottom:1px solid #e2e8f0}
+#estado-formulario{color:#9a3412;font-weight:bold;line-height:1.5}
+@media(max-width:760px){.container{padding:14px}.form-card{padding:16px}.actions{flex-wrap:wrap}.actions .btn{flex:1;text-align:center}}
 </style>
 </head>
 <body>
@@ -38,34 +56,60 @@ textarea{resize:vertical}
 <header class="header">
 <div>
 <h1>{{ titulo_pagina }}</h1>
-<p>Seguimiento del coordinador conectado con la actividad realizada por el técnico.</p>
+<p>Escriba o dicte la novedad, revise el texto y confirme antes de guardar.</p>
 </div>
 <a href="{% url 'lista_bitacora' %}" class="btn btn-light">Volver a la bitácora</a>
 </header>
 
+{% if registro %}
+<section class="form-card">
+<p>Para agregar un avance sin reemplazar la descripción, abra <a href="{% url 'historial_bitacora' registro.id %}">el historial de seguimientos</a>. Las modificaciones guardadas aquí también quedarán registradas.</p>
+</section>
+{% endif %}
 <section class="form-card">
 {% if form.errors %}
 <div class="errors"><strong>Revise los campos indicados:</strong>{{ form.errors }}</div>
 {% endif %}
 
-<form method="post">
+<noscript><p class="errors">Active JavaScript para revisar y confirmar la novedad antes de guardarla.</p></noscript>
+<form method="post" id="form-bitacora" data-responsable-default="{% if registro %}Sin responsable{% else %}{{ request.user.username }}{% endif %}">
 {% csrf_token %}
 
-<h2 class="section-title">1. Seguimiento del coordinador</h2>
+<h2 class="section-title">Captura de novedad</h2>
 <div class="grid">
 <div class="field full"><label for="{{ form.titulo.id_for_label }}">Título</label>{{ form.titulo }}</div>
 <div class="field"><label for="{{ form.tipo.id_for_label }}">Tipo</label>{{ form.tipo }}</div>
 <div class="field"><label for="{{ form.prioridad.id_for_label }}">Prioridad</label>{{ form.prioridad }}</div>
-<div class="field full"><label for="{{ form.descripcion.id_for_label }}">Descripción / seguimiento</label>{{ form.descripcion }}</div>
+<div class="field full">
+<label for="{{ form.descripcion.id_for_label }}">Descripción / seguimiento</label>
+<div class="voice-controls">
+<button type="button" id="dictar" class="btn btn-primary" aria-pressed="false">Dictar</button>
+<button type="button" id="detener-dictado" class="btn btn-light" disabled>Detener</button>
+<span id="estado-dictado" role="status" aria-live="polite">Puede escribir o pulsar Dictar. Detenga el micrófono para corregir.</span>
+</div>
+<p class="hint voice-notice">Al activar el dictado, el navegador puede enviar el audio a su proveedor para transcribirlo. Puede requerir conexión a Internet. SIGOB guarda el texto cuando usted confirma.</p>
+{{ form.descripcion }}
+<div id="dictado-provisional" class="provisional" hidden><strong>Texto en reconocimiento:</strong> <span id="texto-provisional"></span></div>
+</div>
 <div class="field full"><label for="{{ form.accion_pendiente.id_for_label }}">Acción pendiente</label>{{ form.accion_pendiente }}</div>
 </div>
 
-<h2 class="section-title">2. Relación con la operación</h2>
+<h2 class="section-title">Responsable y compromiso</h2>
+<div class="grid">
+<div class="field"><label for="{{ form.responsable.id_for_label }}">Responsable / usuario asignado</label>{{ form.responsable }}<small class="hint">Para que un técnico vea la novedad, seleccione su usuario aquí.{% if not registro %} Si queda vacío, se asignará a su usuario.{% endif %}</small></div>
+<div class="field"><label for="{{ form.estado.id_for_label }}">Estado</label>{{ form.estado }}</div>
+<div class="field"><label for="{{ form.fecha_compromiso.id_for_label }}">Fecha y hora del compromiso</label>{{ form.fecha_compromiso }}</div>
+<p class="hint">La bitácora es interna. Los clientes no acceden a estas novedades.</p>
+</div>
+
+<details class="operation-details" id="relacion-operacion"{% if registro or form.errors %} open{% endif %}>
+<summary>Relacionar unidad, servicio o actividad (opcional)</summary>
+<p class="hint">Complete esta sección cuando la novedad corresponda a una unidad o atención.</p>
 <div class="grid">
 <div class="field"><label for="{{ form.cliente.id_for_label }}">Unidad o cliente</label>{{ form.cliente }}</div>
 <div class="field"><label for="{{ form.servicio.id_for_label }}">Caso 7x24 relacionado</label>{{ form.servicio }}<small class="hint">Puede quedar vacío si no corresponde a un caso 7x24.</small></div>
 <div class="field"><label for="{{ form.actividad.id_for_label }}">Actividad técnica relacionada</label>{{ form.actividad }}<small class="hint">Seleccione una actividad para ver abajo lo que hizo el técnico.</small></div>
-<div class="field"><label for="{{ form.tecnico.id_for_label }}">Técnico relacionado</label>{{ form.tecnico }}<small class="hint">Se completa automáticamente al seleccionar una actividad.</small></div>
+<div class="field"><label for="{{ form.tecnico.id_for_label }}">Técnico relacionado</label>{{ form.tecnico }}<small class="hint">Se completa desde la actividad. Para asignarle acceso al técnico, seleccione también su usuario en Responsable.</small></div>
 
 <div id="resumen_actividad" class="technical-summary">
 <h3>Resumen de la actividad del técnico</h3>
@@ -83,19 +127,23 @@ textarea{resize:vertical}
 </div>
 </div>
 
-<h2 class="section-title">3. Control del compromiso</h2>
-<div class="grid">
-<div class="field"><label for="{{ form.responsable.id_for_label }}">Responsable</label>{{ form.responsable }}</div>
-<div class="field"><label for="{{ form.estado.id_for_label }}">Estado</label>{{ form.estado }}</div>
-<div class="field"><label for="{{ form.fecha_compromiso.id_for_label }}">Fecha y hora del compromiso</label>{{ form.fecha_compromiso }}</div>
-<div class="field full checkbox-row">{{ form.visible_cliente }}<label for="{{ form.visible_cliente.id_for_label }}">Mostrar esta novedad en el portal del cliente</label></div>
-</div>
+</details>
 
 <div class="actions">
 <a href="{% url 'lista_bitacora' %}" class="btn btn-light">Cancelar</a>
-<button type="submit" class="btn btn-primary">Guardar novedad</button>
+<button type="submit" id="revisar-guardado" class="btn btn-primary" disabled>Revisar y guardar</button>
 </div>
+<p id="estado-formulario" role="status" aria-live="polite"></p>
 </form>
+<dialog id="revision-novedad" aria-labelledby="titulo-revision" aria-describedby="aviso-revision">
+<h2 id="titulo-revision" tabindex="-1" autofocus>Revise antes de guardar</h2>
+<p id="aviso-revision">Compruebe el texto y el responsable de esta novedad.</p>
+<dl id="resumen-guardado"></dl>
+<div class="actions">
+<button type="button" id="volver-corregir" class="btn btn-light">Volver a corregir</button>
+<button type="button" id="confirmar-guardado" class="btn btn-primary">Confirmar y guardar</button>
+</div>
+</dialog>
 </section>
 </div>
 
@@ -106,6 +154,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const actividadSelect = document.getElementById("id_actividad");
     const tecnicoSelect = document.getElementById("id_tecnico");
     const resumen = document.getElementById("resumen_actividad");
+    let casosVersion = 0;
+    let actividadesVersion = 0;
+    let detalleVersion = 0;
 
     function limpiarSelect(select, texto="---------") {
         if (!select) return;
@@ -117,13 +168,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function ocultarResumen() {
+        detalleVersion++;
+        delete resumen.dataset.loading;
         if (resumen) resumen.style.display="none";
     }
 
     function cargarCasos(clienteId, seleccionado="") {
         if (!servicioSelect) return;
+        const version = ++casosVersion;
         limpiarSelect(servicioSelect);
+        delete servicioSelect.dataset.loading;
         if (!clienteId) return;
+        servicioSelect.dataset.loading = "true";
 
         fetch("{% url 'casos_por_cliente' %}?cliente_id="+encodeURIComponent(clienteId))
         .then(r => {
@@ -131,6 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return r.json();
         })
         .then(data => {
+            if (version !== casosVersion) return;
             limpiarSelect(servicioSelect);
             data.casos.forEach(caso => {
                 const op=document.createElement("option");
@@ -140,14 +197,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 servicioSelect.appendChild(op);
             });
         })
-        .catch(e => console.error(e));
+        .catch(e => {
+            if (version !== casosVersion) return;
+            console.error(e);
+            document.getElementById("estado-formulario").textContent = "No se pudieron cargar los casos. Vuelva a seleccionar la unidad.";
+        })
+        .finally(() => { if (version === casosVersion) delete servicioSelect.dataset.loading; });
     }
 
     function cargarActividades(clienteId, servicioId="", seleccionada="") {
         if (!actividadSelect) return;
+        const version = ++actividadesVersion;
         limpiarSelect(actividadSelect);
         ocultarResumen();
+        delete actividadSelect.dataset.loading;
         if (!clienteId) return;
+        actividadSelect.dataset.loading = "true";
 
         let url="{% url 'actividades_por_cliente' %}?cliente_id="+encodeURIComponent(clienteId);
         if (servicioId) url += "&servicio_id="+encodeURIComponent(servicioId);
@@ -158,6 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return r.json();
         })
         .then(data => {
+            if (version !== actividadesVersion) return;
             limpiarSelect(actividadSelect);
             data.actividades.forEach(act => {
                 const op=document.createElement("option");
@@ -168,12 +234,19 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             if (seleccionada) cargarDetalleActividad(seleccionada);
         })
-        .catch(e => console.error(e));
+        .catch(e => {
+            if (version !== actividadesVersion) return;
+            console.error(e);
+            document.getElementById("estado-formulario").textContent = "No se pudieron cargar las actividades. Vuelva a seleccionar la unidad o el caso.";
+        })
+        .finally(() => { if (version === actividadesVersion) delete actividadSelect.dataset.loading; });
     }
 
     function cargarDetalleActividad(id) {
         if (!id) { ocultarResumen(); return; }
 
+        const version = ++detalleVersion;
+        resumen.dataset.loading = "true";
         const base="{% url 'detalle_actividad' 0 %}";
         const url=base.replace("/0/detalle/","/"+id+"/detalle/");
 
@@ -183,6 +256,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return r.json();
         })
         .then(data => {
+            if (version !== detalleVersion) return;
             const a=data.actividad;
 
             document.getElementById("resumen_tecnico").textContent=a.tecnico || "—";
@@ -218,9 +292,11 @@ document.addEventListener("DOMContentLoaded", function () {
             resumen.style.display="block";
         })
         .catch(e => {
+            if (version !== detalleVersion) return;
             console.error(e);
             ocultarResumen();
-        });
+        })
+        .finally(() => { if (version === detalleVersion) delete resumen.dataset.loading; });
     }
 
     if (clienteSelect) {
@@ -253,11 +329,250 @@ document.addEventListener("DOMContentLoaded", function () {
     const servicioInicial=servicioSelect ? servicioSelect.value : "";
     const actividadInicial=actividadSelect ? actividadSelect.value : "";
 
-    if (clienteInicial) {
-        cargarCasos(clienteInicial, servicioInicial);
-        cargarActividades(clienteInicial, servicioInicial, actividadInicial);
+    if (actividadInicial) {
+        cargarDetalleActividad(actividadInicial);
     }
 });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    "use strict";
+    const form = document.getElementById("form-bitacora");
+    const description = document.getElementById("id_descripcion");
+    const startButton = document.getElementById("dictar");
+    const stopButton = document.getElementById("detener-dictado");
+    const voiceStatus = document.getElementById("estado-dictado");
+    const provisionalBox = document.getElementById("dictado-provisional");
+    const provisionalText = document.getElementById("texto-provisional");
+    const reviewButton = document.getElementById("revisar-guardado");
+    const formStatus = document.getElementById("estado-formulario");
+    const dialog = document.getElementById("revision-novedad");
+    const summary = document.getElementById("resumen-guardado");
+    const confirmButton = document.getElementById("confirmar-guardado");
+    const editButton = document.getElementById("volver-corregir");
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let stopTimer = null;
+    let approval = null;
+    let saving = false;
+    let snapshot = "";
+
+    function appendText(text) {
+        text = text.trim();
+        if (!text) return;
+        const separator = description.value && !/\s$/.test(description.value) ? " " : "";
+        description.value += separator + text;
+        description.dispatchEvent(new Event("input", {bubbles:true}));
+    }
+
+    function resetVoice(session, message) {
+        if (recognition !== session) return;
+        clearTimeout(stopTimer);
+        // Preserve a last provisional phrase if the provider stops before finalizing it.
+        const provisional = provisionalText.textContent.trim();
+        if (provisional) appendText(provisional);
+        provisionalText.textContent = "";
+        provisionalBox.hidden = true;
+        recognition = null;
+        description.readOnly = false;
+        startButton.disabled = !Recognition;
+        stopButton.disabled = true;
+        startButton.setAttribute("aria-pressed", "false");
+        voiceStatus.textContent = message + (provisional ? " Revise especialmente la última frase: quedó provisional." : "");
+    }
+
+    if (!Recognition) {
+        startButton.disabled = true;
+        voiceStatus.textContent = "El dictado no está disponible en este navegador. Puede escribir y guardar normalmente.";
+    }
+
+    startButton.addEventListener("click", function () {
+        if (!Recognition || recognition || saving) return;
+        let session;
+        try {
+            session = new Recognition();
+            session.lang = "es-CO";
+            session.continuous = true;
+            session.interimResults = true;
+            session.maxAlternatives = 1;
+            recognition = session;
+            const finalized = new Set();
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            description.readOnly = true;
+            startButton.setAttribute("aria-pressed", "true");
+            provisionalText.textContent = "";
+            provisionalBox.hidden = true;
+            voiceStatus.textContent = "Activando micrófono… Autorice su uso si el navegador lo solicita.";
+            formStatus.textContent = "";
+            session.onstart = function () {
+                if (recognition === session) voiceStatus.textContent = "Escuchando. Hable; pulse Detener para corregir el texto.";
+            };
+            session.onresult = function (event) {
+                if (recognition !== session) return;
+                const interim = [];
+                for (let i = 0; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    const text = result[0].transcript;
+                    if (result.isFinal) {
+                        if (!finalized.has(i)) {
+                            appendText(text);
+                            finalized.add(i);
+                        }
+                    } else {
+                        interim.push(text);
+                    }
+                }
+                provisionalText.textContent = interim.join(" ").trim();
+                provisionalBox.hidden = !provisionalText.textContent;
+                description.scrollTop = description.scrollHeight;
+            };
+            session.onerror = function (event) {
+                if (recognition !== session) return;
+                const messages = {
+                    "not-allowed": "El micrófono no tiene permiso. Puede habilitarlo en el navegador o escribir el texto.",
+                    "service-not-allowed": "El servicio de dictado no está habilitado. Puede escribir el texto.",
+                    "audio-capture": "No se pudo acceder al micrófono. Revise su conexión y permisos.",
+                    "network": "No se pudo conectar con el servicio de voz. Puede corregir o completar el texto por teclado.",
+                    "no-speech": "No se detectó voz. Puede volver a dictar o escribir el texto.",
+                    "language-not-supported": "El servicio no admite el idioma configurado. Puede escribir el texto.",
+                    "aborted": "Dictado detenido. Revise el texto antes de guardar."
+                };
+                resetVoice(session, messages[event.error] || "El dictado se interrumpió. Revise el texto y continúe por teclado si lo necesita.");
+                try { session.abort(); } catch (_) { /* Session already ended. */ }
+            };
+            session.onend = function () {
+                resetVoice(session, "Dictado detenido. Puede corregir el texto o pulsar Dictar para continuar.");
+            };
+            session.start();
+        } catch (_) {
+            if (session && recognition === session) {
+                resetVoice(session, "No se pudo iniciar el dictado. Puede escribir el texto.");
+            } else {
+                voiceStatus.textContent = "No se pudo iniciar el dictado. Puede escribir el texto.";
+            }
+        }
+    });
+
+    stopButton.addEventListener("click", function () {
+        if (!recognition) return;
+        const session = recognition;
+        stopButton.disabled = true;
+        voiceStatus.textContent = "Terminando el dictado…";
+        // Do not leave the field locked if a provider never emits its end event.
+        stopTimer = setTimeout(function () {
+            if (recognition !== session) return;
+            resetVoice(session, "Dictado detenido. Revise el texto antes de guardar.");
+            try { session.abort(); } catch (_) { /* Already stopped. */ }
+        }, 5000);
+        try { session.stop(); }
+        catch (_) { resetVoice(session, "Dictado detenido. Revise el texto antes de guardar."); }
+    });
+
+    function formSnapshot() {
+        return JSON.stringify(Array.from(new FormData(form).entries()));
+    }
+
+    function buildSummary() {
+        summary.replaceChildren();
+        const fields = [
+            ["titulo", "Título"], ["descripcion", "Descripción / seguimiento"],
+            ["tipo", "Tipo"], ["prioridad", "Prioridad"],
+            ["responsable", "Responsable"], ["estado", "Estado"],
+            ["accion_pendiente", "Acción pendiente"], ["fecha_compromiso", "Fecha del compromiso"],
+            ["cliente", "Unidad / cliente"], ["servicio", "Caso 7x24"],
+            ["actividad", "Actividad técnica"], ["tecnico", "Técnico relacionado"]
+        ];
+        const lines = [];
+        fields.forEach(function (pair) {
+            const field = form.elements.namedItem(pair[0]);
+            if (!field) return;
+            let text = field.tagName === "SELECT" && field.value
+                ? field.options[field.selectedIndex].textContent : field.value;
+            if (!text && pair[0] === "responsable") text = form.dataset.responsableDefault || "Sin responsable";
+            if (!text) text = "Sin indicar";
+            const term = document.createElement("dt");
+            term.textContent = pair[1];
+            const value = document.createElement("dd");
+            value.textContent = text;
+            summary.append(term, value);
+            lines.push(pair[1] + ": " + text);
+        });
+        snapshot = formSnapshot();
+        return lines.join("\n\n");
+    }
+
+    form.addEventListener("invalid", function (event) {
+        const details = event.target.closest("details");
+        if (details) details.open = true;
+    }, true);
+
+    form.addEventListener("submit", function (event) {
+        if (saving) { event.preventDefault(); return; }
+        if (recognition) {
+            event.preventDefault();
+            approval = null;
+            formStatus.textContent = "Primero pulse Detener y revise el texto del dictado.";
+            stopButton.focus();
+            return;
+        }
+        if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); return; }
+        if (form.querySelector('[data-loading="true"]')) {
+            event.preventDefault();
+            approval = null;
+            formStatus.textContent = "Espere a que termine de cargar el caso o la actividad antes de revisar.";
+            return;
+        }
+        if (approval !== null && approval === formSnapshot()) {
+            saving = true;
+            reviewButton.disabled = true;
+            confirmButton.disabled = true;
+            formStatus.textContent = "Guardando novedad…";
+            return;
+        }
+        event.preventDefault();
+        approval = null;
+        formStatus.textContent = "";
+        const text = buildSummary();
+        if (typeof dialog.showModal === "function") {
+            if (!dialog.open) dialog.showModal();
+            document.getElementById("titulo-revision").focus({preventScroll:true});
+            dialog.scrollTop = 0;
+        } else if (window.confirm("Revise la novedad:\n\n" + text + "\n\n¿Confirma que desea guardarla?")) {
+            approval = snapshot;
+            form.requestSubmit();
+        }
+    });
+
+    confirmButton.addEventListener("click", function () {
+        if (snapshot !== formSnapshot()) {
+            buildSummary();
+            document.getElementById("aviso-revision").textContent = "Algunos datos cambiaron. Revise nuevamente antes de confirmar.";
+            return;
+        }
+        approval = snapshot;
+        dialog.close();
+        form.requestSubmit();
+    });
+    editButton.addEventListener("click", function () { approval = null; dialog.close(); description.focus(); });
+    dialog.addEventListener("cancel", function () { approval = null; });
+    window.addEventListener("pagehide", function () {
+        if (recognition) {
+            const session = recognition;
+            resetVoice(session, "Dictado detenido.");
+            try { session.abort(); } catch (_) { /* Already stopped. */ }
+        }
+    });
+    window.addEventListener("pageshow", function () {
+        saving = false;
+        approval = null;
+        reviewButton.disabled = false;
+        confirmButton.disabled = false;
+        if (formStatus.textContent === "Guardando novedad…") formStatus.textContent = "";
+    });
+    reviewButton.disabled = false;
+});
+
 </script>
 </body>
 </html>

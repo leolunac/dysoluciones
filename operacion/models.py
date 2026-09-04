@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils import timezone
 from datetime import time
@@ -1759,4 +1760,50 @@ class RevisionTanquePreventivo(models.Model):
                 else "Tanque"
             )
         )
-        return descripcion    
+        return descripcion
+
+class SeguimientoBitacora(models.Model):
+    """Entradas históricas; la aplicación solo permite agregarlas y consultarlas."""
+    TIPO = [("COMENTARIO", "Seguimiento"), ("EDICION", "Cambio de datos"), ("ADJUNTO", "Archivo adjunto")]
+    bitacora = models.ForeignKey(
+        BitacoraOperativa, on_delete=models.PROTECT, related_name="seguimientos",
+    )
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL,
+        related_name="seguimientos_bitacora", editable=False,
+    )
+    autor_nombre = models.CharField(max_length=254, editable=False)
+    creado = models.DateTimeField(auto_now_add=True)
+    tipo = models.CharField(max_length=12, choices=TIPO, default="COMENTARIO", editable=False)
+    comentario = models.TextField(blank=True, editable=False)
+    cambios = models.JSONField(default=list, blank=True, editable=False)
+    solicitud = models.UUIDField(null=True, unique=True, editable=False)
+
+    class Meta:
+        ordering = ("-creado", "-pk")
+        verbose_name = "Seguimiento de bitácora"
+        verbose_name_plural = "Seguimientos de bitácora"
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} #{self.pk} · {self.bitacora}"
+
+
+class AdjuntoBitacora(models.Model):
+    """Archivo privado asociado a una entrada del historial de la novedad."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seguimiento = models.OneToOneField(
+        SeguimientoBitacora, on_delete=models.PROTECT, related_name="adjunto",
+    )
+    nombre_original = models.CharField(max_length=200, editable=False)
+    ruta_privada = models.CharField(max_length=200, editable=False)
+    tamano = models.PositiveBigIntegerField(editable=False)
+    tipo_mime = models.CharField(max_length=100, editable=False)
+    sha256 = models.CharField(max_length=64, editable=False)
+
+    class Meta:
+        ordering = ("-seguimiento__creado",)
+        verbose_name = "Adjunto de bitácora"
+        verbose_name_plural = "Adjuntos de bitácora"
+
+    def __str__(self):
+        return self.nombre_original

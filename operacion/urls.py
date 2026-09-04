@@ -1,3 +1,5 @@
+from .views_adjuntos_bitacora import adjuntar_bitacora, descargar_adjunto_bitacora
+from .views_historial_bitacora import historial_bitacora
 from django.urls import path
 
 from .views import (
@@ -129,6 +131,10 @@ urlpatterns = [
     # =====================================================
     # BITÁCORA
     # =====================================================
+
+    path("bitacora/<int:bitacora_id>/adjuntar/", adjuntar_bitacora, name="adjuntar_bitacora"),
+    path("bitacora/adjuntos/<uuid:adjunto_id>/descargar/", descargar_adjunto_bitacora, name="descargar_adjunto_bitacora"),
+    path("bitacora/<int:bitacora_id>/historial/", historial_bitacora, name="historial_bitacora"),
 
     path(
         "bitacora/",

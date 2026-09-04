@@ -131,7 +131,7 @@
 
         .filters{
             display:grid;
-            grid-template-columns:2fr repeat(3,1fr) auto;
+            grid-template-columns:repeat(12,minmax(0,1fr));
             gap:10px;
             align-items:end;
         }
@@ -160,6 +160,9 @@
         }
 
         .card{
+            display:flex;
+            flex-direction:column;
+            min-width:0;
             background:white;
             border-radius:15px;
             padding:17px;
@@ -248,7 +251,9 @@
         }
 
         .card-actions{
-            margin-top:14px;
+            margin-top:auto;
+            padding-top:14px;
+            order:1;
         }
 
         .empty{
@@ -279,6 +284,16 @@
                 margin-top:15px;
             }
         }
+        .filters .field{grid-column:span 3;min-width:0}
+        .filter-actions{grid-column:span 6;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .periodo-activo{margin:0 0 12px;color:#073b6f;font-size:17px}
+        .date-help{font-size:13px;color:#475569;margin:14px 0 0;line-height:1.5}
+        .date-errors{background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:14px}
+        .date-errors p{margin:4px 0}
+        .filter-actions .btn-light{border:1px solid #cbd5e1}
+        .filter-actions .btn:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
+        @media(max-width:900px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filters .field{grid-column:span 1}.filter-actions{grid-column:1/-1}}
+        @media(max-width:520px){.container{padding:12px}.filters{grid-template-columns:minmax(0,1fr)}.cards{grid-template-columns:minmax(0,1fr)}.brand{flex-wrap:wrap}.brand h1{font-size:23px}}
     </style>
 </head>
 
@@ -297,9 +312,11 @@
         </div>
 
         <div class="actions">
-            <a href="{% url 'nueva_bitacora' %}" class="btn btn-light">
+            {% if puede_gestionar_bitacora %}
+<a href="{% url 'nueva_bitacora' %}" class="btn btn-light">
                 + Nueva novedad
             </a>
+{% endif %}
 
             <a href="{% url 'centro_operaciones' %}" class="btn btn-light">
                 Centro de Operaciones
@@ -347,21 +364,41 @@
     </section>
 
     <section class="panel">
+        <p class="periodo-activo"><strong>
+        {% if errores_fechas %}
+            Revise las fechas del filtro
+        {% elif es_vista_diaria %}
+            Novedades del {{ fecha_desde|date:"d/m/Y" }}
+        {% elif fecha_desde and fecha_hasta %}
+            Novedades del {{ fecha_desde|date:"d/m/Y" }} al {{ fecha_hasta|date:"d/m/Y" }}
+        {% elif fecha_desde %}
+            Novedades desde el {{ fecha_desde|date:"d/m/Y" }}
+        {% elif fecha_hasta %}
+            Novedades hasta el {{ fecha_hasta|date:"d/m/Y" }}
+        {% else %}
+            Novedades de todas las fechas
+        {% endif %}
+        </strong></p>
+        {% if errores_fechas %}
+        <div class="date-errors" role="alert">
+            {% for error in errores_fechas %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
         <form method="get" class="filters">
 
             <div class="field">
-                <label>Buscar</label>
+                <label for="filtro-buscar">Buscar</label>
                 <input
                     type="text"
-                    name="buscar"
+                    name="buscar" id="filtro-buscar"
                     value="{{ buscar }}"
                     placeholder="Cliente, técnico, título o descripción"
                 >
             </div>
 
             <div class="field">
-                <label>Estado</label>
-                <select name="estado">
+                <label for="filtro-estado">Estado</label>
+                <select name="estado" id="filtro-estado">
                     <option value="">Todos</option>
 
                     {% for valor, nombre in estados %}
@@ -376,8 +413,8 @@
             </div>
 
             <div class="field">
-                <label>Tipo</label>
-                <select name="tipo">
+                <label for="filtro-tipo">Tipo</label>
+                <select name="tipo" id="filtro-tipo">
                     <option value="">Todos</option>
 
                     {% for valor, nombre in tipos %}
@@ -392,8 +429,8 @@
             </div>
 
             <div class="field">
-                <label>Prioridad</label>
-                <select name="prioridad">
+                <label for="filtro-prioridad">Prioridad</label>
+                <select name="prioridad" id="filtro-prioridad">
                     <option value="">Todas</option>
 
                     {% for valor, nombre in prioridades %}
@@ -407,11 +444,23 @@
                 </select>
             </div>
 
-            <button class="btn btn-primary" type="submit">
-                Filtrar
-            </button>
+            <div class="field">
+                <label for="fecha-desde">Desde</label>
+                <input type="date" id="fecha-desde" name="fecha_desde" value="{{ filtro_fecha_desde }}" aria-describedby="ayuda-fechas">
+            </div>
+            <div class="field">
+                <label for="fecha-hasta">Hasta</label>
+                <input type="date" id="fecha-hasta" name="fecha_hasta" value="{{ filtro_fecha_hasta }}" aria-describedby="ayuda-fechas">
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" type="submit">Filtrar</button>
+                <button class="btn btn-light" type="submit" name="periodo" value="hoy" formnovalidate>Hoy</button>
+                <button class="btn btn-light" type="submit" name="periodo" value="ayer" formnovalidate>Ayer</button>
+                <a class="btn btn-light" href="{% url 'lista_bitacora' %}">Limpiar filtros</a>
+            </div>
 
         </form>
+        <p class="date-help" id="ayuda-fechas">Las fechas corresponden al registro de la novedad. Para consultar un solo día, use la misma fecha en Desde y Hasta. Los indicadores muestran los resultados de los filtros aplicados.</p>
     </section>
 
     <section class="cards">
@@ -436,6 +485,10 @@
                 </div>
 
                 <div class="meta">
+                    <div>
+                        <strong>Registrada:</strong>
+                        {{ registro.creado|date:"d/m/Y H:i" }}
+                    </div>
                     <div>
                         <strong>Prioridad:</strong>
                         {{ registro.get_prioridad_display }}
@@ -487,12 +540,16 @@
                 <div class="card-actions"
      style="display:flex; gap:10px; flex-wrap:wrap;">
 
-    <a
+    <a class="btn btn-light" style="border:1px solid #cbd5e1;" href="{% url 'historial_bitacora' registro.id %}">Ver historial</a>
+
+    {% if puede_gestionar_bitacora %}
+<a
         href="{% url 'editar_bitacora' registro.id %}"
         class="btn btn-primary"
     >
         Editar / gestionar
     </a>
+{% endif %}
 
     {% if registro.actividad %}
         <button
@@ -645,11 +702,13 @@
 
             <div class="empty">
                 <h3>No hay registros en la bitácora.</h3>
-                <p>Crea la primera novedad operativa.</p>
+                <p>No hay novedades que coincidan con su acceso y los filtros seleccionados.</p>
 
-                <a href="{% url 'nueva_bitacora' %}" class="btn btn-primary">
+                {% if puede_gestionar_bitacora %}
+<a href="{% url 'nueva_bitacora' %}" class="btn btn-primary">
                     + Nueva novedad
                 </a>
+{% endif %}
             </div>
 
         {% endfor %}

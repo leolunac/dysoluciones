@@ -93,17 +93,21 @@ th{
 <body>
 
 <div class="header">
-    <h1>📋 Escritorio del Coordinador</h1>
+    <h1>&#128203; Escritorio del Coordinador</h1>
     <p>Resumen operativo de servicios nocturnos y pendientes de seguimiento</p>
 </div>
 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
 
+    <a class="btn" href="{% url 'lista_bitacora' %}">
+        Bit&#225;cora
+    </a>
+
     <a class="btn" href="{% url 'gestion_comercial:panel' %}">
-        Gestión Comercial / Revisión
+        Gesti&#243;n Comercial / Revisi&#243;n
     </a>
 
     <a class="btn" href="{% url 'logout' %}">
-        Cerrar sesión
+        Cerrar sesi&#243;n
     </a>
 
 </div>
@@ -138,8 +142,8 @@ th{
 
 <div class="card">
  <div class="card">
-    <h2>Servicios pendientes de asignación</h2>
-    <p>Casos registrados que todavía no tienen técnico asignado.</p>
+    <h2>Servicios pendientes de asignaci&#243;n</h2>
+    <p>Casos registrados que todav&#237;a no tienen t&#233;cnico asignado.</p>
 </div>
 
 <table>
@@ -149,7 +153,7 @@ th{
     <th>Tipo</th>
     <th>Prioridad</th>
     <th>Falla reportada</th>
-    <th>Acción</th>
+    <th>Acci&#243;n</th>
 </tr>
 
 {% for s in servicios_sin_asignar %}
@@ -161,19 +165,19 @@ th{
     <td>{{ s.descripcion_falla|truncatechars:70 }}</td>
     <td>
         <a class="btn" href="{% url 'gestionar_servicio' s.id %}">
-            Asignar técnico
+            Asignar t&#233;cnico
         </a>
     </td>
 </tr>
 {% empty %}
 <tr>
-    <td colspan="6">No hay servicios pendientes de asignación.</td>
+    <td colspan="6">No hay servicios pendientes de asignaci&#243;n.</td>
 </tr>
 {% endfor %}
 </table>
 
 <br>   
-    <h2>🔔 Servicios para revisar</h2>
+    <h2>&#128276; Servicios para revisar</h2>
     <p>
         Periodo revisado:
         {{ inicio_noche|date:"d/m/Y H:i" }}
@@ -186,11 +190,11 @@ th{
 <tr>
     <th>Hora llamada</th>
     <th>Cliente</th>
-    <th>Técnico</th>
+    <th>T&#233;cnico</th>
     <th>Prioridad</th>
     <th>Estado</th>
     <th>Falla reportada</th>
-    <th>Acción sugerida</th>
+    <th>Acci&#243;n sugerida</th>
 </tr>
 
 {% for s in servicios_revision %}
@@ -207,13 +211,13 @@ th{
     <td>{{ s.descripcion_falla|truncatechars:70 }}</td>
     <td>
         {% if s.estado == "PENDIENTE" %}
-            🔴 Asignar / revisar
+            &#128308; Asignar / revisar
         {% elif s.estado == "EN_PROCESO" %}
-            🟡 Hacer seguimiento
+            &#128993; Hacer seguimiento
         {% elif s.estado == "ATENDIDA" %}
-            ☎ Llamar cliente
+            &#9742; Llamar cliente
         {% elif s.estado == "CERRADA" %}
-            ✅ Sin acción
+            &#9989; Sin acci&#243;n
         {% endif %}
     </td>
 </tr>

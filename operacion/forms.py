@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django import forms
+from .permisos_bitacora import responsables_permitidos
 
 from .models import (
     Emergencia,
@@ -208,7 +209,6 @@ class BitacoraOperativaForm(forms.ModelForm):
             "responsable",
             "estado",
             "fecha_compromiso",
-            "visible_cliente",
         )
 
         widgets = {
@@ -274,9 +274,6 @@ class BitacoraOperativaForm(forms.ModelForm):
                 }
             ),
 
-            "visible_cliente": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
-            ),
         }
 
         labels = {
@@ -290,6 +287,9 @@ class BitacoraOperativaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["responsable"].queryset = responsables_permitidos(
+            self.fields["responsable"].queryset
+        )
 
         # Inicialmente no mostramos todos los casos y actividades
         # de todas las unidades.
@@ -309,7 +309,7 @@ class BitacoraOperativaForm(forms.ModelForm):
             cliente_id = self.instance.cliente_id
             servicio_id = self.instance.servicio_id
 
-        if cliente_id:
+        if cliente_id and str(cliente_id).isdecimal():
             self.fields["servicio"].queryset = (
                 Emergencia.objects
                 .filter(cliente_id=cliente_id)
@@ -333,12 +333,16 @@ class BitacoraOperativaForm(forms.ModelForm):
 
             # Si ya existe un caso seleccionado,
             # mostramos actividades de ese caso.
-            if servicio_id:
+            if servicio_id and str(servicio_id).isdecimal():
                 actividades = actividades.filter(
                     servicio_id=servicio_id
                 )
 
             self.fields["actividad"].queryset = actividades
+    def save(self, commit=True):
+        self.instance.visible_cliente = False
+        return super().save(commit=commit)
+
  # =========================================================
 # REMISIONES DE ACCESORIOS A TÉCNICOS
 # =========================================================
@@ -931,4 +935,14 @@ class RevisionTanquePreventivoForm(forms.ModelForm):
             "capacidad": "Capacidad",
             "precarga_aire": "Precarga de aire",
             "observaciones": "Observaciones",
-        }   
+        }
+
+class SeguimientoBitacoraForm(forms.Form):
+    comentario = forms.CharField(
+        label="Comentario de seguimiento", max_length=8000,
+        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Describa lo realizado o lo que queda pendiente."}),
+    )
+    estado = forms.ChoiceField(
+        label="Estado después del seguimiento", required=False,
+        choices=[("", "Mantener estado actual")] + BitacoraOperativa.ESTADO,
+    )

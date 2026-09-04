@@ -1,4 +1,14 @@
+from .models import AdjuntoBitacora
+from django.urls import reverse
+from django.utils.html import format_html
+from django.db import transaction
+from .historial_bitacora import capturar_campos, registrar_edicion
+from .models import SeguimientoBitacora
 from django.contrib import admin
+from .permisos_bitacora import (
+    puede_gestionar_bitacora, registros_visibles, responsables_permitidos,
+    rol_bitacora,
+)
 
 from .models import (
     Cliente,
@@ -540,7 +550,6 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
         "tipo",
         "prioridad",
         "estado",
-        "visible_cliente",
         "fecha_compromiso",
     )
 
@@ -557,13 +566,13 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
         "cliente",
         "tecnico",
         "servicio",
-        "responsable",
     )
 
     readonly_fields = (
         "creado",
         "actualizado",
         "fecha_cierre",
+        "creado_por",
     )
 
     ordering = (
@@ -603,7 +612,6 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
                     "estado",
                     "fecha_compromiso",
                     "fecha_cierre",
-                    "visible_cliente",
                 )
             },
         ),
@@ -619,8 +627,110 @@ class BitacoraOperativaAdmin(admin.ModelAdmin):
         ),
     )
 
-    def save_model(self, request, obj, form, change):
-        if not obj.creado_por_id:
-            obj.creado_por = request.user
+    def has_module_permission(self, request):
+        return rol_bitacora(request.user) is not None
 
-        super().save_model(request, obj, form, change)
+    def has_view_permission(self, request, obj=None):
+        if rol_bitacora(request.user) is None:
+            return False
+        return obj is None or registros_visibles(request.user).filter(pk=obj.pk).exists()
+
+    def has_add_permission(self, request):
+        return puede_gestionar_bitacora(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return puede_gestionar_bitacora(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        # No se autoriza borrar historia desde la bitácora.
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(
+            pk__in=registros_visibles(request.user).values("pk")
+        )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "responsable":
+            kwargs["queryset"] = responsables_permitidos(
+                db_field.remote_field.model.objects.all()
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        with transaction.atomic():
+            anteriores = None
+            if change:
+                anteriores = capturar_campos(BitacoraOperativa.objects.select_for_update().get(pk=obj.pk))
+            obj.visible_cliente = False
+            if not obj.creado_por_id:
+                obj.creado_por = request.user
+            super().save_model(request, obj, form, change)
+            if anteriores is not None:
+                registrar_edicion(anteriores, obj, request.user)
+
+
+@admin.register(SeguimientoBitacora)
+class SeguimientoBitacoraAdmin(admin.ModelAdmin):
+    list_display = ("bitacora", "creado", "autor_nombre", "tipo")
+    list_filter = ("tipo", "creado")
+    search_fields = ("bitacora__titulo", "comentario", "autor_nombre")
+    list_select_related = ("bitacora",)
+    readonly_fields = tuple(f.name for f in SeguimientoBitacora._meta.fields)
+
+    def has_module_permission(self, request):
+        return rol_bitacora(request.user) is not None
+
+    def has_view_permission(self, request, obj=None):
+        if rol_bitacora(request.user) is None:
+            return False
+        return obj is None or registros_visibles(request.user).filter(pk=obj.bitacora_id).exists()
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(
+            bitacora_id__in=registros_visibles(request.user).values("pk")
+        )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AdjuntoBitacora)
+class AdjuntoBitacoraAdmin(admin.ModelAdmin):
+    list_display = ("nombre_original", "tamano", "seguimiento")
+    search_fields = ("nombre_original", "seguimiento__bitacora__titulo")
+    list_select_related = ("seguimiento__bitacora",)
+    fields = ("nombre_original", "seguimiento", "tamano", "tipo_mime", "sha256", "descargar")
+    readonly_fields = fields
+
+    @admin.display(description="Descarga con permisos")
+    def descargar(self, obj):
+        return format_html('<a href="{}">Descargar archivo</a>', reverse("descargar_adjunto_bitacora", args=[obj.pk]))
+
+    def has_module_permission(self, request):
+        return rol_bitacora(request.user) is not None
+
+    def has_view_permission(self, request, obj=None):
+        if rol_bitacora(request.user) is None:
+            return False
+        return obj is None or registros_visibles(request.user).filter(pk=obj.seguimiento.bitacora_id).exists()
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(
+            seguimiento__bitacora_id__in=registros_visibles(request.user).values("pk")
+        )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

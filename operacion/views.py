@@ -1,6 +1,8 @@
+from django.db import transaction
+from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
 import os
-from datetime import timedelta
+from datetime import date, timedelta
 
 import openpyxl
 
@@ -55,6 +57,12 @@ from .models import (
     
 
 )                    
+
+from .permisos_bitacora import (
+    acceso_bitacora, actividades_visibles, es_usuario_externo,
+    puede_gestionar_bitacora, registros_visibles,
+)
+from django.views.decorators.http import require_GET, require_http_methods
 
 from .utils import registrar_evento
 from gestion_comercial.models import Cotizacion, Liquidacion
@@ -2896,10 +2904,12 @@ def escritorio_coordinador(request):
 # =========================================
 
 @login_required
+@require_GET
+@acceso_bitacora()
 def lista_bitacora(request):
 
     registros = (
-        BitacoraOperativa.objects
+        registros_visibles(request.user)
         .select_related(
             "cliente",
             "tecnico",
@@ -2945,6 +2955,46 @@ def lista_bitacora(request):
 
     ahora = timezone.now()
     hoy = timezone.localdate()
+    fecha_desde_texto = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta_texto = request.GET.get("fecha_hasta", "").strip()
+    periodo = request.GET.get("periodo", "")
+    if periodo in {"hoy", "ayer"}:
+        dia = hoy if periodo == "hoy" else hoy - timedelta(days=1)
+        fecha_desde_texto = fecha_hasta_texto = dia.isoformat()
+
+    fechas = {}
+    errores_fechas = []
+    for nombre, texto, etiqueta in (
+        ("desde", fecha_desde_texto, "Desde"),
+        ("hasta", fecha_hasta_texto, "Hasta"),
+    ):
+        fechas[nombre] = None
+        if texto:
+            try:
+                fecha = date.fromisoformat(texto)
+                if fecha.isoformat() != texto:
+                    raise ValueError
+                fechas[nombre] = fecha
+            except ValueError:
+                errores_fechas.append(
+                    f"La fecha de {etiqueta} no es válida. Use el calendario o el formato AAAA-MM-DD."
+                )
+
+    desde = fechas["desde"]
+    hasta = fechas["hasta"]
+    if desde and hasta and desde > hasta:
+        errores_fechas.append("La fecha Desde debe ser anterior o igual a Hasta.")
+
+    if errores_fechas:
+        registros = registros.none()
+    else:
+        # Django aplica la zona horaria activa al extraer la fecha de creado.
+        if desde:
+            registros = registros.filter(creado__date__gte=desde)
+        if hasta:
+            registros = registros.filter(creado__date__lte=hasta)
+        if desde or hasta:
+            registros = registros.order_by("-creado", "-pk")
 
     total = registros.count()
 
@@ -3007,6 +3057,7 @@ def lista_bitacora(request):
         request,
         "bitacora/lista.html",
         {
+            "puede_gestionar_bitacora": puede_gestionar_bitacora(request.user),
             "registros": registros,
             "total": total,
             "pendientes": pendientes,
@@ -3024,10 +3075,19 @@ def lista_bitacora(request):
             "filtro_tipo": tipo,
             "filtro_prioridad": prioridad,
             "buscar": buscar,
+            "filtro_fecha_desde": fecha_desde_texto,
+            "filtro_fecha_hasta": fecha_hasta_texto,
+            "fecha_desde": desde,
+            "fecha_hasta": hasta,
+            "es_vista_diaria": bool(desde and hasta and desde == hasta),
+            "errores_fechas": errores_fechas,
         },
+        status=400 if errores_fechas else 200,
     )
 
 @login_required
+@require_http_methods(["GET", "POST"])
+@acceso_bitacora(escritura=True)
 def nueva_bitacora(request):
 
     if request.method == "POST":
@@ -3064,37 +3124,25 @@ def nueva_bitacora(request):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
+@acceso_bitacora(escritura=True)
 def editar_bitacora(request, bitacora_id):
-
-    registro = get_object_or_404(
-        BitacoraOperativa,
-        id=bitacora_id,
-    )
-
     if request.method == "POST":
-        form = BitacoraOperativaForm(
-            request.POST,
-            instance=registro,
-        )
-
-        if form.is_valid():
-            form.save()
-            return redirect("lista_bitacora")
-
+        with transaction.atomic():
+            registro = get_object_or_404(BitacoraOperativa.objects.select_for_update(), pk=bitacora_id)
+            anteriores = capturar_campos(registro)
+            form = BitacoraOperativaForm(request.POST, instance=registro)
+            if form.is_valid():
+                form.save()
+                registrar_edicion(anteriores, registro, request.user)
+                return redirect("lista_bitacora")
     else:
-        form = BitacoraOperativaForm(
-            instance=registro,
-        )
+        registro = get_object_or_404(BitacoraOperativa, pk=bitacora_id)
+        form = BitacoraOperativaForm(instance=registro)
+    return render(request, "bitacora/formulario.html", {
+        "form": form, "registro": registro, "titulo_pagina": "Editar novedad",
+    })
 
-    return render(
-        request,
-        "bitacora/formulario.html",
-        {
-            "form": form,
-            "registro": registro,
-            "titulo_pagina": "Editar novedad",
-        },
-    )
 # =========================================
 # REMISIONES DE TÉCNICOS
 # =========================================
@@ -4019,8 +4067,23 @@ def reporte_pdf(request, cliente_id):
 # ACTIVIDADES DE TÉCNICOS
 # =========================================================
 @login_required
+@require_GET
 def casos_por_cliente(request):
+    if not request.user.is_active or es_usuario_externo(request.user):
+        return HttpResponseForbidden("Consulta disponible solo para personal interno.")
+    interno = (
+        request.user.is_superuser
+        or request.user.groups.filter(name__in=[
+            "GESTION_COORDINADOR", "GESTION_SUPERVISOR", "GESTION_GERENCIA",
+            "GESTION_AUXILIAR", "GESTION_FACTURACION",
+        ]).exists()
+    )
+    tecnico = Tecnico.objects.filter(user=request.user, activo=True).first()
+    if not interno and tecnico is None:
+        return HttpResponseForbidden("No está autorizado para consultar casos.")
     cliente_id = request.GET.get("cliente_id")
+    if cliente_id and not cliente_id.isdecimal():
+        return JsonResponse({"error": "Unidad inválida"}, status=400)
 
     if not cliente_id:
         return JsonResponse({"casos": []})
@@ -4034,6 +4097,9 @@ def casos_por_cliente(request):
         .exclude(numero_caso="")
         .order_by("-fecha_llamada")
     )
+
+    if not interno:
+        casos = casos.filter(tecnico=tecnico)
 
     datos = []
 
@@ -4113,15 +4179,20 @@ def buscar_accesorios(request):
         "resultados": resultados,
     })
 @login_required
+@require_GET
+@acceso_bitacora()
 def actividades_por_cliente(request):
     cliente_id = request.GET.get("cliente_id")
     servicio_id = request.GET.get("servicio_id")
+
+    if any(valor and not valor.isdecimal() for valor in (cliente_id, servicio_id)):
+        return JsonResponse({"error": "Identificador inválido"}, status=400)
 
     if not cliente_id:
         return JsonResponse({"actividades": []})
 
     actividades = (
-        ActividadTecnico.objects
+        actividades_visibles(request.user)
         .filter(cliente_id=cliente_id)
         .select_related(
             "tecnico",
@@ -4158,10 +4229,12 @@ def actividades_por_cliente(request):
 
 
 @login_required
+@require_GET
+@acceso_bitacora()
 def detalle_actividad(request, actividad_id):
 
     actividad = get_object_or_404(
-        ActividadTecnico.objects
+        actividades_visibles(request.user)
         .select_related(
             "tecnico",
             "cliente",
