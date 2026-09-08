@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block content %}
+<main style="max-width:720px;margin:35px auto;padding:18px"><section style="background:white;border-radius:16px;padding:28px;border-top:7px solid #16865b;box-shadow:0 10px 30px rgba(0,0,0,.08)"><div style="font-size:42px">✓</div><h1>Informe válido en SIGOB</h1><p>Este documento fue revisado y publicado por D&amp;S Soluciones en Bombeo S.A.S.</p><hr><p><strong>Número:</strong> {{ actividad.numero_informe }}</p><p><strong>Unidad:</strong> {{ actividad.cliente.nombre }}</p><p><strong>Fecha:</strong> {{ actividad.fecha|date:"d/m/Y" }}</p><p><strong>Resultado:</strong> {{ preventivo.get_resultado_preventivo_display }}</p><p><strong>Estado:</strong> {{ preventivo.get_estado_revision_display }}</p></section></main>
+{% endblock %}

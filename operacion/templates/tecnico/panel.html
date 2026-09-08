@@ -436,6 +436,10 @@
                         <span class="badge">
                             Reprogramado
                         </span>
+                    {% elif preventivo.estado == "DEVUELTO" %}
+                        <span class="badge badge-pendiente">
+                            Devuelto para corregir
+                        </span>
                     {% endif %}
                 </div>
 
@@ -446,7 +450,7 @@
                 <a
     class="btn btn-primary"
     href="{% url 'iniciar_preventivo' preventivo.id %}">
-    Iniciar preventivo
+    {% if preventivo.estado == "DEVUELTO" %}Corregir preventivo{% elif preventivo.estado == "EN_PROCESO" %}Continuar preventivo{% else %}Iniciar preventivo{% endif %}
 </a>
             </div>
 

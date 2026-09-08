@@ -29,6 +29,14 @@ from .models import (
     Administracion,
     AdministracionUnidad,
     ContratoPase,
+    ActividadTecnico,
+    AccesorioActividad,
+    ProgramacionMantenimientoPreventivo,
+    MantenimientoPreventivo,
+    MedicionEquipoPreventivo,
+    RevisionComponentePreventivo,
+    RevisionTanquePreventivo,
+    SeguimientoAnomaliaPreventivo,
     
 )
 
@@ -751,3 +759,37 @@ class SectorClienteAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class AccesorioActividadInline(admin.TabularInline):
+    model = AccesorioActividad
+    extra = 0
+
+
+@admin.register(ActividadTecnico)
+class ActividadTecnicoAdmin(admin.ModelAdmin):
+    list_display = ("numero_informe", "fecha", "tecnico", "cliente", "tipo_actividad", "resultado")
+    list_filter = ("tipo_actividad", "resultado", "fecha")
+    search_fields = ("numero_informe", "cliente__nombre", "tecnico__nombre", "labor_realizada")
+    inlines = (AccesorioActividadInline,)
+
+
+@admin.register(ProgramacionMantenimientoPreventivo)
+class ProgramacionMantenimientoPreventivoAdmin(admin.ModelAdmin):
+    list_display = ("fecha_programada", "cliente", "sector", "tecnico", "estado")
+    list_filter = ("estado", "fecha_programada")
+    search_fields = ("cliente__nombre", "sector__nombre", "tecnico__nombre")
+    list_select_related = ("cliente", "sector", "tecnico")
+
+
+@admin.register(MantenimientoPreventivo)
+class MantenimientoPreventivoAdmin(admin.ModelAdmin):
+    list_display = ("actividad", "resultado_preventivo", "estado_revision", "estado_anomalia", "revisado_por")
+    list_filter = ("estado_revision", "resultado_preventivo", "estado_anomalia")
+    readonly_fields = ("codigo_verificacion", "creado", "actualizado")
+
+
+admin.site.register(MedicionEquipoPreventivo)
+admin.site.register(RevisionComponentePreventivo)
+admin.site.register(RevisionTanquePreventivo)
+admin.site.register(SeguimientoAnomaliaPreventivo)

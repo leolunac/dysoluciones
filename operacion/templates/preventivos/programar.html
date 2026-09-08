@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<style>.prog{max-width:760px;margin:25px auto;padding:18px}.card{background:white;border-radius:14px;padding:25px;border:1px solid #dbe5ec}.form-control{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px}.campo{margin-bottom:15px}.btn{background:#075985;color:white;border:0;border-radius:8px;padding:12px 18px;font-weight:700}</style>
+<main class="prog"><section class="card"><h1>Programar mantenimiento preventivo</h1><p>Seleccione la unidad, el sector cuando corresponda y el técnico responsable.</p><form method="post">{% csrf_token %}{{ form.non_field_errors }}{% for campo in form %}<div class="campo">{{ campo.label_tag }}{{ campo }}{{ campo.errors }}{% if campo.help_text %}<small>{{ campo.help_text }}</small>{% endif %}</div>{% endfor %}<button class="btn" type="submit">Guardar programación</button></form>{% include "sectores/selector.html" %}</section></main>
+{% endblock %}

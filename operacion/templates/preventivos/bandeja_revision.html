@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.rev-wrap{max-width:1100px;margin:0 auto;padding:24px 14px}.rev-hero{background:linear-gradient(135deg,#064d73,#1677a8);color:white;padding:25px;border-radius:16px;margin-bottom:20px}.rev-card{background:white;border:1px solid #dbe5ec;border-radius:12px;padding:17px;margin-bottom:12px;display:flex;justify-content:space-between;gap:18px;align-items:center}.meta{color:#64748b;font-size:13px;margin-top:5px}.btn-rev{display:inline-block;background:#075985;color:white;padding:10px 14px;border-radius:8px;text-decoration:none;font-weight:700}.vacio{background:white;padding:25px;border-radius:12px;color:#64748b}@media(max-width:650px){.rev-card{display:block}.btn-rev{margin-top:12px}}
+</style>
+<main class="rev-wrap">
+<header class="rev-hero"><h1>Revisión de mantenimientos preventivos</h1><p>Informes enviados por los técnicos y pendientes de aprobación.</p><a class="btn-rev" href="{% url 'programar_preventivo' %}">+ Programar mantenimiento</a></header>
+<h2>Pendientes ({{ pendientes|length }})</h2>
+{% for item in pendientes %}
+<article class="rev-card"><div><strong>{{ item.actividad.numero_informe }}</strong> · {{ item.cliente.nombre }}{% if item.sector %} · {{ item.sector.nombre }}{% endif %}<div class="meta">Técnico: {{ item.tecnico.nombre }} · Enviado: {{ item.actividad.enviado_en|date:"d/m/Y H:i" }}</div></div><a class="btn-rev" href="{% url 'revisar_preventivo' item.id %}">Revisar</a></article>
+{% empty %}<div class="vacio">No hay informes pendientes de revisión.</div>{% endfor %}
+{% if devueltos %}<h2>Devueltos al técnico</h2>{% for item in devueltos %}<article class="rev-card"><div><strong>{{ item.actividad.numero_informe }}</strong> · {{ item.cliente.nombre }}<div class="meta">{{ item.actividad.preventivo.observaciones_revision }}</div></div><a class="btn-rev" href="{% url 'detalle_preventivo' item.id %}">Ver</a></article>{% endfor %}{% endif %}
+</main>
+{% endblock %}

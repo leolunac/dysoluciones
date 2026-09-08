@@ -1,5 +1,13 @@
 from .views_adjuntos_bitacora import adjuntar_bitacora, descargar_adjunto_bitacora
 from .views_historial_bitacora import historial_bitacora
+from .views_revision_preventivos import (
+    actualizar_anomalia_preventivo,
+    bandeja_revision_preventivos,
+    comprobante_actividad,
+    programar_preventivo,
+    revisar_preventivo,
+    verificar_preventivo,
+)
 from django.urls import path
 
 from .views import (
@@ -109,6 +117,36 @@ urlpatterns = [
         "tecnico/preventivos/<int:programacion_id>/pdf/",
         preventivo_pdf,
         name="preventivo_pdf",
+    ),
+    path(
+        "tecnico/informes/<int:actividad_id>/comprobante/",
+        comprobante_actividad,
+        name="comprobante_actividad",
+    ),
+    path(
+        "preventivos/revision/",
+        bandeja_revision_preventivos,
+        name="bandeja_revision_preventivos",
+    ),
+    path(
+        "preventivos/programar/",
+        programar_preventivo,
+        name="programar_preventivo",
+    ),
+    path(
+        "preventivos/<int:programacion_id>/revisar/",
+        revisar_preventivo,
+        name="revisar_preventivo",
+    ),
+    path(
+        "preventivos/<int:programacion_id>/anomalia/",
+        actualizar_anomalia_preventivo,
+        name="actualizar_anomalia_preventivo",
+    ),
+    path(
+        "informes/preventivos/verificar/<uuid:codigo>/",
+        verificar_preventivo,
+        name="verificar_preventivo",
     ),
     path(
         "inventario/nuevo/",

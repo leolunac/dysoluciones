@@ -333,6 +333,14 @@
                     </div>
                 {% endif %}
 
+                {% if actividad.numero_informe %}
+                    <div style="margin-top:10px;">
+                        <a class="btn btn-blue" href="{% url 'comprobante_actividad' actividad.id %}">
+                            Comprobante {{ actividad.numero_informe }}
+                        </a>
+                    </div>
+                {% endif %}
+
             </div>
 
         {% empty %}

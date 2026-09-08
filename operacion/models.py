@@ -1360,6 +1360,20 @@ class ActividadTecnico(models.Model):
         blank=True,
     )
 
+    numero_informe = models.CharField(
+        max_length=30,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Consecutivo asignado cuando el técnico envía el informe.",
+    )
+
+    enviado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha y hora del servidor en que el técnico envió el informe.",
+    )
+
     registrado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -1497,10 +1511,25 @@ class ProgramacionMantenimientoPreventivo(models.Model):
     ESTADO = [
         ("PROGRAMADO", "Programado"),
         ("EN_PROCESO", "En proceso"),
-        ("EJECUTADO", "Ejecutado"),
+        ("PENDIENTE_REVISION", "Pendiente de revisión"),
+        ("DEVUELTO", "Devuelto para corregir"),
+        ("PUBLICADO", "Aprobado y publicado"),
+        ("EJECUTADO", "Ejecutado antes del nuevo flujo"),
         ("REPROGRAMADO", "Reprogramado"),
         ("CANCELADO", "Cancelado"),
     ]
+
+    sector = models.ForeignKey(
+        SectorCliente,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="preventivos_programados",
+    )
+
+    def clean(self):
+        super().clean()
+        validar_sector_cliente(self)
 
     cliente = models.ForeignKey(
         Cliente,
@@ -1586,6 +1615,31 @@ class ProgramacionMantenimientoPreventivo(models.Model):
 
 class MantenimientoPreventivo(models.Model):
 
+    RESULTADO = [
+        ("SIN_NOVEDAD", "Mantenimiento realizado sin anomalías"),
+        ("CON_NOVEDAD", "Mantenimiento realizado con anomalías"),
+    ]
+
+    ESTADO_REVISION = [
+        ("BORRADOR", "Borrador del técnico"),
+        ("PENDIENTE", "Pendiente de revisión"),
+        ("DEVUELTO", "Devuelto para corregir"),
+        ("PUBLICADO", "Aprobado y publicado"),
+        ("LEGADO", "Ejecutado antes del nuevo flujo"),
+    ]
+
+    ESTADO_ANOMALIA = [
+        ("NO_APLICA", "Sin anomalías"),
+        ("PENDIENTE_RESPUESTA", "Pendiente de respuesta del cliente"),
+        ("PENDIENTE_COTIZACION", "Pendiente de cotización"),
+        ("INCLUIDO_PRESUPUESTO", "Incluido en presupuesto del cliente"),
+        ("APROBADA", "Corrección aprobada"),
+        ("APLAZADA", "Corrección aplazada"),
+        ("NO_APROBADA", "Corrección no aprobada"),
+        ("CORRECTIVO_CREADO", "Servicio correctivo creado"),
+        ("CERRADA", "Anomalía cerrada"),
+    ]
+
     actividad = models.OneToOneField(
         ActividadTecnico,
         on_delete=models.CASCADE,
@@ -1602,6 +1656,67 @@ class MantenimientoPreventivo(models.Model):
 
     novedades = models.TextField(
         blank=True,
+    )
+
+    resultado_preventivo = models.CharField(
+        max_length=20,
+        choices=RESULTADO,
+        null=True,
+        blank=True,
+    )
+
+    estado_revision = models.CharField(
+        max_length=20,
+        choices=ESTADO_REVISION,
+        default="BORRADOR",
+    )
+
+    estado_anomalia = models.CharField(
+        max_length=30,
+        choices=ESTADO_ANOMALIA,
+        default="NO_APLICA",
+    )
+
+    cliente_informado = models.BooleanField(default=False)
+
+    fecha_cliente_informado = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    medio_notificacion = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="Ejemplo: llamada, correo electrónico o reunión.",
+    )
+
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preventivos_revisados",
+    )
+
+    revisado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    observaciones_revision = models.TextField(blank=True)
+
+    documento_cliente = models.OneToOneField(
+        "portal_cliente.DocumentoCliente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="mantenimiento_preventivo",
+    )
+
+    codigo_verificacion = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
     )
 
     persona_recibe = models.CharField(
@@ -1639,6 +1754,36 @@ class MantenimientoPreventivo(models.Model):
             f"{self.actividad.cliente.nombre} - "
             f"{self.actividad.fecha}"
         )
+
+
+class SeguimientoAnomaliaPreventivo(models.Model):
+    preventivo = models.ForeignKey(
+        MantenimientoPreventivo,
+        on_delete=models.CASCADE,
+        related_name="seguimientos_anomalia",
+    )
+    estado_anterior = models.CharField(max_length=30, blank=True)
+    estado_nuevo = models.CharField(
+        max_length=30,
+        choices=MantenimientoPreventivo.ESTADO_ANOMALIA,
+    )
+    observacion = models.TextField(blank=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="seguimientos_anomalias_preventivas",
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado", "-id"]
+        verbose_name = "Seguimiento de anomalía preventiva"
+        verbose_name_plural = "Seguimientos de anomalías preventivas"
+
+    def __str__(self):
+        return f"{self.preventivo} - {self.get_estado_nuevo_display()}"
 
 
 # =========================================================

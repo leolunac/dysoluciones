@@ -15,6 +15,7 @@ from .models import (
     MedicionEquipoPreventivo,
     RevisionComponentePreventivo,
     RevisionTanquePreventivo,
+    ProgramacionMantenimientoPreventivo,
 )
 
 class NuevaLlamadaForm(FormularioSectorMixin, forms.ModelForm):
@@ -691,13 +692,28 @@ class ActividadTecnicoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        exigir_envio = kwargs.pop("exigir_envio", False)
         super().__init__(*args, **kwargs)
+
+        # Los preventivos tienen su propio formulario de inspección y nunca
+        # deben pasar por el formulario que registra accesorios utilizados.
+        self.fields["tipo_actividad"].choices = [
+            opcion
+            for opcion in self.fields["tipo_actividad"].choices
+            if opcion[0] != "PREVENTIVO"
+        ]
 
         self.fields["servicio"].required = False
         self.fields["diagnostico"].required = False
         self.fields["resultado"].required = False
         self.fields["observaciones"].required = False
         self.fields["remision"].required = False
+
+        if exigir_envio:
+            self.fields["hora_llegada"].required = True
+            self.fields["hora_salida"].required = True
+            self.fields["resultado"].required = True
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -709,27 +725,27 @@ class ActividadTecnicoForm(forms.ModelForm):
             from datetime import datetime, timedelta
 
             llegada = datetime.combine(
-            fecha,
-            hora_llegada,
-        )
-
-        salida = datetime.combine(
-            fecha,
-            hora_salida,
-        )
-
-        # Permite servicios que terminan después de medianoche.
-        if salida < llegada:
-            salida += timedelta(days=1)
-
-        duracion = salida - llegada
-
-        # Evita registros probablemente equivocados.
-        if duracion > timedelta(hours=12):
-            raise forms.ValidationError(
-                "La permanencia calculada supera las 12 horas. "
-                "Revise la hora de llegada y la hora de salida."
+                fecha,
+                hora_llegada,
             )
+
+            salida = datetime.combine(
+                fecha,
+                hora_salida,
+            )
+
+            # Permite servicios que terminan después de medianoche.
+            if salida < llegada:
+                salida += timedelta(days=1)
+
+            duracion = salida - llegada
+
+            # Evita registros probablemente equivocados.
+            if duracion > timedelta(hours=12):
+                raise forms.ValidationError(
+                    "La permanencia calculada supera las 12 horas. "
+                    "Revise la hora de llegada y la hora de salida."
+                )
 
         return cleaned_data
  # =========================================================
@@ -745,6 +761,7 @@ class MantenimientoPreventivoForm(forms.ModelForm):
             "control_nivel",
             "tablero_electrico",
             "novedades",
+            "resultado_preventivo",
             "persona_recibe",
             "cargo_recibe",
             "firma_recibido",
@@ -769,6 +786,10 @@ class MantenimientoPreventivoForm(forms.ModelForm):
                 "placeholder": "Novedades encontradas durante el mantenimiento",
             }),
 
+            "resultado_preventivo": forms.Select(attrs={
+                "class": "form-control",
+            }),
+
             "persona_recibe": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "Nombre de quien recibe el servicio",
@@ -788,9 +809,168 @@ class MantenimientoPreventivoForm(forms.ModelForm):
             "control_nivel": "Control de nivel",
             "tablero_electrico": "Tablero eléctrico",
             "novedades": "Novedades",
+            "resultado_preventivo": "Resultado del mantenimiento",
             "persona_recibe": "Persona que recibe",
             "cargo_recibe": "Cargo",
             "firma_recibido": "Firma / soporte de recibido",
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data.get("resultado_preventivo") == "CON_NOVEDAD"
+            and not (cleaned_data.get("novedades") or "").strip()
+        ):
+            self.add_error(
+                "novedades",
+                "Describa la anomalía encontrada antes de enviar el mantenimiento.",
+            )
+        return cleaned_data
+
+
+class RevisionPreventivoForm(forms.Form):
+    DECISION = [
+        ("APROBAR", "Aprobar y publicar para el cliente"),
+        ("DEVOLVER", "Devolver al técnico para corregir"),
+    ]
+
+    decision = forms.ChoiceField(
+        label="Decisión de revisión",
+        choices=DECISION,
+        widget=forms.RadioSelect,
+    )
+    observaciones_revision = forms.CharField(
+        label="Observaciones de la revisión",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control",
+            "rows": 4,
+            "placeholder": "Explique la corrección solicitada o deje una constancia de la revisión.",
+        }),
+    )
+    cliente_informado = forms.BooleanField(
+        label="Confirmo que el cliente o la administración fue informado",
+        required=False,
+    )
+    medio_notificacion = forms.CharField(
+        label="Medio utilizado para informar",
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Ejemplo: llamada, correo o reunión",
+        }),
+    )
+    estado_anomalia = forms.ChoiceField(
+        label="Estado de la corrección",
+        choices=MantenimientoPreventivo.ESTADO_ANOMALIA,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    def __init__(self, *args, preventivo=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.preventivo = preventivo
+        if preventivo and not self.is_bound:
+            self.initial.update({
+                "observaciones_revision": preventivo.observaciones_revision,
+                "cliente_informado": preventivo.cliente_informado,
+                "medio_notificacion": preventivo.medio_notificacion,
+                "estado_anomalia": preventivo.estado_anomalia,
+            })
+
+    def clean(self):
+        cleaned_data = super().clean()
+        decision = cleaned_data.get("decision")
+        observaciones = (cleaned_data.get("observaciones_revision") or "").strip()
+        informado = cleaned_data.get("cliente_informado")
+        medio = (cleaned_data.get("medio_notificacion") or "").strip()
+        estado_anomalia = cleaned_data.get("estado_anomalia")
+
+        if decision == "DEVOLVER" and not observaciones:
+            self.add_error(
+                "observaciones_revision",
+                "Explique al técnico qué debe corregir.",
+            )
+
+        tiene_anomalia = (
+            self.preventivo
+            and self.preventivo.resultado_preventivo == "CON_NOVEDAD"
+        )
+        if decision == "APROBAR" and tiene_anomalia:
+            if not informado:
+                self.add_error(
+                    "cliente_informado",
+                    "Confirme cómo se informó la anomalía al cliente o la administración.",
+                )
+            if not medio:
+                self.add_error(
+                    "medio_notificacion",
+                    "Indique el medio utilizado para informar la anomalía.",
+                )
+            if estado_anomalia == "NO_APLICA":
+                self.add_error(
+                    "estado_anomalia",
+                    "Seleccione el estado actual de la corrección.",
+                )
+        elif not tiene_anomalia:
+            cleaned_data["estado_anomalia"] = "NO_APLICA"
+
+        return cleaned_data
+
+
+class SeguimientoAnomaliaPreventivoForm(forms.Form):
+    estado_anomalia = forms.ChoiceField(
+        label="Estado actual de la corrección",
+        choices=MantenimientoPreventivo.ESTADO_ANOMALIA,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    observacion = forms.CharField(
+        label="Constancia del seguimiento",
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control",
+            "rows": 3,
+            "placeholder": "Ejemplo: el cliente lo incluirá en el presupuesto del próximo mes.",
+        }),
+    )
+
+
+class ProgramacionPreventivoForm(FormularioSectorMixin, forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["cliente"].queryset = self.fields["cliente"].queryset.filter(
+            activo=True,
+        )
+        self.fields["tecnico"].queryset = self.fields["tecnico"].queryset.filter(
+            activo=True,
+        )
+
+    class Meta:
+        model = ProgramacionMantenimientoPreventivo
+        fields = [
+            "cliente",
+            "sector",
+            "tecnico",
+            "fecha_programada",
+            "hora_programada",
+            "observaciones",
+        ]
+        widgets = {
+            "cliente": forms.Select(attrs={"class": "form-control"}),
+            "sector": forms.Select(attrs={"class": "form-control"}),
+            "tecnico": forms.Select(attrs={"class": "form-control"}),
+            "fecha_programada": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "hora_programada": forms.TimeInput(attrs={
+                "class": "form-control",
+                "type": "time",
+            }),
+            "observaciones": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+            }),
         }
 
 

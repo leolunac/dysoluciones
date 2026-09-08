@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block content %}
+<main style="max-width:720px;margin:25px auto;padding:18px"><section style="background:white;border-radius:14px;padding:24px;border:1px solid #dbe5ec"><h1>Seguimiento de corrección</h1><p><strong>{{ programacion.cliente.nombre }}</strong> · {{ programacion.actividad.numero_informe }}</p><p>{{ preventivo.novedades }}</p><form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit" style="background:#075985;color:white;border:0;border-radius:8px;padding:11px 17px;font-weight:700">Guardar seguimiento</button></form></section></main>
+{% endblock %}

@@ -409,6 +409,15 @@ textarea{
 
             </div>
 
+            <div style="margin-top:15px;">
+                <label>{{ form_general.resultado_preventivo.label }}</label>
+                {{ form_general.resultado_preventivo }}
+                {{ form_general.resultado_preventivo.errors }}
+                <div class="acordeon-resumen" style="margin-top:6px;">
+                    Los componentes de esta sección son inspeccionados; no se registran como accesorios utilizados.
+                </div>
+            </div>
+
             <hr class="separador">
 
             <h2 style="font-size:15px;">
@@ -634,7 +643,7 @@ textarea{
 
 </div>    
     <!-- ================================================= -->
-    <!-- 4. COMPONENTES HIDRAULICOS -->
+    <!-- 4. REVISIÓN DE COMPONENTES HIDRÁULICOS -->
     <!-- ================================================= -->
     <div class="acordeon">
 
@@ -644,7 +653,7 @@ textarea{
         onclick="toggleAcordeon(this)">
 
         <div class="acordeon-titulo">
-            <span>4. Componentes hidráulicos</span>
+            <span>4. Revisión de componentes hidráulicos</span>
 
             {% if componentes %}
                 <span class="completado">
@@ -926,17 +935,26 @@ textarea{
 <div class="card" style="border:2px solid #16a34a;">
 
     <h2 style="color:#166534;">
-        Finalizar mantenimiento
+        Enviar mantenimiento a revisión
     </h2>
 
     <p class="muted">
         Verifique que la revisión general, equipos, componentes y tanques
-        hayan sido registrados correctamente antes de finalizar.
+        hayan sido registrados correctamente antes de enviarlo al coordinador o supervisor.
     </p>
+
+    {% if errores_envio %}
+        <div style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:14px;margin:14px 0;">
+            <strong>No se pudo enviar:</strong>
+            <ul style="margin:8px 0 0;">
+                {% for error in errores_envio %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 
     <form
         method="post"
-        onsubmit="return confirm('¿Está seguro de finalizar este mantenimiento preventivo? Una vez finalizado quedará registrado como EJECUTADO.');">
+        onsubmit="return confirm('¿Confirma el envío? Recibirá un comprobante y el informe quedará pendiente de revisión.');">
 
         {% csrf_token %}
 
@@ -955,7 +973,7 @@ textarea{
                 padding:12px 20px;
             ">
 
-            ✓ Finalizar mantenimiento
+            ✓ Enviar a revisión
 
         </button>
 

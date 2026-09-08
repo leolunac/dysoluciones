@@ -12,6 +12,7 @@ def validar_usuario_interno(request):
     Permite administrar documentos a los perfiles internos autorizados.
     """
     grupos_autorizados = [
+        "GESTION_COORDINADOR",
         "GESTION_SUPERVISOR",
         "GESTION_GERENCIA",
     ]

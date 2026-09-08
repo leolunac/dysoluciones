@@ -364,7 +364,7 @@ body{
 
     <div class="card">
 
-        <h2>Componentes hidráulicos</h2>
+        <h2>Revisión de componentes hidráulicos</h2>
 
         {% for componente in componentes %}
 
@@ -396,6 +396,54 @@ body{
         {% endfor %}
 
     </div>
+
+
+    {% if preventivo %}
+    <div class="card">
+        <h2>Control y revisión del informe</h2>
+        <div class="grid">
+            <div>
+                <div class="label">Número de informe</div>
+                <div class="valor">{{ actividad.numero_informe|default:"Pendiente" }}</div>
+            </div>
+            <div>
+                <div class="label">Estado de revisión</div>
+                <div class="valor">{{ preventivo.get_estado_revision_display }}</div>
+            </div>
+            <div>
+                <div class="label">Resultado preventivo</div>
+                <div class="valor">{{ preventivo.get_resultado_preventivo_display|default:"Sin definir" }}</div>
+            </div>
+            <div>
+                <div class="label">Estado de la corrección</div>
+                <div class="valor">{{ preventivo.get_estado_anomalia_display }}</div>
+            </div>
+            <div>
+                <div class="label">Cliente informado</div>
+                <div class="valor">{% if preventivo.cliente_informado %}Sí · {{ preventivo.medio_notificacion }}{% else %}No registrado{% endif %}</div>
+            </div>
+            <div>
+                <div class="label">Revisado por</div>
+                <div class="valor">{{ preventivo.revisado_por.username|default:"Pendiente" }}</div>
+            </div>
+        </div>
+        {% if preventivo.observaciones_revision %}
+            <p><strong>Observaciones de revisión:</strong> {{ preventivo.observaciones_revision }}</p>
+        {% endif %}
+
+        {% if seguimientos_anomalia %}
+            <h3>Seguimiento de la anomalía</h3>
+            {% for seguimiento in seguimientos_anomalia %}
+                <div class="registro">
+                    {{ seguimiento.creado|date:"d/m/Y H:i" }} ·
+                    <strong>{{ seguimiento.get_estado_nuevo_display }}</strong>
+                    {% if seguimiento.usuario %}· {{ seguimiento.usuario.username }}{% endif %}
+                    {% if seguimiento.observacion %}<br>{{ seguimiento.observacion }}{% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% endif %}
 
 
     <!-- ================================================= -->
@@ -525,6 +573,24 @@ body{
         href="{% url 'preventivo_pdf' programacion.id %}">
         Generar PDF
     </a>
+
+    {% if puede_revisar and programacion.estado == "PENDIENTE_REVISION" %}
+        <a class="btn btn-pdf" href="{% url 'revisar_preventivo' programacion.id %}">
+            Revisar informe
+        </a>
+    {% endif %}
+
+    {% if puede_revisar and programacion.estado == "PUBLICADO" and preventivo.resultado_preventivo == "CON_NOVEDAD" %}
+        <a class="btn btn-pdf" href="{% url 'actualizar_anomalia_preventivo' programacion.id %}">
+            Actualizar corrección
+        </a>
+    {% endif %}
+
+    {% if actividad.numero_informe %}
+        <a class="btn btn-volver" href="{% url 'comprobante_actividad' actividad.id %}">
+            Ver comprobante
+        </a>
+    {% endif %}
 
 </div>
 

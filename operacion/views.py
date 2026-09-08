@@ -6,6 +6,7 @@ from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
 import os
 from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 
 import openpyxl
 
@@ -19,7 +20,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from reportlab.lib.pagesizes import letter
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
 from reportlab.pdfgen import canvas
+from django.urls import reverse
 
 from .forms import (
     NuevaLlamadaForm,
@@ -64,6 +69,11 @@ from .models import (
 from .permisos_bitacora import (
     acceso_bitacora, actividades_visibles, es_usuario_externo,
     puede_gestionar_bitacora, registros_visibles,
+)
+from .informes_tecnicos import (
+    asignar_comprobante,
+    errores_para_enviar_preventivo,
+    puede_revisar_preventivos,
 )
 from django.views.decorators.http import require_GET, require_http_methods
 
@@ -336,9 +346,10 @@ def panel_tecnico(request):
             "PROGRAMADO",
             "REPROGRAMADO",
             "EN_PROCESO",
+            "DEVUELTO",
         ],
     )
-    .select_related("cliente")
+    .select_related("cliente", "sector")
     .order_by(
         "fecha_programada",
         "hora_programada",
@@ -447,6 +458,8 @@ def iniciar_preventivo(request, programacion_id):
     if programacion.estado in [
         "CANCELADO",
         "EJECUTADO",
+        "PENDIENTE_REVISION",
+        "PUBLICADO",
     ]:
         return HttpResponseForbidden(
             "Este mantenimiento preventivo ya no puede iniciarse."
@@ -457,6 +470,18 @@ def iniciar_preventivo(request, programacion_id):
 
         actividad = programacion.actividad
 
+        if not actividad.hora_llegada:
+            actividad.hora_llegada = timezone.localtime().time()
+            actividad.save(update_fields=["hora_llegada", "actualizado"])
+
+        if programacion.estado in {"PROGRAMADO", "REPROGRAMADO", "DEVUELTO"}:
+            estaba_devuelto = programacion.estado == "DEVUELTO"
+            programacion.estado = "EN_PROCESO"
+            programacion.save(update_fields=["estado", "actualizado"])
+            if estaba_devuelto and hasattr(actividad, "preventivo"):
+                actividad.preventivo.estado_revision = "BORRADOR"
+                actividad.preventivo.save(update_fields=["estado_revision", "actualizado"])
+
     else:
 
         actividad = ActividadTecnico.objects.create(
@@ -465,6 +490,7 @@ def iniciar_preventivo(request, programacion_id):
             servicio=None,
             tipo_actividad="PREVENTIVO",
             fecha=timezone.localdate(),
+            hora_llegada=timezone.localtime().time(),
             labor_realizada="Mantenimiento preventivo programado.",
             registrado_por=request.user,
         )
@@ -491,7 +517,6 @@ def iniciar_preventivo(request, programacion_id):
 # =========================================
 # FORMULARIO MANTENIMIENTO PREVENTIVO
 # =========================================
-@login_required
 @login_required
 def formulario_preventivo(request, programacion_id):
 
@@ -531,6 +556,12 @@ def formulario_preventivo(request, programacion_id):
 
     actividad = programacion.actividad
 
+    if programacion.estado not in {"EN_PROCESO", "DEVUELTO"}:
+        return redirect(
+            "detalle_preventivo",
+            programacion_id=programacion.id,
+        )
+
     # =====================================================
     # OBTENER / CREAR EXPEDIENTE PREVENTIVO
     # =====================================================
@@ -550,6 +581,7 @@ def formulario_preventivo(request, programacion_id):
     form_componente = RevisionComponentePreventivoForm()
 
     form_tanque = RevisionTanquePreventivoForm()
+    errores_envio = []
 
     # Solo equipos pertenecientes a esta unidad.
     form_equipo.fields["equipo"].queryset = (
@@ -706,34 +738,40 @@ def formulario_preventivo(request, programacion_id):
         # FINALIZAR MANTENIMIENTO PREVENTIVO
         # -------------------------------------------------
         elif accion == "finalizar":
+            errores_envio = errores_para_enviar_preventivo(preventivo)
 
-            if programacion.estado == "EJECUTADO":
-                return redirect(
-                    "panel_tecnico"
-                )
+            if not errores_envio:
+                with transaction.atomic():
+                    if not actividad.hora_salida:
+                        actividad.hora_salida = timezone.localtime().time()
 
-            if not actividad.hora_salida:
-                actividad.hora_salida = timezone.localtime().time()
-
-                actividad.save(
-                    update_fields=[
+                    actividad.enviado_en = timezone.now()
+                    actividad.save(update_fields=[
                         "hora_salida",
+                        "enviado_en",
                         "actualizado",
-                    ]
+                    ])
+                    asignar_comprobante(actividad)
+
+                    preventivo.estado_revision = "PENDIENTE"
+                    if preventivo.resultado_preventivo == "CON_NOVEDAD":
+                        if preventivo.estado_anomalia == "NO_APLICA":
+                            preventivo.estado_anomalia = "PENDIENTE_RESPUESTA"
+                    else:
+                        preventivo.estado_anomalia = "NO_APLICA"
+                    preventivo.save(update_fields=[
+                        "estado_revision",
+                        "estado_anomalia",
+                        "actualizado",
+                    ])
+
+                    programacion.estado = "PENDIENTE_REVISION"
+                    programacion.save(update_fields=["estado", "actualizado"])
+
+                return redirect(
+                    "comprobante_actividad",
+                    actividad_id=actividad.id,
                 )
-
-            programacion.estado = "EJECUTADO"
-
-            programacion.save(
-                update_fields=[
-                    "estado",
-                    "actualizado",
-                ]
-            )
-
-            return redirect(
-                "panel_tecnico"
-            )
     # =====================================================
     # REGISTROS YA GUARDADOS
     # =====================================================
@@ -774,6 +812,7 @@ def formulario_preventivo(request, programacion_id):
             "mediciones": mediciones,
             "componentes": componentes,
             "tanques": tanques,
+            "errores_envio": errores_envio,
         },
     )  
 
@@ -790,7 +829,12 @@ def historial_preventivos(request):
 
     preventivos = (
         ProgramacionMantenimientoPreventivo.objects
-        .filter(estado="EJECUTADO")
+        .filter(estado__in=[
+            "PENDIENTE_REVISION",
+            "DEVUELTO",
+            "PUBLICADO",
+            "EJECUTADO",
+        ])
         .select_related(
             "cliente",
             "tecnico",
@@ -809,7 +853,11 @@ def historial_preventivos(request):
         )
 
     # El personal que no sea técnico debe ser interno.
-    elif not request.user.is_staff:
+    elif not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or puede_revisar_preventivos(request.user)
+    ):
         return HttpResponseForbidden(
             "No está autorizado para consultar el historial de mantenimientos."
         )
@@ -842,7 +890,12 @@ def detalle_preventivo(request, programacion_id):
             "actividad",
         ),
         id=programacion_id,
-        estado="EJECUTADO",
+        estado__in=[
+            "PENDIENTE_REVISION",
+            "DEVUELTO",
+            "PUBLICADO",
+            "EJECUTADO",
+        ],
     )
 
     # Técnico: solo puede consultar sus propios preventivos.
@@ -852,7 +905,11 @@ def detalle_preventivo(request, programacion_id):
         )
 
     # Usuario externo que no sea técnico ni personal interno.
-    if not tecnico and not request.user.is_staff:
+    if not tecnico and not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or puede_revisar_preventivos(request.user)
+    ):
         return HttpResponseForbidden(
             "No está autorizado para consultar este mantenimiento."
         )
@@ -900,6 +957,11 @@ def detalle_preventivo(request, programacion_id):
             "componentes": componentes,
             "tanques": tanques,
             "tecnico": tecnico,
+            "puede_revisar": puede_revisar_preventivos(request.user),
+            "seguimientos_anomalia": (
+                preventivo.seguimientos_anomalia.select_related("usuario")
+                if preventivo else []
+            ),
         },
     )
 
@@ -921,7 +983,12 @@ def preventivo_pdf(request, programacion_id):
             "actividad",
         ),
         id=programacion_id,
-        estado="EJECUTADO",
+        estado__in=[
+            "PENDIENTE_REVISION",
+            "DEVUELTO",
+            "PUBLICADO",
+            "EJECUTADO",
+        ],
     )
 
     # =====================================================
@@ -934,7 +1001,11 @@ def preventivo_pdf(request, programacion_id):
                 "No está autorizado para generar este informe."
             )
 
-    elif not request.user.is_staff:
+    elif not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or puede_revisar_preventivos(request.user)
+    ):
 
         return HttpResponseForbidden(
             "No está autorizado para generar este informe."
@@ -980,14 +1051,20 @@ def preventivo_pdf(request, programacion_id):
         content_type="application/pdf"
     )
 
-    response["Content-Disposition"] = (
-        f'attachment; filename="mantenimiento_preventivo_{programacion.id}.pdf"'
+    nombre_pdf = (
+        actividad.numero_informe
+        if actividad and actividad.numero_informe
+        else f"mantenimiento_preventivo_{programacion.id}"
     )
+    response["Content-Disposition"] = f'attachment; filename="{nombre_pdf}.pdf"'
 
     pdf = canvas.Canvas(
         response,
         pagesize=letter,
     )
+    pdf.setTitle(nombre_pdf)
+    pdf.setAuthor("D&S Soluciones en Bombeo S.A.S.")
+    pdf.setSubject("Informe de mantenimiento preventivo generado por SIGOB 7x24")
 
     width, height = letter
 
@@ -1007,6 +1084,8 @@ def preventivo_pdf(request, programacion_id):
         "logo_dys.png",
     )
 
+    pagina_actual = 1
+
     # =====================================================
     # UTILIDADES
     # =====================================================
@@ -1025,9 +1104,9 @@ def preventivo_pdf(request, programacion_id):
             pdf.drawImage(
                 logo,
                 margen,
-                height - 88,
-                width=75,
-                height=50,
+                height - 70,
+                width=58,
+                height=40,
                 preserveAspectRatio=True,
                 mask="auto",
             )
@@ -1036,10 +1115,10 @@ def preventivo_pdf(request, programacion_id):
         pdf.setFillColorRGB(*azul)
 
         pdf.roundRect(
-            125,
-            height - 87,
-            width - 165,
-            50,
+            102,
+            height - 70,
+            width - 140,
+            40,
             5,
             fill=True,
             stroke=False,
@@ -1049,23 +1128,23 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            12,
+            10.5,
         )
 
         pdf.drawString(
-            140,
-            height - 58,
+            116,
+            height - 47,
             "D&S SOLUCIONES EN BOMBEO S.A.S.",
         )
 
         pdf.setFont(
             "Helvetica",
-            8.5,
+            7.5,
         )
 
         pdf.drawString(
-            140,
-            height - 72,
+            116,
+            height - 60,
             "SIGOB 7x24 - Sistema Integral de Gestión Operativa",
         )
 
@@ -1074,12 +1153,12 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            15,
+            12.5,
         )
 
         pdf.drawCentredString(
             width / 2,
-            height - 118,
+            height - 88,
             "INFORME DE MANTENIMIENTO PREVENTIVO",
         )
 
@@ -1089,9 +1168,9 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.line(
             margen,
-            height - 128,
+            height - 98,
             width - margen,
-            height - 128,
+            height - 98,
         )
 
     def pie():
@@ -1128,15 +1207,24 @@ def preventivo_pdf(request, programacion_id):
             "D&S Soluciones en Bombeo S.A.S.",
         )
 
+        pdf.drawCentredString(
+            width / 2,
+            29,
+            f"Página {pagina_actual}",
+        )
+
         pdf.setFillColorRGB(0, 0, 0)
 
     def nueva_pagina():
 
+        nonlocal pagina_actual
+
         pie()
         pdf.showPage()
+        pagina_actual += 1
         encabezado()
 
-        return height - 150
+        return height - 112
 
     def asegurar_espacio(y, necesario=55):
 
@@ -1156,9 +1244,9 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.roundRect(
             margen,
-            y - 17,
+            y - 14,
             ancho_util,
-            21,
+            17,
             4,
             fill=True,
             stroke=False,
@@ -1168,71 +1256,83 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            9.5,
+            8.5,
         )
 
         pdf.drawString(
             margen + 9,
-            y - 9,
+            y - 8,
             titulo,
         )
 
         pdf.setFillColorRGB(0, 0, 0)
 
-        return y - 24
+        return y - 20
+
+    def dividir_texto(
+        texto,
+        ancho,
+        tamano=8.2,
+        fuente="Helvetica",
+    ):
+        texto = limpiar(texto)
+        lineas = []
+
+        for parrafo in texto.splitlines() or [texto]:
+            palabras = parrafo.split()
+            if not palabras:
+                lineas.append("-")
+                continue
+
+            linea = ""
+            for palabra in palabras:
+                prueba = f"{linea} {palabra}".strip()
+                if pdf.stringWidth(prueba, fuente, tamano) <= ancho:
+                    linea = prueba
+                    continue
+
+                if linea:
+                    lineas.append(linea)
+                    linea = ""
+
+                fragmento = ""
+                for caracter in palabra:
+                    prueba_fragmento = fragmento + caracter
+                    if (
+                        fragmento
+                        and pdf.stringWidth(
+                            prueba_fragmento,
+                            fuente,
+                            tamano,
+                        ) > ancho
+                    ):
+                        lineas.append(fragmento)
+                        fragmento = caracter
+                    else:
+                        fragmento = prueba_fragmento
+                linea = fragmento
+
+            if linea:
+                lineas.append(linea)
+
+        return lineas or ["-"]
 
     def envolver_texto(
         texto,
         x,
         y,
         ancho,
-        tamano=8.2,
-        interlineado=10.5,
+        tamano=7.6,
+        interlineado=9.2,
         fuente="Helvetica",
     ):
-
-        texto = limpiar(texto)
-
-        palabras = texto.split()
-        linea = ""
 
         pdf.setFont(
             fuente,
             tamano,
         )
 
-        for palabra in palabras:
-
-            prueba = (
-                f"{linea} {palabra}".strip()
-            )
-
-            if pdf.stringWidth(
-                prueba,
-                fuente,
-                tamano,
-            ) <= ancho:
-
-                linea = prueba
-
-            else:
-
-                y = asegurar_espacio(
-                    y,
-                    interlineado,
-                )
-
-                pdf.drawString(
-                    x,
-                    y,
-                    linea,
-                )
-
-                y -= interlineado
-                linea = palabra
-
-        if linea:
-
+        for linea in dividir_texto(texto, ancho, tamano, fuente):
             y = asegurar_espacio(
                 y,
                 interlineado,
@@ -1283,12 +1383,12 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            7.3,
+            6.8,
         )
 
         pdf.drawString(
             x + 7,
-            y - 11,
+            y - 10,
             label,
         )
 
@@ -1296,19 +1396,40 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            8.5,
+            7.8,
         )
 
-        valor = limpiar(valor)
-
-        if len(valor) > 40:
-            valor = valor[:37] + "..."
-
-        pdf.drawString(
-            x + 7,
-            y - 25,
+        lineas = dividir_texto(
             valor,
+            ancho - 14,
+            7.8,
+            "Helvetica-Bold",
         )
+        posicion_y = y - 22
+        for linea in lineas:
+            pdf.drawString(x + 7, posicion_y, linea)
+            posicion_y -= 8.5
+
+    def fila_campos(
+        campos,
+        y,
+        anchos,
+        separacion=10,
+        alto_minimo=30,
+    ):
+        cantidades = [
+            len(dividir_texto(valor, ancho - 14, 7.8, "Helvetica-Bold"))
+            for (_, valor), ancho in zip(campos, anchos)
+        ]
+        alto = max(alto_minimo, 18 + (max(cantidades) * 8.5))
+        y = asegurar_espacio(y, alto + 4)
+        posicion_x = margen
+
+        for (label, valor), ancho in zip(campos, anchos):
+            campo_caja(label, valor, posicion_x, y, ancho, alto)
+            posicion_x += ancho + separacion
+
+        return y - alto - 4
 
     def encabezado_tabla(
         columnas,
@@ -1317,7 +1438,7 @@ def preventivo_pdf(request, programacion_id):
         anchos,
     ):
 
-        altura = 20
+        altura = 17
 
         pdf.setFillColorRGB(*azul_claro)
 
@@ -1334,7 +1455,7 @@ def preventivo_pdf(request, programacion_id):
 
         pdf.setFont(
             "Helvetica-Bold",
-            7.5,
+            6.8,
         )
 
         posicion = x
@@ -1346,7 +1467,7 @@ def preventivo_pdf(request, programacion_id):
 
             pdf.drawString(
                 posicion + 5,
-                y - 13,
+                y - 11,
                 titulo,
             )
 
@@ -1364,10 +1485,12 @@ def preventivo_pdf(request, programacion_id):
         alto=22,
     ):
 
-        y = asegurar_espacio(
-            y,
-            alto + 5,
-        )
+        lineas_celdas = [
+            dividir_texto(valor, ancho - 10, 7, "Helvetica")
+            for valor, ancho in zip(valores, anchos)
+        ]
+        alto = max(alto, 7 + (max(len(lineas) for lineas in lineas_celdas) * 8))
+        y = asegurar_espacio(y, alto + 5)
 
         pdf.setStrokeColorRGB(
             0.85,
@@ -1377,8 +1500,8 @@ def preventivo_pdf(request, programacion_id):
 
         posicion = x
 
-        for valor, ancho in zip(
-            valores,
+        for lineas, ancho in zip(
+            lineas_celdas,
             anchos,
         ):
 
@@ -1393,27 +1516,13 @@ def preventivo_pdf(request, programacion_id):
 
             pdf.setFont(
                 "Helvetica",
-                7.5,
+                7,
             )
 
-            texto = limpiar(valor)
-
-            max_chars = max(
-                8,
-                int(ancho / 4.5),
-            )
-
-            if len(texto) > max_chars:
-                texto = (
-                    texto[:max_chars - 3]
-                    + "..."
-                )
-
-            pdf.drawString(
-                posicion + 5,
-                y - 14,
-                texto,
-            )
+            posicion_y = y - 10
+            for linea in lineas:
+                pdf.drawString(posicion + 5, posicion_y, linea)
+                posicion_y -= 8
 
             posicion += ancho
 
@@ -1425,7 +1534,7 @@ def preventivo_pdf(request, programacion_id):
 
     encabezado()
 
-    y = height - 142
+    y = height - 108
 
     # =====================================================
     # 1. INFORMACIÓN GENERAL
@@ -1436,49 +1545,41 @@ def preventivo_pdf(request, programacion_id):
         y,
     )
 
-    espacio = 10
+    espacio = 8
+    ancho_caja = (ancho_util - espacio) / 2
 
-    ancho_caja = (
-        ancho_util - espacio
-    ) / 2
-
-    campo_caja(
-        "UNIDAD / CLIENTE",
-        programacion.cliente.nombre,
-        margen,
+    ancho_unidad = 330
+    y = fila_campos(
+        [
+            ("UNIDAD / CLIENTE", programacion.cliente.nombre),
+            (
+                "SECTOR",
+                programacion.sector.nombre
+                if programacion.sector
+                else "Sin sector / por identificar",
+            ),
+        ],
         y,
-        ancho_caja,
+        [ancho_unidad, ancho_util - ancho_unidad - espacio],
+        separacion=espacio,
     )
 
-    campo_caja(
-        "TÉCNICO",
-        programacion.tecnico.nombre,
-        margen + ancho_caja + espacio,
+    y = fila_campos(
+        [
+            (
+                "NÚMERO DE INFORME",
+                actividad.numero_informe if actividad else "Pendiente",
+            ),
+            (
+                "FECHA",
+                programacion.fecha_programada.strftime("%d/%m/%Y"),
+            ),
+            ("TÉCNICO", programacion.tecnico.nombre),
+        ],
         y,
-        ancho_caja,
+        [135, 82, ancho_util - 233],
+        separacion=espacio,
     )
-
-    y -= 37
-
-    campo_caja(
-        "FECHA DEL MANTENIMIENTO",
-        programacion.fecha_programada.strftime(
-            "%d/%m/%Y"
-        ),
-        margen,
-        y,
-        ancho_caja,
-    )
-
-    campo_caja(
-        "ESTADO",
-        programacion.get_estado_display(),
-        margen + ancho_caja + espacio,
-        y,
-        ancho_caja,
-    )
-
-    y -= 42
 
     hora_llegada = "-"
 
@@ -1500,23 +1601,27 @@ def preventivo_pdf(request, programacion_id):
                 )
             )
 
-    campo_caja(
-        "HORA DE LLEGADA",
-        hora_llegada,
-        margen,
+    y = fila_campos(
+        [
+            ("LLEGADA", hora_llegada),
+            ("SALIDA", hora_salida),
+            (
+                "RESULTADO",
+                preventivo.get_resultado_preventivo_display()
+                if preventivo and preventivo.resultado_preventivo
+                else "Sin definir",
+            ),
+            (
+                "REVISIÓN",
+                preventivo.get_estado_revision_display()
+                if preventivo
+                else "Pendiente",
+            ),
+        ],
         y,
-        ancho_caja,
+        [58, 58, 235, ancho_util - 375],
+        separacion=espacio,
     )
-
-    campo_caja(
-        "HORA DE SALIDA",
-        hora_salida,
-        margen + ancho_caja + espacio,
-        y,
-        ancho_caja,
-    )
-
-    y -= 39
 
     if programacion.observaciones:
 
@@ -1573,7 +1678,7 @@ def preventivo_pdf(request, programacion_id):
         else "-"
     )
 
-        # Revisión general compacta en tres columnas
+    # Revisión general en columnas de altura variable para conservar el texto.
     ancho_revision = (ancho_util - 16) / 3
 
     campos_revision = [
@@ -1582,66 +1687,13 @@ def preventivo_pdf(request, programacion_id):
         ("Novedades", novedades),
     ]
 
-    x_revision = margen
-
-    for titulo, valor in campos_revision:
-
-        pdf.setStrokeColorRGB(
-            0.82,
-            0.85,
-            0.88,
-        )
-
-        pdf.setFillColorRGB(
-            0.98,
-            0.99,
-            1,
-        )
-
-        pdf.roundRect(
-            x_revision,
-            y - 38,
-            ancho_revision,
-            34,
-            4,
-            fill=True,
-            stroke=True,
-        )
-
-        pdf.setFillColorRGB(*azul)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            7.5,
-        )
-
-        pdf.drawString(
-            x_revision + 6,
-            y - 13,
-            titulo,
-        )
-
-        pdf.setFillColorRGB(0, 0, 0)
-
-        pdf.setFont(
-            "Helvetica",
-            7.5,
-        )
-
-        texto = limpiar(valor)
-
-        if len(texto) > 28:
-            texto = texto[:25] + "..."
-
-        pdf.drawString(
-            x_revision + 6,
-            y - 27,
-            texto,
-        )
-
-        x_revision += ancho_revision + 8
-
-    y -= 46
+    y = fila_campos(
+        campos_revision,
+        y,
+        [ancho_revision, ancho_revision, ancho_revision],
+        separacion=8,
+        alto_minimo=34,
+    )
     # =====================================================
     # 3. EQUIPOS
     # =====================================================
@@ -1721,7 +1773,7 @@ def preventivo_pdf(request, programacion_id):
     # =====================================================
 
     y = seccion(
-        "4. COMPONENTES HIDRÁULICOS",
+        "4. REVISIÓN DE COMPONENTES HIDRÁULICOS",
         y,
     )
 
@@ -1849,12 +1901,99 @@ def preventivo_pdf(request, programacion_id):
 
         y -= 18
 
-        # =====================================================
-    # 6. RECIBIDO DEL SERVICIO
+    # =====================================================
+    # 6. REVISIÓN, AVISO Y VERIFICACIÓN
+    # =====================================================
+
+    y = asegurar_espacio(y, 145)
+    y = seccion(
+        "6. REVISIÓN, AVISO Y ESTADO DE LA CORRECCIÓN",
+        y,
+    )
+
+    revisor = "Pendiente"
+    fecha_revision = "Pendiente"
+    cliente_informado = "No registrado"
+    estado_anomalia = "Sin anomalías"
+    if preventivo:
+        if preventivo.revisado_por:
+            revisor = preventivo.revisado_por.get_full_name() or preventivo.revisado_por.username
+        if preventivo.revisado_en:
+            fecha_revision = timezone.localtime(preventivo.revisado_en).strftime("%d/%m/%Y %H:%M")
+        if preventivo.cliente_informado:
+            cliente_informado = f"Sí - {preventivo.medio_notificacion or 'medio no indicado'}"
+        estado_anomalia = preventivo.get_estado_anomalia_display()
+
+    y = fila_campos(
+        [
+            ("REVISADO POR", revisor),
+            ("FECHA DE REVISIÓN", fecha_revision),
+        ],
+        y,
+        [ancho_caja, ancho_caja],
+    )
+    y = fila_campos(
+        [
+            ("CLIENTE / ADMINISTRACIÓN INFORMADO", cliente_informado),
+            ("ESTADO DE LA CORRECCIÓN", estado_anomalia),
+        ],
+        y,
+        [ancho_caja, ancho_caja],
+    )
+
+    if preventivo and preventivo.observaciones_revision:
+        y = asegurar_espacio(y, 35)
+        pdf.setFont("Helvetica-Bold", 7.5)
+        pdf.setFillColorRGB(*gris)
+        pdf.drawString(margen, y - 2, "OBSERVACIONES DE REVISIÓN")
+        pdf.setFillColorRGB(0, 0, 0)
+        y = envolver_texto(
+            preventivo.observaciones_revision,
+            margen + 5,
+            y - 14,
+            ancho_util - 10,
+        )
+        y -= 5
+
+    if preventivo and preventivo.estado_revision == "PUBLICADO":
+        # El QR, su título y su explicación deben permanecer juntos.
+        y = asegurar_espacio(y, 68)
+        url_verificacion = request.build_absolute_uri(
+            reverse("verificar_preventivo", args=[preventivo.codigo_verificacion])
+        )
+        codigo_qr = QrCodeWidget(url_verificacion)
+        x1, y1, x2, y2 = codigo_qr.getBounds()
+        lado = 46
+        dibujo_qr = Drawing(
+            lado,
+            lado,
+            transform=[lado / (x2 - x1), 0, 0, lado / (y2 - y1), 0, 0],
+        )
+        dibujo_qr.add(codigo_qr)
+        renderPDF.draw(dibujo_qr, pdf, margen, y - lado + 4)
+        pdf.setFont("Helvetica-Bold", 7.5)
+        pdf.setFillColorRGB(*azul)
+        pdf.drawString(margen + 58, y - 9, "VERIFICACIÓN DEL INFORME")
+        pdf.setFillColorRGB(0, 0, 0)
+        y_texto = envolver_texto(
+            "Escanee el código QR para comprobar que este informe fue aprobado y publicado en SIGOB.",
+            margen + 58,
+            y - 22,
+            ancho_util - 65,
+            tamano=7.5,
+        )
+        pdf.setFillColorRGB(*gris)
+        pdf.setFont("Helvetica", 6.5)
+        pdf.drawString(margen + 58, y_texto - 2, str(preventivo.codigo_verificacion))
+        pdf.setFillColorRGB(0, 0, 0)
+        y -= 56
+
+    # =====================================================
+    # 7. RECIBIDO DEL SERVICIO
     # =====================================================
 
     y = seccion(
-        "6. RECIBIDO DEL SERVICIO",
+        "7. RECIBIDO DEL SERVICIO",
         y,
     )
 
@@ -4404,6 +4543,7 @@ def lista_actividades(request):
     )
 
 @login_required
+@transaction.atomic
 def nueva_actividad(request):
 
     # Técnico asociado al usuario conectado, si existe.
@@ -4411,6 +4551,14 @@ def nueva_actividad(request):
         user=request.user,
         activo=True,
     ).first()
+
+    if not tecnico_usuario and (
+        es_usuario_externo(request.user)
+        or not (request.user.is_staff or request.user.is_superuser)
+    ):
+        return HttpResponseForbidden(
+            "No está autorizado para registrar actividades técnicas."
+        )
 
     # Servicio que viene desde el Panel Técnico.
     servicio_id = (
@@ -4451,9 +4599,31 @@ def nueva_actividad(request):
             datos_post["cliente"] = str(servicio_forzado.cliente_id)
             datos_post["servicio"] = str(servicio_forzado.id)
 
-        form = ActividadTecnicoForm(datos_post)
+        form = ActividadTecnicoForm(
+            datos_post,
+            exigir_envio=bool(tecnico_usuario),
+        )
 
-        if form.is_valid():
+        formulario_valido = form.is_valid()
+
+        if formulario_valido:
+            for cantidad_texto in request.POST.getlist("cantidad[]"):
+                cantidad_texto = cantidad_texto.strip()
+                if not cantidad_texto:
+                    continue
+                try:
+                    cantidad_numero = Decimal(cantidad_texto)
+                except (InvalidOperation, ValueError):
+                    cantidad_numero = Decimal("0")
+                if cantidad_numero <= 0:
+                    form.add_error(
+                        None,
+                        "La cantidad de cada accesorio debe ser mayor que cero.",
+                    )
+                    formulario_valido = False
+                    break
+
+        if formulario_valido:
 
             actividad = form.save(commit=False)
 
@@ -4561,11 +4731,13 @@ def nueva_actividad(request):
                         observacion=observacion,
                     )
 
+            asignar_comprobante(actividad)
+
             # Técnico vuelve al servicio que estaba atendiendo.
             if tecnico_usuario:
                 return redirect(
-                    "servicio_tecnico",
-                    servicio_id=servicio_forzado.id,
+                    "comprobante_actividad",
+                    actividad_id=actividad.id,
                 )
 
             # Personal interno conserva su flujo actual.
@@ -4590,7 +4762,8 @@ def nueva_actividad(request):
                         else "CORRECTIVO"
                     ),
                     "fecha": timezone.localdate(),
-                }
+                },
+                exigir_envio=True,
             )
 
         else:
