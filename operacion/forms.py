@@ -573,7 +573,11 @@ DetalleRemisionFormSet = forms.inlineformset_factory(
     RemisionTecnico,
     DetalleRemision,
     form=DetalleRemisionForm,
-    extra=5,
+    extra=0,
+    min_num=1,
+    validate_min=True,
+    max_num=50,
+    validate_max=True,
     can_delete=True,
 )
 class DetalleConciliacionForm(forms.ModelForm):

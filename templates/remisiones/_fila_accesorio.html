@@ -1,0 +1,63 @@
+<tr class="fila-accesorio-remision" style="border-bottom:1px solid #e5e7eb;">
+    <td style="padding:10px;min-width:280px;vertical-align:top;">
+        {{ detalle.accesorio }}
+        <input
+            type="text"
+            class="buscador-catalogo-remision"
+            value="{% if detalle.instance.accesorio %}{{ detalle.instance.accesorio.descripcion }}{% endif %}"
+            placeholder="Ej.: flotador, válvula, cheque..."
+            autocomplete="off"
+            style="width:100%;padding:8px;border:1px solid #94a3b8;border-radius:6px;"
+        >
+        <div class="resultados-catalogo-remision" style="display:none;background:white;border:1px solid #cbd5e1;border-radius:6px;max-height:180px;overflow:auto;position:relative;z-index:5;"></div>
+        <button
+            type="button"
+            class="usar-otro-remision"
+            style="margin-top:6px;background:#fff;border:1px solid #94a3b8;border-radius:6px;padding:6px 9px;cursor:pointer;"
+        >
+            Otro / No encontrado
+        </button>
+        {% if detalle.accesorio.errors %}
+            <div style="color:#b91c1c;font-size:12px;">{{ detalle.accesorio.errors }}</div>
+        {% endif %}
+    </td>
+
+    <td style="padding:10px;">{{ detalle.codigo_accesorio }}</td>
+
+    <td style="padding:10px;">
+        {{ detalle.descripcion_accesorio }}
+        {% if detalle.descripcion_accesorio.errors %}
+            <div style="color:#b91c1c;font-size:12px;">{{ detalle.descripcion_accesorio.errors }}</div>
+        {% endif %}
+    </td>
+
+    <td style="padding:10px;">
+        {{ detalle.cantidad_entregada }}
+        {% if detalle.cantidad_entregada.errors %}
+            <div style="color:#b91c1c;font-size:12px;">{{ detalle.cantidad_entregada.errors }}</div>
+        {% endif %}
+    </td>
+
+    <td style="padding:10px;">
+        {{ detalle.observaciones }}
+        {% if detalle.non_field_errors %}
+            <div style="color:#b91c1c;font-size:12px;margin-top:5px;">{{ detalle.non_field_errors }}</div>
+        {% endif %}
+        <div style="display:none;">
+            {{ detalle.cantidad_utilizada }}
+            {{ detalle.cantidad_devuelta }}
+            {{ detalle.id }}
+            {{ detalle.DELETE }}
+        </div>
+    </td>
+
+    <td style="padding:10px;text-align:center;vertical-align:top;">
+        <button
+            type="button"
+            class="quitar-accesorio-remision"
+            style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;border-radius:6px;padding:7px 10px;cursor:pointer;"
+        >
+            Quitar
+        </button>
+    </td>
+</tr>

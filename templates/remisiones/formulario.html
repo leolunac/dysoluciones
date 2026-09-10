@@ -133,88 +133,34 @@
                             <th style="padding:10px;text-align:left;">Descripción</th>
                             <th style="padding:10px;text-align:center;">Cantidad entregada</th>
                             <th style="padding:10px;text-align:left;">Observaciones</th>
+                            <th style="padding:10px;text-align:center;">Acción</th>
                         </tr>
                     </thead>
 
-                    <tbody>
-
+                    <tbody id="filas-accesorios-remision">
                         {% for detalle in formset %}
-
-                            <tr style="border-bottom:1px solid #e5e7eb;">
-
-                                <td style="padding:10px;min-width:280px;vertical-align:top;">
-                                    {{ detalle.accesorio }}
-                                    <input
-                                        type="text"
-                                        class="buscador-catalogo-remision"
-                                        value="{% if detalle.instance.accesorio %}{{ detalle.instance.accesorio.descripcion }}{% endif %}"
-                                        placeholder="Ej.: flotador, válvula, cheque..."
-                                        autocomplete="off"
-                                        style="width:100%;padding:8px;border:1px solid #94a3b8;border-radius:6px;"
-                                    >
-                                    <div class="resultados-catalogo-remision" style="display:none;background:white;border:1px solid #cbd5e1;border-radius:6px;max-height:180px;overflow:auto;position:relative;z-index:5;"></div>
-                                    <button
-                                        type="button"
-                                        class="usar-otro-remision"
-                                        style="margin-top:6px;background:#fff;border:1px solid #94a3b8;border-radius:6px;padding:6px 9px;cursor:pointer;"
-                                    >
-                                        Otro / No encontrado
-                                    </button>
-                                    {% if detalle.accesorio.errors %}
-                                        <div style="color:#b91c1c;font-size:12px;">{{ detalle.accesorio.errors }}</div>
-                                    {% endif %}
-                                </td>
-
-                                <td style="padding:10px;">
-                                    {{ detalle.codigo_accesorio }}
-                                </td>
-
-                                <td style="padding:10px;">
-                                    {{ detalle.descripcion_accesorio }}
-
-                                    {% if detalle.descripcion_accesorio.errors %}
-                                        <div style="color:#b91c1c;font-size:12px;">
-                                            {{ detalle.descripcion_accesorio.errors }}
-                                        </div>
-                                    {% endif %}
-                                </td>
-
-                                <td style="padding:10px;">
-                                    {{ detalle.cantidad_entregada }}
-
-                                    {% if detalle.cantidad_entregada.errors %}
-                                        <div style="color:#b91c1c;font-size:12px;">
-                                            {{ detalle.cantidad_entregada.errors }}
-                                        </div>
-                                    {% endif %}
-                                </td>
-
-                                <td style="padding:10px;">
-                                    {{ detalle.observaciones }}
-
-                                    {% if detalle.non_field_errors %}
-                                        <div style="color:#b91c1c;font-size:12px;margin-top:5px;">
-                                            {{ detalle.non_field_errors }}
-                                        </div>
-                                    {% endif %}
-
-                                    <div style="display:none;">
-                                        {{ detalle.cantidad_utilizada }}
-                                        {{ detalle.cantidad_devuelta }}
-                                        {{ detalle.id }}
-                                        {{ detalle.DELETE }}
-                                    </div>
-                                </td>
-
-                            </tr>
-
+                            {% include "remisiones/_fila_accesorio.html" with detalle=detalle %}
                         {% endfor %}
-
                     </tbody>
 
                 </table>
 
             </div>
+
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
+                <button
+                    type="button"
+                    id="agregar-accesorio-remision"
+                    style="background:#0b5c92;color:white;border:0;border-radius:7px;padding:9px 14px;font-weight:700;cursor:pointer;"
+                >
+                    + Agregar accesorio
+                </button>
+                <span id="contador-accesorios-remision" style="color:#64748b;font-size:13px;"></span>
+            </div>
+
+            <template id="plantilla-fila-accesorio-remision">
+                {% include "remisiones/_fila_accesorio.html" with detalle=formset.empty_form %}
+            </template>
         </div>
 
 
@@ -264,6 +210,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const tecnico = document.getElementById("id_tecnico");
     const cliente = document.getElementById("id_cliente");
     const avisoCaso = document.getElementById("aviso-caso-remision");
+    const cuerpoAccesorios = document.getElementById("filas-accesorios-remision");
+    const plantillaFila = document.getElementById("plantilla-fila-accesorio-remision");
+    const botonAgregar = document.getElementById("agregar-accesorio-remision");
+    const contadorAccesorios = document.getElementById("contador-accesorios-remision");
+    const totalFormularios = document.getElementById("id_detalles-TOTAL_FORMS");
+    const maximoFormularios = Number(
+        document.getElementById("id_detalles-MAX_NUM_FORMS").value || 50
+    );
 
     function bloquearRelacion(bloquear) {
         [tecnico, cliente].forEach(function (campo) {
@@ -326,10 +280,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    document.querySelectorAll("tbody tr").forEach(function (fila) {
+    function prepararFilaAccesorio(fila) {
+        if (!fila || fila.dataset.preparada === "1") return;
+        fila.dataset.preparada = "1";
+
         const buscador = fila.querySelector(".buscador-catalogo-remision");
         const resultados = fila.querySelector(".resultados-catalogo-remision");
         const botonOtro = fila.querySelector(".usar-otro-remision");
+        const botonQuitar = fila.querySelector(".quitar-accesorio-remision");
+        const campoEliminar = fila.querySelector("input[name$='-DELETE']");
         const accesorioId = fila.querySelector("input[name$='-accesorio']");
         const codigo = fila.querySelector("input[name$='-codigo_accesorio']");
         const descripcion = fila.querySelector("input[name$='-descripcion_accesorio']");
@@ -399,7 +358,65 @@ document.addEventListener("DOMContentLoaded", function () {
             resultados.style.display = "none";
             descripcion.focus();
         });
-    });
+
+        if (botonQuitar && campoEliminar) {
+            botonQuitar.addEventListener("click", function () {
+                if (filasActivas().length <= 1) return;
+                campoEliminar.checked = true;
+                fila.dataset.eliminada = "1";
+                fila.style.display = "none";
+                actualizarControlesFilas();
+            });
+        }
+    }
+
+    function filasActivas() {
+        if (!cuerpoAccesorios) return [];
+        return Array.from(
+            cuerpoAccesorios.querySelectorAll(".fila-accesorio-remision")
+        ).filter(function (fila) {
+            return fila.dataset.eliminada !== "1";
+        });
+    }
+
+    function actualizarControlesFilas() {
+        const activas = filasActivas();
+        activas.forEach(function (fila) {
+            const quitar = fila.querySelector(".quitar-accesorio-remision");
+            if (quitar) quitar.disabled = activas.length <= 1;
+        });
+        if (botonAgregar) {
+            botonAgregar.disabled = activas.length >= maximoFormularios;
+        }
+        if (contadorAccesorios) {
+            contadorAccesorios.textContent = activas.length + " de máximo " + maximoFormularios;
+        }
+    }
+
+    if (cuerpoAccesorios) {
+        cuerpoAccesorios.querySelectorAll(".fila-accesorio-remision").forEach(function (fila) {
+            const campoEliminar = fila.querySelector("input[name$='-DELETE']");
+            if (campoEliminar && campoEliminar.checked) {
+                fila.dataset.eliminada = "1";
+                fila.style.display = "none";
+            }
+            prepararFilaAccesorio(fila);
+        });
+    }
+
+    if (botonAgregar && plantillaFila && cuerpoAccesorios && totalFormularios) {
+        botonAgregar.addEventListener("click", function () {
+            const indice = Number(totalFormularios.value);
+            if (filasActivas().length >= maximoFormularios) return;
+            const html = plantillaFila.innerHTML.replace(/__prefix__/g, String(indice));
+            cuerpoAccesorios.insertAdjacentHTML("beforeend", html);
+            totalFormularios.value = String(indice + 1);
+            prepararFilaAccesorio(cuerpoAccesorios.lastElementChild);
+            actualizarControlesFilas();
+        });
+    }
+
+    actualizarControlesFilas();
 });
 </script>
 

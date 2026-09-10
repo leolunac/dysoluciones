@@ -133,6 +133,31 @@ class FlujoInformesTecnicosTests(TestCase):
         )
         return accesorio, remision, detalle
 
+    def datos_nueva_remision(self, numero, servicio, accesorios):
+        datos = {
+            "numero_remision": numero,
+            "fecha": "2026-09-10T08:00",
+            "tecnico": str(self.tecnico.pk),
+            "cliente": str(self.cliente.pk),
+            "servicio": str(servicio.pk),
+            "observaciones": "Entrega dinámica de prueba",
+            "detalles-TOTAL_FORMS": str(len(accesorios)),
+            "detalles-INITIAL_FORMS": "0",
+            "detalles-MIN_NUM_FORMS": "1",
+            "detalles-MAX_NUM_FORMS": "50",
+        }
+        for indice, accesorio in enumerate(accesorios):
+            datos.update({
+                f"detalles-{indice}-accesorio": str(accesorio.pk),
+                f"detalles-{indice}-codigo_accesorio": accesorio.codigo,
+                f"detalles-{indice}-descripcion_accesorio": accesorio.descripcion,
+                f"detalles-{indice}-cantidad_entregada": "1",
+                f"detalles-{indice}-cantidad_utilizada": "0",
+                f"detalles-{indice}-cantidad_devuelta": "0",
+                f"detalles-{indice}-observaciones": "",
+            })
+        return datos
+
     def preparar_preventivo(self, *, con_novedad=False):
         programacion = self.crear_programacion()
         self.client.force_login(self.usuario_tecnico)
@@ -420,6 +445,64 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertEqual(detalle.codigo_accesorio, accesorio.codigo)
         self.assertEqual(detalle.descripcion_accesorio, accesorio.descripcion)
 
+    def test_nueva_remision_inicia_con_una_fila_y_permite_agregar(self):
+        self.client.force_login(self.coordinador)
+        respuesta = self.client.get(reverse("nueva_remision"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "+ Agregar accesorio")
+        self.assertContains(respuesta, "Quitar")
+        self.assertEqual(respuesta.context["formset"].total_form_count(), 1)
+        self.assertEqual(respuesta.context["formset"].max_num, 50)
+
+    def test_nueva_remision_acepta_mas_de_cinco_accesorios(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorios = [
+            Accesorio.objects.create(
+                codigo=f"DIN-{indice:03d}",
+                descripcion=f"Accesorio dinámico {indice}",
+            )
+            for indice in range(6)
+        ]
+        datos = self.datos_nueva_remision(
+            "REM-DINAMICA-006",
+            servicio,
+            accesorios,
+        )
+
+        self.client.force_login(self.coordinador)
+        respuesta = self.client.post(reverse("nueva_remision"), datos)
+
+        self.assertRedirects(respuesta, reverse("lista_remisiones"))
+        remision = RemisionTecnico.objects.get(numero_remision="REM-DINAMICA-006")
+        self.assertEqual(remision.detalles.count(), 6)
+
+    def test_nueva_remision_rechaza_mas_de_cincuenta_accesorios(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorios = [
+            Accesorio.objects.create(
+                codigo=f"MAX-{indice:03d}",
+                descripcion=f"Accesorio máximo {indice}",
+            )
+            for indice in range(51)
+        ]
+        datos = self.datos_nueva_remision(
+            "REM-DINAMICA-051",
+            servicio,
+            accesorios,
+        )
+
+        self.client.force_login(self.coordinador)
+        respuesta = self.client.post(reverse("nueva_remision"), datos)
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.context["formset"].non_form_errors())
+        self.assertFalse(
+            RemisionTecnico.objects.filter(
+                numero_remision="REM-DINAMICA-051"
+            ).exists()
+        )
+
     def test_caso_completa_unidad_y_tecnico_en_remision(self):
         servicio = self.crear_servicio_correctivo()
         otra_unidad = Cliente.objects.create(
@@ -580,6 +663,15 @@ class FlujoInformesTecnicosTests(TestCase):
         self.client.force_login(self.usuario_tecnico)
         lista = self.client.get(reverse("lista_remisiones"))
         self.assertEqual(lista.status_code, 403)
+
+    def test_menu_coordinador_sin_staff_no_muestra_mis_unidades(self):
+        self.client.force_login(self.coordinador_sin_staff)
+        respuesta = self.client.get(reverse("lista_remisiones"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Escritorio coordinador")
+        self.assertContains(respuesta, reverse("escritorio_coordinador"))
+        self.assertNotContains(respuesta, "Mis Unidades")
 
     def test_formulario_correctivo_no_ofrece_preventivo(self):
         servicio = Emergencia.objects.create(
