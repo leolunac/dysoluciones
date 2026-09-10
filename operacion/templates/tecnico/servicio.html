@@ -333,6 +333,20 @@
                     </div>
                 {% endif %}
 
+                {% for uso in actividad.accesorios_utilizados.all %}
+                    <div style="margin-top:7px;padding:7px 9px;background:#eef7ff;border-left:3px solid #1d70a2;border-radius:5px;">
+                        <strong>Accesorio:</strong>
+                        {% if uso.es_otro %}
+                            {{ uso.descripcion_otro }}
+                        {% elif uso.accesorio %}
+                            {{ uso.accesorio.descripcion }}
+                        {% else %}
+                            Sin identificar
+                        {% endif %}
+                        · Cantidad {{ uso.cantidad }}
+                    </div>
+                {% endfor %}
+
                 {% if actividad.numero_informe %}
                     <div style="margin-top:10px;">
                         <a class="btn btn-blue" href="{% url 'comprobante_actividad' actividad.id %}">

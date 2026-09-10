@@ -377,6 +377,7 @@ class Emergencia(models.Model):
     TIPO_SERVICIO = [
         ("EMERGENCIA", "Emergencia"),
         ("CORRECTIVO", "Correctivo"),
+        ("LAVADO", "Lavado de tanques"),
         ("GARANTIA", "Garantía"),
         ("REVISION", "Revisión"),
     ]
@@ -1211,6 +1212,18 @@ class DetalleRemision(models.Model):
         related_name="detalles",
     )
 
+    accesorio = models.ForeignKey(
+        Accesorio,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="detalles_remision",
+        help_text=(
+            "Accesorio del catálogo. Los campos de código y descripción "
+            "conservan la información histórica de la remisión."
+        ),
+    )
+
     codigo_accesorio = models.CharField(
         max_length=50,
         blank=True,
@@ -1254,6 +1267,29 @@ class DetalleRemision(models.Model):
     def esta_conciliado(self):
         return self.cantidad_pendiente == Decimal("0.00")
 
+    def actualizar_utilizado_desde_informes(self):
+        total = self.usos_en_actividades.aggregate(
+            total=models.Sum("cantidad"),
+        )["total"] or Decimal("0.00")
+
+        # Las remisiones anteriores podían haber sido conciliadas a mano.
+        # Esa información histórica nunca debe disminuirse automáticamente.
+        total = max(self.cantidad_utilizada, total)
+
+        if self.cantidad_utilizada != total:
+            self.cantidad_utilizada = total
+            self.save(update_fields=["cantidad_utilizada"])
+
+        return total
+
+    def save(self, *args, **kwargs):
+        if self.accesorio_id:
+            accesorio = self.accesorio
+            self.codigo_accesorio = accesorio.codigo
+            self.descripcion_accesorio = accesorio.descripcion
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return (
             f"{self.descripcion_accesorio} - "
@@ -1267,6 +1303,7 @@ class ActividadTecnico(models.Model):
 
     TIPO_ACTIVIDAD = [
         ("CORRECTIVO", "Correctivo"),
+        ("LAVADO", "Lavado de tanques"),
         ("DIAGNOSTICO", "Visita de diagnóstico"),
         ("REGRESO", "Regreso a unidad"),
         ("GARANTIA", "Garantía"),
@@ -1461,6 +1498,15 @@ class AccesorioActividad(models.Model):
         null=True,
         blank=True,
         related_name="usos_en_actividades",
+    )
+
+    detalle_remision = models.ForeignKey(
+        DetalleRemision,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="usos_en_actividades",
+        help_text="Renglón de la remisión que respalda este consumo.",
     )
 
     es_otro = models.BooleanField(

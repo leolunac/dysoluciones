@@ -73,6 +73,7 @@ from .permisos_bitacora import (
 from .informes_tecnicos import (
     asignar_comprobante,
     errores_para_enviar_preventivo,
+    puede_gestionar_remisiones,
     puede_revisar_preventivos,
 )
 from django.views.decorators.http import require_GET, require_http_methods
@@ -3305,6 +3306,11 @@ def editar_bitacora(request, bitacora_id):
 @login_required
 def lista_remisiones(request):
 
+    if not puede_gestionar_remisiones(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para administrar remisiones."
+        )
+
     remisiones = (
         RemisionTecnico.objects
         .select_related(
@@ -3355,6 +3361,11 @@ def lista_remisiones(request):
 @login_required
 def nueva_remision(request):
 
+    if not puede_gestionar_remisiones(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para registrar remisiones."
+        )
+
     if request.method == "POST":
 
         form = RemisionTecnicoForm(request.POST)
@@ -3394,8 +3405,12 @@ def nueva_remision(request):
 
 
 @login_required
-@login_required
 def conciliar_remision(request, remision_id):
+
+    if not puede_gestionar_remisiones(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para conciliar remisiones."
+        )
 
     remision = get_object_or_404(
         RemisionTecnico,
@@ -4280,17 +4295,82 @@ def casos_por_cliente(request):
         })
 
     return JsonResponse({"casos": datos})
+
+
 @login_required
+@require_GET
+def datos_caso_remision(request):
+    if not puede_gestionar_remisiones(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para consultar datos de remisiones."
+        )
+
+    servicio_id = request.GET.get("servicio_id", "").strip()
+    if not servicio_id.isdecimal():
+        return JsonResponse({"error": "Caso inválido."}, status=400)
+
+    servicio = get_object_or_404(
+        Emergencia.objects.select_related("cliente", "tecnico"),
+        pk=servicio_id,
+    )
+
+    return JsonResponse({
+        "caso": {
+            "id": servicio.id,
+            "numero": servicio.numero_caso,
+            "cliente_id": servicio.cliente_id,
+            "cliente": servicio.cliente.nombre,
+            "tecnico_id": servicio.tecnico_id,
+            "tecnico": servicio.tecnico.nombre if servicio.tecnico_id else "",
+        }
+    })
+
+
+@login_required
+@require_GET
 def remisiones_por_cliente(request):
+    if not request.user.is_active or es_usuario_externo(request.user):
+        return HttpResponseForbidden(
+            "Consulta disponible solo para personal interno."
+        )
+
     cliente_id = request.GET.get("cliente_id")
     servicio_id = request.GET.get("servicio_id")
+
+    if any(
+        valor and not valor.isdecimal()
+        for valor in (cliente_id, servicio_id)
+    ):
+        return JsonResponse({"error": "Identificador inválido"}, status=400)
 
     if not cliente_id:
         return JsonResponse({"remisiones": []})
 
-    remisiones = RemisionTecnico.objects.filter(
-        cliente_id=cliente_id
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    gestor = (
+        request.user.is_superuser
+        or puede_gestionar_remisiones(request.user)
     )
+    interno = gestor or (request.user.is_staff and tecnico is None)
+
+    if not interno and tecnico is None:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar remisiones."
+        )
+
+    remisiones = RemisionTecnico.objects.select_related(
+        "tecnico",
+    ).filter(
+        cliente_id=cliente_id,
+        estado="PENDIENTE",
+    )
+
+    if tecnico is not None and not gestor:
+        remisiones = remisiones.filter(tecnico=tecnico)
 
     # Si además se seleccionó un caso 7x24,
     # mostramos las remisiones relacionadas con ese caso.
@@ -4313,12 +4393,93 @@ def remisiones_por_cliente(request):
             ),
         })
 
-    return JsonResponse({"remisiones": datos})        
+    return JsonResponse({"remisiones": datos})
 
-    return JsonResponse({"casos": datos})
 
 @login_required
+@require_GET
+def accesorios_remision(request, remision_id):
+    if not request.user.is_active or es_usuario_externo(request.user):
+        return HttpResponseForbidden(
+            "Consulta disponible solo para personal interno."
+        )
+
+    remision = get_object_or_404(
+        RemisionTecnico.objects.select_related(
+            "tecnico",
+        ).prefetch_related(
+            "detalles__accesorio",
+        ),
+        pk=remision_id,
+    )
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).first()
+
+    gestor = (
+        request.user.is_superuser
+        or puede_gestionar_remisiones(request.user)
+    )
+    autorizado = (
+        gestor
+        or (tecnico is not None and remision.tecnico_id == tecnico.id)
+        or (request.user.is_staff and tecnico is None)
+    )
+
+    if not autorizado:
+        return HttpResponseForbidden(
+            "No está autorizado para consultar esta remisión."
+        )
+
+    detalles = []
+
+    for detalle in remision.detalles.all():
+        disponible = detalle.cantidad_pendiente
+        detalles.append({
+            "id": detalle.id,
+            "accesorio_id": detalle.accesorio_id,
+            "codigo": detalle.codigo_accesorio,
+            "descripcion": detalle.descripcion_accesorio,
+            "entregada": str(detalle.cantidad_entregada),
+            "utilizada": str(detalle.cantidad_utilizada),
+            "devuelta": str(detalle.cantidad_devuelta),
+            "disponible": str(max(disponible, Decimal("0.00"))),
+            "catalogado": bool(detalle.accesorio_id),
+        })
+
+    return JsonResponse({
+        "remision": {
+            "id": remision.id,
+            "numero": remision.numero_remision,
+            "estado": remision.estado,
+        },
+        "detalles": detalles,
+    })
+
+@login_required
+@require_GET
 def buscar_accesorios(request):
+    if not request.user.is_active or es_usuario_externo(request.user):
+        return HttpResponseForbidden(
+            "Consulta disponible solo para personal interno."
+        )
+
+    tecnico = Tecnico.objects.filter(
+        user=request.user,
+        activo=True,
+    ).exists()
+    if not (
+        tecnico
+        or request.user.is_staff
+        or request.user.is_superuser
+        or puede_gestionar_remisiones(request.user)
+    ):
+        return HttpResponseForbidden(
+            "No está autorizado para consultar accesorios."
+        )
+
     texto = request.GET.get("q", "").strip()
 
     if len(texto) < 2:
@@ -4327,7 +4488,8 @@ def buscar_accesorios(request):
     accesorios = (
         Accesorio.objects
         .filter(
-            descripcion__icontains=texto,
+            Q(descripcion__icontains=texto)
+            | Q(codigo__icontains=texto),
             activo=True,
         )
         .order_by("descripcion")[:20]
@@ -4336,6 +4498,7 @@ def buscar_accesorios(request):
     resultados = [
         {
             "id": accesorio.id,
+            "codigo": accesorio.codigo,
             "descripcion": accesorio.descripcion,
         }
         for accesorio in accesorios
@@ -4470,6 +4633,25 @@ def detalle_actividad(request, actividad_id):
 
 def lista_actividades(request):
 
+    autorizado = (
+        request.user.is_superuser
+        or request.user.is_staff
+        or (
+            not es_usuario_externo(request.user)
+            and request.user.groups.filter(name__in=[
+                "GESTION_COORDINADOR",
+                "GESTION_SUPERVISOR",
+                "GESTION_GERENCIA",
+                "GESTION_AUXILIAR",
+                "GESTION_FACTURACION",
+            ]).exists()
+        )
+    )
+    if not autorizado or es_usuario_externo(request.user):
+        return HttpResponseForbidden(
+            "No está autorizado para consultar los informes técnicos."
+        )
+
     actividades = (
         ActividadTecnico.objects
         .select_related(
@@ -4542,6 +4724,184 @@ def lista_actividades(request):
         },
     )
 
+
+def _validar_remision_actividad(form):
+    remision = form.cleaned_data.get("remision")
+    if not remision:
+        return None
+
+    tecnico = form.cleaned_data.get("tecnico")
+    cliente = form.cleaned_data.get("cliente")
+    servicio = form.cleaned_data.get("servicio")
+
+    if remision.estado == "CONCILIADA":
+        form.add_error(
+            "remision",
+            "La remisión ya está conciliada y no admite nuevos consumos.",
+        )
+    elif tecnico and remision.tecnico_id != tecnico.id:
+        form.add_error(
+            "remision",
+            "La remisión no pertenece al técnico seleccionado.",
+        )
+    elif cliente and remision.cliente_id != cliente.id:
+        form.add_error(
+            "remision",
+            "La remisión no pertenece a la unidad seleccionada.",
+        )
+    elif remision.servicio_id and (
+        not servicio or remision.servicio_id != servicio.id
+    ):
+        form.add_error(
+            "remision",
+            "La remisión pertenece a otro caso 7x24.",
+        )
+
+    return remision
+
+
+def _usos_accesorios_solicitados(request, form):
+    accesorios_ids = request.POST.getlist("accesorio_id[]")
+    detalles_ids = request.POST.getlist("detalle_remision_id[]")
+    cantidades = request.POST.getlist("cantidad[]")
+    es_otro_lista = request.POST.getlist("es_otro[]")
+    descripciones_otro = request.POST.getlist("descripcion_otro[]")
+    observaciones = request.POST.getlist("observacion[]")
+
+    total_filas = max(
+        len(accesorios_ids),
+        len(detalles_ids),
+        len(cantidades),
+        len(es_otro_lista),
+        len(descripciones_otro),
+        len(observaciones),
+        0,
+    )
+
+    remision = form.cleaned_data.get("remision")
+    usos = []
+
+    for i in range(total_filas):
+        accesorio_id = accesorios_ids[i].strip() if i < len(accesorios_ids) else ""
+        detalle_id = detalles_ids[i].strip() if i < len(detalles_ids) else ""
+        cantidad_texto = cantidades[i].strip() if i < len(cantidades) else ""
+        es_otro = (
+            i < len(es_otro_lista)
+            and es_otro_lista[i] == "1"
+        )
+        descripcion_otro = (
+            descripciones_otro[i].strip()
+            if i < len(descripciones_otro)
+            else ""
+        )
+        observacion = (
+            observaciones[i].strip()
+            if i < len(observaciones)
+            else ""
+        )
+
+        if not accesorio_id and not detalle_id and not descripcion_otro:
+            continue
+
+        try:
+            cantidad = Decimal(cantidad_texto or "1")
+        except (InvalidOperation, ValueError):
+            cantidad = Decimal("0")
+
+        if cantidad <= 0:
+            form.add_error(
+                None,
+                "La cantidad de cada accesorio debe ser mayor que cero.",
+            )
+            return []
+
+        detalle = None
+        accesorio = None
+
+        if detalle_id:
+            if not detalle_id.isdecimal() or not remision:
+                form.add_error(None, "El accesorio de la remisión no es válido.")
+                return []
+
+            detalle = (
+                DetalleRemision.objects
+                .select_related("accesorio")
+                .filter(pk=detalle_id, remision=remision)
+                .first()
+            )
+            if not detalle or not detalle.accesorio_id:
+                form.add_error(
+                    None,
+                    "El accesorio no está relacionado correctamente con la remisión.",
+                )
+                return []
+            accesorio = detalle.accesorio
+            es_otro = False
+            descripcion_otro = ""
+
+        elif es_otro:
+            if not descripcion_otro:
+                form.add_error(None, "Describa el accesorio no catalogado.")
+                return []
+
+        else:
+            if not accesorio_id.isdecimal():
+                form.add_error(None, "Seleccione un accesorio válido del catálogo.")
+                return []
+
+            accesorio = Accesorio.objects.filter(
+                pk=accesorio_id,
+                activo=True,
+            ).first()
+            if not accesorio:
+                form.add_error(None, "El accesorio seleccionado no está disponible.")
+                return []
+
+            if remision:
+                coincidencias = list(
+                    remision.detalles.select_related("accesorio").filter(
+                        accesorio=accesorio,
+                    )[:2]
+                )
+                if len(coincidencias) == 1:
+                    detalle = coincidencias[0]
+
+        usos.append({
+            "accesorio": accesorio,
+            "detalle_remision": detalle,
+            "es_otro": es_otro,
+            "descripcion_otro": descripcion_otro,
+            "cantidad": cantidad,
+            "observacion": observacion,
+        })
+
+    cantidades_por_detalle = {}
+    detalles = {}
+
+    for uso in usos:
+        detalle = uso["detalle_remision"]
+        if not detalle:
+            continue
+        detalles[detalle.pk] = detalle
+        cantidades_por_detalle[detalle.pk] = (
+            cantidades_por_detalle.get(detalle.pk, Decimal("0.00"))
+            + uso["cantidad"]
+        )
+
+    for detalle_id, cantidad in cantidades_por_detalle.items():
+        detalle = detalles[detalle_id]
+        if cantidad > detalle.cantidad_pendiente:
+            form.add_error(
+                None,
+                (
+                    f"La cantidad utilizada de {detalle.descripcion_accesorio} "
+                    "supera lo disponible en la remisión."
+                ),
+            )
+            return []
+
+    return usos
+
 @login_required
 @transaction.atomic
 def nueva_actividad(request):
@@ -4604,24 +4964,25 @@ def nueva_actividad(request):
             exigir_envio=bool(tecnico_usuario),
         )
 
+        if tecnico_usuario and servicio_forzado:
+            form.fields["remision"].queryset = RemisionTecnico.objects.filter(
+                tecnico=tecnico_usuario,
+                cliente=servicio_forzado.cliente,
+                servicio=servicio_forzado,
+                estado="PENDIENTE",
+            ).order_by("-fecha", "-id")
+
         formulario_valido = form.is_valid()
+        usos_solicitados = []
 
         if formulario_valido:
-            for cantidad_texto in request.POST.getlist("cantidad[]"):
-                cantidad_texto = cantidad_texto.strip()
-                if not cantidad_texto:
-                    continue
-                try:
-                    cantidad_numero = Decimal(cantidad_texto)
-                except (InvalidOperation, ValueError):
-                    cantidad_numero = Decimal("0")
-                if cantidad_numero <= 0:
-                    form.add_error(
-                        None,
-                        "La cantidad de cada accesorio debe ser mayor que cero.",
-                    )
-                    formulario_valido = False
-                    break
+            _validar_remision_actividad(form)
+            if not form.errors:
+                usos_solicitados = _usos_accesorios_solicitados(
+                    request,
+                    form,
+                )
+            formulario_valido = not form.errors
 
         if formulario_valido:
 
@@ -4637,99 +4998,36 @@ def nueva_actividad(request):
             actividad.registrado_por = request.user
             actividad.save()
 
-            # =================================================
-            # ACCESORIOS UTILIZADOS
-            # =================================================
-            accesorios_ids = request.POST.getlist(
-                "accesorio_id[]"
-            )
-            cantidades = request.POST.getlist(
-                "cantidad[]"
-            )
-            es_otro_lista = request.POST.getlist(
-                "es_otro[]"
-            )
-            descripciones_otro = request.POST.getlist(
-                "descripcion_otro[]"
-            )
-            observaciones = request.POST.getlist(
-                "observacion[]"
-            )
+            detalles_afectados = {}
 
-            total_filas = max(
-                len(accesorios_ids),
-                len(cantidades),
-                len(es_otro_lista),
-                len(descripciones_otro),
-                len(observaciones),
-                0,
-            )
-
-            for i in range(total_filas):
-
-                accesorio_id = (
-                    accesorios_ids[i]
-                    if i < len(accesorios_ids)
-                    else ""
+            for uso in usos_solicitados:
+                AccesorioActividad.objects.create(
+                    actividad=actividad,
+                    accesorio=uso["accesorio"],
+                    detalle_remision=uso["detalle_remision"],
+                    es_otro=uso["es_otro"],
+                    descripcion_otro=uso["descripcion_otro"],
+                    cantidad=uso["cantidad"],
+                    observacion=uso["observacion"],
                 )
 
-                cantidad = (
-                    cantidades[i]
-                    if i < len(cantidades)
-                    else ""
+                detalle = uso["detalle_remision"]
+                if detalle:
+                    detalles_afectados[detalle.pk] = detalle
+
+            for detalle in detalles_afectados.values():
+                detalle.actualizar_utilizado_desde_informes()
+
+            if actividad.remision_id:
+                actividad.remision.refresh_from_db()
+                actividad.remision.estado = (
+                    "CONCILIADA"
+                    if actividad.remision.esta_conciliada
+                    else "PENDIENTE"
                 )
-
-                es_otro = (
-                    es_otro_lista[i] == "1"
-                    if i < len(es_otro_lista)
-                    else False
+                actividad.remision.save(
+                    update_fields=["estado", "actualizado"]
                 )
-
-                descripcion_otro = (
-                    descripciones_otro[i].strip()
-                    if i < len(descripciones_otro)
-                    else ""
-                )
-
-                observacion = (
-                    observaciones[i].strip()
-                    if i < len(observaciones)
-                    else ""
-                )
-
-                # Fila completamente vacía.
-                if not accesorio_id and not descripcion_otro:
-                    continue
-
-                if not cantidad:
-                    cantidad = 1
-
-                if es_otro:
-
-                    AccesorioActividad.objects.create(
-                        actividad=actividad,
-                        accesorio=None,
-                        es_otro=True,
-                        descripcion_otro=descripcion_otro,
-                        cantidad=cantidad,
-                        observacion=observacion,
-                    )
-
-                else:
-
-                    accesorio = get_object_or_404(
-                        Accesorio,
-                        id=accesorio_id,
-                    )
-
-                    AccesorioActividad.objects.create(
-                        actividad=actividad,
-                        accesorio=accesorio,
-                        es_otro=False,
-                        descripcion_otro="",
-                        cantidad=cantidad,
-                        observacion=observacion,
-                    )
 
             asignar_comprobante(actividad)
 
@@ -4765,6 +5063,12 @@ def nueva_actividad(request):
                 },
                 exigir_envio=True,
             )
+            form.fields["remision"].queryset = RemisionTecnico.objects.filter(
+                tecnico=tecnico_usuario,
+                cliente=servicio_forzado.cliente,
+                servicio=servicio_forzado,
+                estado="PENDIENTE",
+            ).order_by("-fecha", "-id")
 
         else:
             form = ActividadTecnicoForm()

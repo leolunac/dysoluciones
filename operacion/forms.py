@@ -8,6 +8,7 @@ from .models import (
     EquipoUnidad,
     TanqueUnidad,
     BitacoraOperativa,
+    Accesorio,
     RemisionTecnico,
     DetalleRemision,
     ActividadTecnico,
@@ -418,6 +419,42 @@ class RemisionTecnicoForm(forms.ModelForm):
         ]
 
         self.fields["servicio"].required = False
+        self.fields["tecnico"].required = False
+        self.fields["cliente"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tecnico = cleaned_data.get("tecnico")
+        cliente = cleaned_data.get("cliente")
+        servicio = cleaned_data.get("servicio")
+
+        if servicio:
+            cliente = servicio.cliente
+            cleaned_data["cliente"] = cliente
+            self.instance.cliente = cliente
+
+            if servicio.tecnico_id:
+                tecnico = servicio.tecnico
+                cleaned_data["tecnico"] = tecnico
+                self.instance.tecnico = tecnico
+            else:
+                self.add_error(
+                    "servicio",
+                    "El caso 7x24 todavía no tiene un técnico asignado.",
+                )
+        else:
+            if not tecnico:
+                self.add_error(
+                    "tecnico",
+                    "Seleccione el técnico que recibe la remisión.",
+                )
+            if not cliente:
+                self.add_error(
+                    "cliente",
+                    "Seleccione la unidad que recibe la remisión.",
+                )
+
+        return cleaned_data
 
 
 class DetalleRemisionForm(forms.ModelForm):
@@ -426,6 +463,7 @@ class DetalleRemisionForm(forms.ModelForm):
         model = DetalleRemision
 
         fields = (
+            "accesorio",
             "codigo_accesorio",
             "descripcion_accesorio",
             "cantidad_entregada",
@@ -435,6 +473,8 @@ class DetalleRemisionForm(forms.ModelForm):
         )
 
         widgets = {
+            "accesorio": forms.HiddenInput(),
+
             "codigo_accesorio": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "Código",
@@ -470,6 +510,7 @@ class DetalleRemisionForm(forms.ModelForm):
         }
 
         labels = {
+            "accesorio": "Accesorio del catálogo",
             "codigo_accesorio": "Código",
             "descripcion_accesorio": "Accesorio",
             "cantidad_entregada": "Entregado",
@@ -477,7 +518,14 @@ class DetalleRemisionForm(forms.ModelForm):
             "cantidad_devuelta": "Devuelto",
             "observaciones": "Observaciones",
         }
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["accesorio"].queryset = Accesorio.objects.filter(
+            activo=True,
+        ).order_by("descripcion")
+        self.fields["codigo_accesorio"].required = False
+        self.fields["descripcion_accesorio"].required = False
 
     def clean(self):
         cleaned_data = super().clean()
@@ -485,6 +533,27 @@ class DetalleRemisionForm(forms.ModelForm):
         entregada = cleaned_data.get("cantidad_entregada") or Decimal("0")
         utilizada = cleaned_data.get("cantidad_utilizada") or Decimal("0")
         devuelta = cleaned_data.get("cantidad_devuelta") or Decimal("0")
+
+        if cleaned_data.get("DELETE"):
+            return cleaned_data
+
+        accesorio = cleaned_data.get("accesorio")
+        descripcion = (cleaned_data.get("descripcion_accesorio") or "").strip()
+
+        if accesorio:
+            cleaned_data["codigo_accesorio"] = accesorio.codigo
+            cleaned_data["descripcion_accesorio"] = accesorio.descripcion
+            self.instance.codigo_accesorio = accesorio.codigo
+            self.instance.descripcion_accesorio = accesorio.descripcion
+        elif not descripcion:
+            raise forms.ValidationError(
+                "Seleccione un accesorio del catálogo o use Otro / No encontrado."
+            )
+
+        if entregada <= 0:
+            raise forms.ValidationError(
+                "La cantidad entregada debe ser mayor que cero."
+            )
 
         if entregada < 0 or utilizada < 0 or devuelta < 0:
             raise forms.ValidationError(
@@ -549,10 +618,23 @@ class DetalleConciliacionForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # En remisiones nuevas, el consumo proviene del informe del técnico
+        # y coordinación solo registra la devolución. Las remisiones antiguas
+        # sin relación al catálogo conservan la captura manual para no perder
+        # compatibilidad con la información histórica.
+        if self.instance and self.instance.pk and self.instance.accesorio_id:
+            self.fields["cantidad_utilizada"].widget = forms.HiddenInput()
+
     def clean(self):
         cleaned_data = super().clean()
 
-        utilizada = cleaned_data.get("cantidad_utilizada") or Decimal("0")
+        if self.instance and self.instance.pk and self.instance.accesorio_id:
+            utilizada = self.instance.cantidad_utilizada
+        else:
+            utilizada = cleaned_data.get("cantidad_utilizada") or Decimal("0")
         devuelta = cleaned_data.get("cantidad_devuelta") or Decimal("0")
         cleaned_data["cantidad_utilizada"] = utilizada
         cleaned_data["cantidad_devuelta"] = devuelta

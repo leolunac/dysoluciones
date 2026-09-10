@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 from django.contrib.auth.models import Group, User
@@ -10,12 +11,16 @@ from django.urls import reverse
 from portal_cliente.models import DocumentoCliente
 
 from .models import (
+    Accesorio,
+    AccesorioActividad,
     ActividadTecnico,
     Cliente,
     Emergencia,
+    DetalleRemision,
     MantenimientoPreventivo,
     MedicionEquipoPreventivo,
     ProgramacionMantenimientoPreventivo,
+    RemisionTecnico,
     SectorCliente,
     SeguimientoAnomaliaPreventivo,
     Tecnico,
@@ -99,6 +104,34 @@ class FlujoInformesTecnicosTests(TestCase):
             fecha_programada=date.today(),
             creado_por=self.coordinador,
         )
+
+    def crear_servicio_correctivo(self):
+        return Emergencia.objects.create(
+            cliente=self.cliente,
+            sector=self.sector,
+            tecnico=self.tecnico,
+            descripcion_falla="Flotador defectuoso",
+            tipo_servicio="CORRECTIVO",
+        )
+
+    def crear_remision_catalogada(self, servicio, cantidad="2.00"):
+        accesorio = Accesorio.objects.create(
+            codigo="FLOT-PRUEBA",
+            descripcion="Flotador de prueba catalogado",
+        )
+        remision = RemisionTecnico.objects.create(
+            numero_remision=f"REM-{servicio.pk}",
+            tecnico=self.tecnico,
+            cliente=self.cliente,
+            servicio=servicio,
+            entregado_por=self.coordinador,
+        )
+        detalle = DetalleRemision.objects.create(
+            remision=remision,
+            accesorio=accesorio,
+            cantidad_entregada=Decimal(cantidad),
+        )
+        return accesorio, remision, detalle
 
     def preparar_preventivo(self, *, con_novedad=False):
         programacion = self.crear_programacion()
@@ -294,6 +327,260 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertTrue(actividad.numero_informe.startswith("COR-"))
         self.assertIsNotNone(actividad.enviado_en)
 
+    def test_remision_catalogada_alimenta_consumo_y_comprobante(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio, remision, detalle = self.crear_remision_catalogada(servicio)
+        self.client.force_login(self.usuario_tecnico)
+
+        respuesta = self.client.post(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}",
+            {
+                "servicio": str(servicio.pk),
+                "remision": str(remision.pk),
+                "tipo_actividad": "CORRECTIVO",
+                "fecha": date.today().isoformat(),
+                "hora_llegada": "08:00",
+                "hora_salida": "09:00",
+                "diagnostico": "Flotador defectuoso",
+                "labor_realizada": "Se reemplazó el flotador",
+                "resultado": "OPERATIVO",
+                "accesorio_id[]": str(accesorio.pk),
+                "detalle_remision_id[]": str(detalle.pk),
+                "cantidad[]": "1",
+                "es_otro[]": "0",
+                "descripcion_otro[]": "",
+                "observacion[]": "Instalado en la unidad",
+            },
+        )
+
+        actividad = ActividadTecnico.objects.get(servicio=servicio)
+        uso = AccesorioActividad.objects.get(actividad=actividad)
+        detalle.refresh_from_db()
+        remision.refresh_from_db()
+
+        self.assertRedirects(
+            respuesta,
+            reverse("comprobante_actividad", args=[actividad.pk]),
+        )
+        self.assertEqual(uso.detalle_remision_id, detalle.pk)
+        self.assertEqual(detalle.cantidad_utilizada, Decimal("1.00"))
+        self.assertEqual(remision.estado, "PENDIENTE")
+
+        comprobante = self.client.get(
+            reverse("comprobante_actividad", args=[actividad.pk])
+        )
+        self.assertContains(comprobante, remision.numero_remision)
+        self.assertContains(comprobante, accesorio.descripcion)
+        self.assertContains(comprobante, "Cantidad 1,00")
+
+    def test_nueva_remision_copia_codigo_y_descripcion_del_catalogo(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio = Accesorio.objects.create(
+            codigo="CAT-001",
+            descripcion="Accesorio oficial del catálogo",
+        )
+        datos = {
+            "numero_remision": "REM-CATALOGO-001",
+            "fecha": "2026-09-09T18:00",
+            "tecnico": str(self.tecnico.pk),
+            "cliente": str(self.cliente.pk),
+            "servicio": str(servicio.pk),
+            "observaciones": "Entrega de prueba",
+            "detalles-TOTAL_FORMS": "5",
+            "detalles-INITIAL_FORMS": "0",
+            "detalles-MIN_NUM_FORMS": "0",
+            "detalles-MAX_NUM_FORMS": "1000",
+            "detalles-0-accesorio": str(accesorio.pk),
+            "detalles-0-codigo_accesorio": "CODIGO ALTERADO",
+            "detalles-0-descripcion_accesorio": "DESCRIPCION ALTERADA",
+            "detalles-0-cantidad_entregada": "2",
+            "detalles-0-cantidad_utilizada": "0",
+            "detalles-0-cantidad_devuelta": "0",
+            "detalles-0-observaciones": "Prueba",
+        }
+        for indice in range(1, 5):
+            datos.update({
+                f"detalles-{indice}-accesorio": "",
+                f"detalles-{indice}-codigo_accesorio": "",
+                f"detalles-{indice}-descripcion_accesorio": "",
+                f"detalles-{indice}-cantidad_entregada": "0",
+                f"detalles-{indice}-cantidad_utilizada": "0",
+                f"detalles-{indice}-cantidad_devuelta": "0",
+                f"detalles-{indice}-observaciones": "",
+            })
+
+        self.client.force_login(self.coordinador)
+        respuesta = self.client.post(reverse("nueva_remision"), datos)
+
+        self.assertRedirects(respuesta, reverse("lista_remisiones"))
+        detalle = DetalleRemision.objects.get(
+            remision__numero_remision="REM-CATALOGO-001"
+        )
+        self.assertEqual(detalle.accesorio_id, accesorio.pk)
+        self.assertEqual(detalle.codigo_accesorio, accesorio.codigo)
+        self.assertEqual(detalle.descripcion_accesorio, accesorio.descripcion)
+
+    def test_caso_completa_unidad_y_tecnico_en_remision(self):
+        servicio = self.crear_servicio_correctivo()
+        otra_unidad = Cliente.objects.create(
+            nombre="Unidad incorrecta",
+            direccion="Calle 2",
+            telefono_porteria="456",
+            administrador="Administración 2",
+            email="otra-unidad@example.com",
+            tipo_contrato="SIN_CONTRATO",
+            frecuencia_lavado=6,
+        )
+        accesorio = Accesorio.objects.create(
+            codigo="CAT-AUTO-001",
+            descripcion="Accesorio para autocompletar",
+        )
+        datos = {
+            "numero_remision": "REM-AUTO-001",
+            "fecha": "2026-09-10T07:00",
+            "tecnico": str(self.otro_tecnico.pk),
+            "cliente": str(otra_unidad.pk),
+            "servicio": str(servicio.pk),
+            "observaciones": "Datos derivados del caso",
+            "detalles-TOTAL_FORMS": "1",
+            "detalles-INITIAL_FORMS": "0",
+            "detalles-MIN_NUM_FORMS": "0",
+            "detalles-MAX_NUM_FORMS": "1000",
+            "detalles-0-accesorio": str(accesorio.pk),
+            "detalles-0-codigo_accesorio": accesorio.codigo,
+            "detalles-0-descripcion_accesorio": accesorio.descripcion,
+            "detalles-0-cantidad_entregada": "1",
+            "detalles-0-cantidad_utilizada": "0",
+            "detalles-0-cantidad_devuelta": "0",
+            "detalles-0-observaciones": "",
+        }
+
+        self.client.force_login(self.coordinador)
+        respuesta = self.client.post(reverse("nueva_remision"), datos)
+
+        self.assertRedirects(respuesta, reverse("lista_remisiones"))
+        remision = RemisionTecnico.objects.get(numero_remision="REM-AUTO-001")
+        self.assertEqual(remision.cliente_id, servicio.cliente_id)
+        self.assertEqual(remision.tecnico_id, servicio.tecnico_id)
+
+        datos_caso = self.client.get(
+            reverse("datos_caso_remision"),
+            {"servicio_id": servicio.pk},
+        )
+        self.assertEqual(datos_caso.status_code, 200)
+        self.assertEqual(datos_caso.json()["caso"]["cliente_id"], servicio.cliente_id)
+        self.assertEqual(datos_caso.json()["caso"]["tecnico_id"], servicio.tecnico_id)
+
+    def test_correctivo_no_permite_consumir_mas_de_lo_entregado(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio, remision, detalle = self.crear_remision_catalogada(servicio)
+        self.client.force_login(self.usuario_tecnico)
+
+        respuesta = self.client.post(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}",
+            {
+                "servicio": str(servicio.pk),
+                "remision": str(remision.pk),
+                "tipo_actividad": "CORRECTIVO",
+                "fecha": date.today().isoformat(),
+                "hora_llegada": "08:00",
+                "hora_salida": "09:00",
+                "labor_realizada": "Prueba de cantidad",
+                "resultado": "OPERATIVO",
+                "accesorio_id[]": str(accesorio.pk),
+                "detalle_remision_id[]": str(detalle.pk),
+                "cantidad[]": "3",
+                "es_otro[]": "0",
+                "descripcion_otro[]": "",
+                "observacion[]": "",
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "supera lo disponible")
+        self.assertFalse(ActividadTecnico.objects.filter(servicio=servicio).exists())
+
+    def test_conciliacion_toma_utilizado_del_informe_y_registra_devolucion(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio, remision, detalle = self.crear_remision_catalogada(servicio)
+        actividad = ActividadTecnico.objects.create(
+            tecnico=self.tecnico,
+            cliente=self.cliente,
+            servicio=servicio,
+            remision=remision,
+            tipo_actividad="CORRECTIVO",
+            fecha=date.today(),
+            labor_realizada="Cambio de flotador",
+            registrado_por=self.usuario_tecnico,
+        )
+        AccesorioActividad.objects.create(
+            actividad=actividad,
+            accesorio=accesorio,
+            detalle_remision=detalle,
+            cantidad=Decimal("1.00"),
+        )
+        detalle.actualizar_utilizado_desde_informes()
+
+        self.client.force_login(self.coordinador)
+        formulario = self.client.get(
+            reverse("conciliar_remision", args=[remision.pk])
+        )
+        self.assertEqual(formulario.status_code, 200)
+        self.assertContains(formulario, "Del informe técnico")
+
+        respuesta = self.client.post(
+            reverse("conciliar_remision", args=[remision.pk]),
+            {
+                "detalles-TOTAL_FORMS": "1",
+                "detalles-INITIAL_FORMS": "1",
+                "detalles-MIN_NUM_FORMS": "0",
+                "detalles-MAX_NUM_FORMS": "1000",
+                "detalles-0-id": str(detalle.pk),
+                "detalles-0-cantidad_utilizada": "2",
+                "detalles-0-cantidad_devuelta": "1",
+                "detalles-0-observaciones": "Accesorio devuelto al almacén",
+            },
+        )
+
+        self.assertRedirects(respuesta, reverse("lista_remisiones"))
+        detalle.refresh_from_db()
+        remision.refresh_from_db()
+        self.assertEqual(detalle.cantidad_utilizada, Decimal("1.00"))
+        self.assertEqual(detalle.cantidad_devuelta, Decimal("1.00"))
+        self.assertEqual(remision.estado, "CONCILIADA")
+
+    def test_tecnico_solo_consulta_accesorios_de_su_remision(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio, remision, detalle = self.crear_remision_catalogada(servicio)
+
+        self.client.force_login(self.usuario_tecnico)
+        respuesta = self.client.get(
+            reverse("accesorios_remision", args=[remision.pk])
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.json()["detalles"][0]["accesorio_id"], accesorio.pk)
+        self.assertEqual(respuesta.json()["detalles"][0]["disponible"], "2.00")
+
+        self.client.force_login(self.otro_usuario)
+        respuesta = self.client.get(
+            reverse("accesorios_remision", args=[remision.pk])
+        )
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_coordinador_tiene_acceso_visible_y_tecnico_no_administra_remisiones(self):
+        self.client.force_login(self.coordinador)
+        escritorio = self.client.get(reverse("escritorio_coordinador"))
+        self.assertEqual(escritorio.status_code, 200)
+        self.assertContains(escritorio, reverse("lista_remisiones"))
+
+        nueva = self.client.get(reverse("nueva_remision"))
+        self.assertEqual(nueva.status_code, 200)
+        self.assertContains(nueva, "Buscar en catálogo")
+
+        self.client.force_login(self.usuario_tecnico)
+        lista = self.client.get(reverse("lista_remisiones"))
+        self.assertEqual(lista.status_code, 403)
+
     def test_formulario_correctivo_no_ofrece_preventivo(self):
         servicio = Emergencia.objects.create(
             cliente=self.cliente,
@@ -337,6 +624,56 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "mayor que cero")
         self.assertFalse(ActividadTecnico.objects.filter(servicio=servicio).exists())
+
+    def test_lavado_no_exige_accesorios_y_genera_comprobante_propio(self):
+        servicio = Emergencia.objects.create(
+            cliente=self.cliente,
+            sector=self.sector,
+            tecnico=self.tecnico,
+            descripcion_falla="Lavado programado de tanques",
+            tipo_servicio="LAVADO",
+        )
+        self.client.force_login(self.usuario_tecnico)
+
+        formulario = self.client.get(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}"
+        )
+        self.assertEqual(formulario.status_code, 200)
+        self.assertEqual(
+            formulario.context["form"].initial["tipo_actividad"],
+            "LAVADO",
+        )
+        self.assertContains(formulario, "Normalmente no utiliza accesorios")
+
+        respuesta = self.client.post(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}",
+            {
+                "servicio": str(servicio.pk),
+                "tipo_actividad": "LAVADO",
+                "fecha": date.today().isoformat(),
+                "hora_llegada": "08:00",
+                "hora_salida": "10:00",
+                "diagnostico": "Tanques programados para lavado",
+                "labor_realizada": "Se realizó el lavado de los tanques.",
+                "resultado": "OPERATIVO",
+            },
+        )
+
+        actividad = ActividadTecnico.objects.get(servicio=servicio)
+        self.assertRedirects(
+            respuesta,
+            reverse("comprobante_actividad", args=[actividad.pk]),
+        )
+        self.assertEqual(actividad.tipo_actividad, "LAVADO")
+        self.assertTrue(actividad.numero_informe.startswith("LAV-"))
+        self.assertEqual(actividad.accesorios_utilizados.count(), 0)
+
+    def test_panel_tecnico_muestra_dos_accesos_principales(self):
+        self.client.force_login(self.usuario_tecnico)
+        respuesta = self.client.get(reverse("panel_tecnico"))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Correctivos y lavados")
+        self.assertContains(respuesta, "Preventivos")
 
     def test_usuario_externo_no_abre_formulario_de_actividad(self):
         externo = User.objects.create_user("cliente_externo", password="clave")

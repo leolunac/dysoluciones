@@ -199,7 +199,11 @@
                                text-decoration:none;
                                font-size:13px;
                            ">
-                            Conciliar
+                            {% if remision.esta_conciliada %}
+                                Ver conciliación
+                            {% else %}
+                                Conciliar
+                            {% endif %}
                         </a>
 
                     </td>

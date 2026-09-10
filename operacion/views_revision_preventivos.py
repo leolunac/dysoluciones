@@ -53,6 +53,9 @@ def comprobante_actividad(request, actividad_id):
             "cliente",
             "tecnico__user",
             "servicio",
+            "remision",
+        ).prefetch_related(
+            "accesorios_utilizados__accesorio",
         ),
         pk=actividad_id,
         numero_informe__isnull=False,

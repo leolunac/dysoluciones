@@ -38,7 +38,9 @@ from .views import (
     lista_actividades,
     nueva_actividad,
     casos_por_cliente,
+    datos_caso_remision,
     remisiones_por_cliente,
+    accesorios_remision,
     buscar_accesorios,
     actividades_por_cliente,
     detalle_actividad,
@@ -227,9 +229,21 @@ urlpatterns = [
     ),
 
     path(
+        "remisiones/datos-caso/",
+        datos_caso_remision,
+        name="datos_caso_remision",
+    ),
+
+    path(
         "actividades/remisiones-por-cliente/",
         remisiones_por_cliente,
         name="remisiones_por_cliente",
+    ),
+
+    path(
+        "actividades/remisiones/<int:remision_id>/accesorios/",
+        accesorios_remision,
+        name="accesorios_remision",
     ),
 
     path(

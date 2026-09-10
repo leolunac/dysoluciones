@@ -11,6 +11,11 @@ GRUPOS_REVISION_PREVENTIVOS = {
     "GESTION_SUPERVISOR",
 }
 
+GRUPOS_GESTION_REMISIONES = {
+    "GESTION_COORDINADOR",
+    "GESTION_SUPERVISOR",
+}
+
 
 def puede_revisar_preventivos(user):
     if not user.is_authenticated or not user.is_active:
@@ -29,6 +34,16 @@ def exigir_revisor_preventivos(user):
         )
 
 
+def puede_gestionar_remisiones(user):
+    if not user.is_authenticated or not user.is_active:
+        return False
+    if es_usuario_externo(user):
+        return False
+    if user.is_superuser:
+        return True
+    return user.groups.filter(name__in=GRUPOS_GESTION_REMISIONES).exists()
+
+
 def asignar_comprobante(actividad):
     """Asigna una constancia estable usando fecha, tipo y llave primaria."""
     cambios = []
@@ -37,7 +52,10 @@ def asignar_comprobante(actividad):
         cambios.append("enviado_en")
 
     if not actividad.numero_informe:
-        prefijo = "PREV" if actividad.tipo_actividad == "PREVENTIVO" else "COR"
+        prefijo = {
+            "PREVENTIVO": "PREV",
+            "LAVADO": "LAV",
+        }.get(actividad.tipo_actividad, "COR")
         anio = actividad.fecha.year
         actividad.numero_informe = f"{prefijo}-{anio}-{actividad.pk:06d}"
         cambios.append("numero_informe")

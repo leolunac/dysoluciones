@@ -58,24 +58,32 @@
                     {{ form.fecha }}
                 </div>
 
+                <div style="grid-column:1 / -1;">
+                    <label><strong>Caso 7x24 relacionado</strong></label><br>
+                    {{ form.servicio }}
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                        Al seleccionar un caso, SIGOB completa y bloquea la
+                        unidad y el técnico para evitar inconsistencias.
+                    </div>
+                </div>
+
                 <div>
                     <label><strong>Técnico</strong></label><br>
                     {{ form.tecnico }}
+                    {% if form.tecnico.errors %}
+                        <div style="color:#b91c1c;font-size:12px;">{{ form.tecnico.errors }}</div>
+                    {% endif %}
                 </div>
 
                 <div>
                     <label><strong>Unidad / Cliente</strong></label><br>
                     {{ form.cliente }}
+                    {% if form.cliente.errors %}
+                        <div style="color:#b91c1c;font-size:12px;">{{ form.cliente.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <div style="grid-column:1 / -1;">
-                    <label><strong>Caso 7x24 relacionado</strong></label><br>
-                    {{ form.servicio }}
-                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-                        Es opcional. Se utiliza cuando la remisión corresponde
-                        a un correctivo o servicio 7x24 ya registrado.
-                    </div>
-                </div>
+                <div id="aviso-caso-remision" style="display:none;grid-column:1 / -1;background:#e0f2fe;color:#075985;padding:10px 12px;border-radius:8px;"></div>
 
                 <div style="grid-column:1 / -1;">
                     <label><strong>Observaciones</strong></label><br>
@@ -97,8 +105,9 @@
             <h2 style="margin-top:0;">Accesorios entregados</h2>
 
             <p style="color:#6b7280;">
-                Registre los elementos que aparecen en la remisión física.
-                La utilización y devolución se controlarán posteriormente.
+                Busque cada elemento en el catálogo. El código y la descripción
+                se completan automáticamente para que el técnico y facturación
+                trabajen con el mismo accesorio.
             </p>
 
             {{ formset.management_form }}
@@ -114,13 +123,14 @@
                 <table style="
                     width:100%;
                     border-collapse:collapse;
-                    min-width:850px;
+                    min-width:1100px;
                 ">
 
                     <thead style="background:#edf3f7;">
                         <tr>
+                            <th style="padding:10px;text-align:left;">Buscar en catálogo</th>
                             <th style="padding:10px;text-align:left;">Código</th>
-                            <th style="padding:10px;text-align:left;">Accesorio</th>
+                            <th style="padding:10px;text-align:left;">Descripción</th>
                             <th style="padding:10px;text-align:center;">Cantidad entregada</th>
                             <th style="padding:10px;text-align:left;">Observaciones</th>
                         </tr>
@@ -131,6 +141,29 @@
                         {% for detalle in formset %}
 
                             <tr style="border-bottom:1px solid #e5e7eb;">
+
+                                <td style="padding:10px;min-width:280px;vertical-align:top;">
+                                    {{ detalle.accesorio }}
+                                    <input
+                                        type="text"
+                                        class="buscador-catalogo-remision"
+                                        value="{% if detalle.instance.accesorio %}{{ detalle.instance.accesorio.descripcion }}{% endif %}"
+                                        placeholder="Ej.: flotador, válvula, cheque..."
+                                        autocomplete="off"
+                                        style="width:100%;padding:8px;border:1px solid #94a3b8;border-radius:6px;"
+                                    >
+                                    <div class="resultados-catalogo-remision" style="display:none;background:white;border:1px solid #cbd5e1;border-radius:6px;max-height:180px;overflow:auto;position:relative;z-index:5;"></div>
+                                    <button
+                                        type="button"
+                                        class="usar-otro-remision"
+                                        style="margin-top:6px;background:#fff;border:1px solid #94a3b8;border-radius:6px;padding:6px 9px;cursor:pointer;"
+                                    >
+                                        Otro / No encontrado
+                                    </button>
+                                    {% if detalle.accesorio.errors %}
+                                        <div style="color:#b91c1c;font-size:12px;">{{ detalle.accesorio.errors }}</div>
+                                    {% endif %}
+                                </td>
 
                                 <td style="padding:10px;">
                                     {{ detalle.codigo_accesorio }}
@@ -158,14 +191,20 @@
 
                                 <td style="padding:10px;">
                                     {{ detalle.observaciones }}
-                                </td>
 
-                                <div style="display:none;">
-                                    {{ detalle.cantidad_utilizada }}
-                                    {{ detalle.cantidad_devuelta }}
-                                    {{ detalle.id }}
-                                    {{ detalle.DELETE }}
-                                </div>
+                                    {% if detalle.non_field_errors %}
+                                        <div style="color:#b91c1c;font-size:12px;margin-top:5px;">
+                                            {{ detalle.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+
+                                    <div style="display:none;">
+                                        {{ detalle.cantidad_utilizada }}
+                                        {{ detalle.cantidad_devuelta }}
+                                        {{ detalle.id }}
+                                        {{ detalle.DELETE }}
+                                    </div>
+                                </td>
 
                             </tr>
 
@@ -215,5 +254,153 @@
     </form>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const urlBusqueda = "{% url 'buscar_accesorios' %}";
+    const urlDatosCaso = "{% url 'datos_caso_remision' %}";
+    const formulario = document.querySelector("form");
+    const servicio = document.getElementById("id_servicio");
+    const tecnico = document.getElementById("id_tecnico");
+    const cliente = document.getElementById("id_cliente");
+    const avisoCaso = document.getElementById("aviso-caso-remision");
+
+    function bloquearRelacion(bloquear) {
+        [tecnico, cliente].forEach(function (campo) {
+            if (!campo) return;
+            campo.disabled = bloquear;
+            campo.style.background = bloquear ? "#e2e8f0" : "white";
+        });
+    }
+
+    function mostrarAviso(texto, error) {
+        if (!avisoCaso) return;
+        avisoCaso.textContent = texto;
+        avisoCaso.style.display = texto ? "block" : "none";
+        avisoCaso.style.background = error ? "#fee2e2" : "#e0f2fe";
+        avisoCaso.style.color = error ? "#991b1b" : "#075985";
+    }
+
+    function cargarCaso() {
+        const servicioId = servicio ? servicio.value : "";
+        if (!servicioId) {
+            bloquearRelacion(false);
+            mostrarAviso("", false);
+            return;
+        }
+
+        fetch(urlDatosCaso + "?servicio_id=" + encodeURIComponent(servicioId))
+        .then(function (respuesta) {
+            if (!respuesta.ok) throw new Error("No fue posible consultar el caso.");
+            return respuesta.json();
+        })
+        .then(function (data) {
+            cliente.value = String(data.caso.cliente_id);
+            tecnico.value = data.caso.tecnico_id ? String(data.caso.tecnico_id) : "";
+            bloquearRelacion(true);
+            if (data.caso.tecnico_id) {
+                mostrarAviso(
+                    "Unidad: " + data.caso.cliente + " · Técnico: " + data.caso.tecnico,
+                    false
+                );
+            } else {
+                mostrarAviso("Este caso todavía no tiene un técnico asignado.", true);
+            }
+        })
+        .catch(function () {
+            bloquearRelacion(false);
+            mostrarAviso("No fue posible completar los datos del caso.", true);
+        });
+    }
+
+    if (servicio) {
+        servicio.addEventListener("change", cargarCaso);
+        if (servicio.value) cargarCaso();
+    }
+
+    if (formulario) {
+        formulario.addEventListener("submit", function () {
+            [tecnico, cliente].forEach(function (campo) {
+                if (campo) campo.disabled = false;
+            });
+        });
+    }
+
+    document.querySelectorAll("tbody tr").forEach(function (fila) {
+        const buscador = fila.querySelector(".buscador-catalogo-remision");
+        const resultados = fila.querySelector(".resultados-catalogo-remision");
+        const botonOtro = fila.querySelector(".usar-otro-remision");
+        const accesorioId = fila.querySelector("input[name$='-accesorio']");
+        const codigo = fila.querySelector("input[name$='-codigo_accesorio']");
+        const descripcion = fila.querySelector("input[name$='-descripcion_accesorio']");
+        if (!buscador || !resultados || !accesorioId || !codigo || !descripcion) return;
+
+        let temporizador = null;
+
+        function bloquearDatos(bloquear) {
+            codigo.readOnly = bloquear;
+            descripcion.readOnly = bloquear;
+            codigo.style.background = bloquear ? "#f1f5f9" : "white";
+            descripcion.style.background = bloquear ? "#f1f5f9" : "white";
+        }
+
+        bloquearDatos(Boolean(accesorioId.value));
+
+        buscador.addEventListener("input", function () {
+            const texto = buscador.value.trim();
+            clearTimeout(temporizador);
+            if (texto.length < 2) {
+                resultados.style.display = "none";
+                resultados.innerHTML = "";
+                return;
+            }
+
+            temporizador = setTimeout(function () {
+                fetch(urlBusqueda + "?q=" + encodeURIComponent(texto))
+                .then(function (respuesta) {
+                    if (!respuesta.ok) throw new Error("No fue posible buscar accesorios.");
+                    return respuesta.json();
+                })
+                .then(function (data) {
+                    resultados.innerHTML = "";
+                    if (!data.resultados.length) {
+                        resultados.innerHTML = "<div style='padding:9px;color:#64748b'>Sin coincidencias. Use Otro / No encontrado.</div>";
+                    }
+                    data.resultados.forEach(function (accesorio) {
+                        const opcion = document.createElement("button");
+                        opcion.type = "button";
+                        opcion.style.cssText = "display:block;width:100%;text-align:left;padding:9px;border:0;border-bottom:1px solid #e5e7eb;background:white;cursor:pointer";
+                        opcion.textContent = accesorio.codigo + " · " + accesorio.descripcion;
+                        opcion.addEventListener("click", function () {
+                            accesorioId.value = accesorio.id;
+                            codigo.value = accesorio.codigo;
+                            descripcion.value = accesorio.descripcion;
+                            buscador.value = accesorio.descripcion;
+                            bloquearDatos(true);
+                            resultados.style.display = "none";
+                        });
+                        resultados.appendChild(opcion);
+                    });
+                    resultados.style.display = "block";
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    resultados.style.display = "none";
+                });
+            }, 250);
+        });
+
+        botonOtro.addEventListener("click", function () {
+            accesorioId.value = "";
+            buscador.value = "Otro / No encontrado";
+            codigo.value = "";
+            descripcion.value = "";
+            bloquearDatos(false);
+            resultados.style.display = "none";
+            descripcion.focus();
+        });
+    });
+});
+</script>
 
 {% endblock %}

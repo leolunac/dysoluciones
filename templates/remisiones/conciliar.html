@@ -133,8 +133,8 @@
             </h2>
 
             <p style="color:#6b7280;">
-                Para cada accesorio indique cuánto utilizó el técnico
-                y cuánto devolvió.
+                SIGOB toma la cantidad utilizada del informe técnico.
+                Coordinación solamente verifica y registra lo devuelto.
             </p>
 
 
@@ -239,16 +239,23 @@
                                 </td>
 
 
-                               <td style="padding:10px;">
-    <input
-        type="number"
-        name="{{ detalle.prefix }}-cantidad_utilizada"
-        id="id_{{ detalle.prefix }}-cantidad_utilizada"
-        value="{{ detalle.cantidad_utilizada.value|default_if_none:'0.00' }}"
-        min="0"
-        step="0.01"
-        class="form-control"
-    >
+                               <td style="padding:10px;text-align:center;">
+    {% if detalle.instance.accesorio_id %}
+        {{ detalle.cantidad_utilizada }}
+        <strong>{{ detalle.instance.cantidad_utilizada }}</strong>
+        <div style="font-size:11px;color:#166534;margin-top:3px;">Del informe técnico</div>
+    {% else %}
+        <input
+            type="number"
+            name="{{ detalle.prefix }}-cantidad_utilizada"
+            id="id_{{ detalle.prefix }}-cantidad_utilizada"
+            value="{{ detalle.cantidad_utilizada.value|default_if_none:'0.00' }}"
+            min="0"
+            step="0.01"
+            class="form-control cantidad-utilizada-manual"
+        >
+        <div style="font-size:11px;color:#92400e;margin-top:3px;">Remisión antigua: captura manual</div>
+    {% endif %}
 </td>
 
 <td style="padding:10px;">
@@ -259,14 +266,14 @@
         value="{{ detalle.cantidad_devuelta.value|default_if_none:'0.00' }}"
         min="0"
         step="0.01"
-        class="form-control"
+        class="form-control cantidad-devuelta"
     >
 </td>
 <td style="
     padding:10px;
     text-align:center;
     font-weight:700;
-">
+" class="cantidad-pendiente" data-entregado="{{ detalle.instance.cantidad_entregada }}" data-utilizado="{{ detalle.instance.cantidad_utilizada }}">
     {{ detalle.instance.cantidad_pendiente }}
 </td>
 <td style="padding:10px;">
@@ -336,5 +343,27 @@
     </form>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".cantidad-pendiente").forEach(function (celda) {
+        const fila = celda.closest("tr");
+        const utilizadoManual = fila.querySelector(".cantidad-utilizada-manual");
+        const devuelto = fila.querySelector(".cantidad-devuelta");
+
+        function actualizar() {
+            const entregado = parseFloat(celda.dataset.entregado || "0");
+            const utilizado = utilizadoManual
+                ? parseFloat(utilizadoManual.value || "0")
+                : parseFloat(celda.dataset.utilizado || "0");
+            const cantidadDevuelta = parseFloat(devuelto.value || "0");
+            celda.textContent = (entregado - utilizado - cantidadDevuelta).toFixed(2);
+        }
+
+        if (utilizadoManual) utilizadoManual.addEventListener("input", actualizar);
+        if (devuelto) devuelto.addEventListener("input", actualizar);
+    });
+});
+</script>
 
 {% endblock %}

@@ -189,6 +189,17 @@
         <small style="color:#64748b;display:block;margin-top:5px;">
             Remisión de accesorios relacionada con esta actividad.
         </small>
+
+        <div
+            id="panel_accesorios_remision"
+            style="display:none;margin-top:10px;padding:12px;background:#eff8ff;border:1px solid #b8d9ee;border-radius:9px;"
+        >
+            <strong style="color:#075985;">Accesorios entregados en esta remisión</strong>
+            <div id="lista_accesorios_remision" style="margin-top:8px;"></div>
+            <small style="display:block;margin-top:7px;color:#52677a;">
+                Indique la cantidad realmente utilizada. SIGOB la llevará automáticamente a conciliación.
+            </small>
+        </div>
     </div>
 
     <div>
@@ -356,7 +367,7 @@
      5. ACCESORIOS UTILIZADOS
 ===================================================== -->
 
-<section style="
+<section id="seccion_accesorios" style="
     background:white;
     border:1px solid #dfe5eb;
     border-radius:14px;
@@ -364,6 +375,20 @@
     margin-bottom:18px;
     box-shadow:0 3px 12px rgba(0,0,0,.04);
 ">
+
+    <div id="aviso_lavado" style="
+        display:none;
+        margin-bottom:16px;
+        padding:13px 15px;
+        border-radius:10px;
+        background:#e9f7ef;
+        border:1px solid #b9e2c8;
+        color:#176b36;
+        font-weight:600;
+    ">
+        Este trabajo es un lavado de tanques. Normalmente no utiliza accesorios;
+        puede dejar esta sección vacía y enviar el informe.
+    </div>
 
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
         <div style="
@@ -609,6 +634,21 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
+    const tipoActividadSelect = document.getElementById("id_tipo_actividad");
+    const avisoLavado = document.getElementById("aviso_lavado");
+
+    function actualizarAvisoLavado() {
+        if (!tipoActividadSelect || !avisoLavado) return;
+        avisoLavado.style.display = (
+            tipoActividadSelect.value === "LAVADO"
+        ) ? "block" : "none";
+    }
+
+    if (tipoActividadSelect) {
+        tipoActividadSelect.addEventListener("change", actualizarAvisoLavado);
+        actualizarAvisoLavado();
+    }
+
     // ======================================================
     // UNIDAD / CASO 7X24 / REMISIÓN
     // ======================================================
@@ -616,6 +656,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const clienteSelect = document.getElementById("id_cliente");
     const servicioSelect = document.getElementById("id_servicio");
     const remisionSelect = document.getElementById("id_remision");
+    const panelAccesoriosRemision = document.getElementById("panel_accesorios_remision");
+    const listaAccesoriosRemision = document.getElementById("lista_accesorios_remision");
+    const urlDetalleRemisionBase = "{% url 'accesorios_remision' 0 %}";
 
     function limpiarSelect(select, texto = "---------") {
         if (!select) return;
@@ -682,6 +725,97 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(error => console.error("Error cargando remisiones:", error));
     }
 
+    function limpiarAccesoriosVinculados() {
+        if (!listaAccesorios) return;
+        listaAccesorios.querySelectorAll("[data-detalle-remision]").forEach(function (fila) {
+            fila.remove();
+        });
+        if (listaAccesorios.children.length === 0 && mensajeSinAccesorios) {
+            mensajeSinAccesorios.style.display = "block";
+        }
+    }
+
+    function cargarAccesoriosDeRemision(remisionId) {
+        if (!panelAccesoriosRemision || !listaAccesoriosRemision) return;
+
+        listaAccesoriosRemision.innerHTML = "";
+        panelAccesoriosRemision.style.display = "none";
+        if (!remisionId) return;
+
+        const url = urlDetalleRemisionBase.replace("/0/", "/" + remisionId + "/");
+        fetch(url)
+        .then(function (response) {
+            if (!response.ok) throw new Error("No fue posible consultar la remisión.");
+            return response.json();
+        })
+        .then(function (data) {
+            panelAccesoriosRemision.style.display = "block";
+
+            if (!data.detalles.length) {
+                listaAccesoriosRemision.textContent = "La remisión no tiene accesorios registrados.";
+                return;
+            }
+
+            data.detalles.forEach(function (detalle) {
+                const disponible = parseFloat(detalle.disponible || "0");
+                const fila = document.createElement("div");
+                fila.style.cssText = "display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #d6e8f3";
+
+                const informacion = document.createElement("div");
+                informacion.innerHTML = "<strong></strong><div style='font-size:12px;color:#52677a'></div>";
+                informacion.querySelector("strong").textContent = detalle.descripcion;
+                informacion.querySelector("div").textContent = (
+                    (detalle.codigo ? detalle.codigo + " · " : "")
+                    + "Entregado: " + detalle.entregada
+                    + " · Utilizado: " + detalle.utilizada
+                    + " · Disponible: " + detalle.disponible
+                );
+
+                const cantidad = document.createElement("input");
+                cantidad.type = "number";
+                cantidad.min = "0.01";
+                cantidad.step = "0.01";
+                cantidad.max = detalle.disponible;
+                cantidad.value = disponible >= 1 ? "1" : detalle.disponible;
+                cantidad.style.cssText = "width:90px;padding:8px;border:1px solid #94a3b8;border-radius:6px";
+
+                const agregar = document.createElement("button");
+                agregar.type = "button";
+                agregar.textContent = detalle.catalogado ? "Usar" : "No catalogado";
+                agregar.disabled = !detalle.catalogado || disponible <= 0;
+                agregar.style.cssText = "padding:8px 10px;border:0;border-radius:6px;background:#08783e;color:white;font-weight:700;cursor:pointer";
+                if (agregar.disabled) {
+                    agregar.style.background = "#94a3b8";
+                    agregar.style.cursor = "not-allowed";
+                }
+
+                agregar.addEventListener("click", function () {
+                    const valor = parseFloat(cantidad.value || "0");
+                    if (valor <= 0 || valor > disponible) {
+                        alert("La cantidad debe ser mayor que cero y no superar lo disponible.");
+                        return;
+                    }
+                    agregarAccesorioCatalogo(
+                        detalle.accesorio_id,
+                        detalle.descripcion,
+                        detalle.id,
+                        cantidad.value
+                    );
+                });
+
+                fila.appendChild(informacion);
+                fila.appendChild(cantidad);
+                fila.appendChild(agregar);
+                listaAccesoriosRemision.appendChild(fila);
+            });
+        })
+        .catch(function (error) {
+            console.error(error);
+            panelAccesoriosRemision.style.display = "block";
+            listaAccesoriosRemision.textContent = "No fue posible cargar los accesorios de la remisión.";
+        });
+    }
+
     if (clienteSelect) {
         clienteSelect.addEventListener("change", function () {
             const clienteId = this.value;
@@ -701,6 +835,14 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             cargarRemisiones(clienteSelect ? clienteSelect.value : "", this.value);
         });
+    }
+
+    if (remisionSelect) {
+        remisionSelect.addEventListener("change", function () {
+            limpiarAccesoriosVinculados();
+            cargarAccesoriosDeRemision(this.value);
+        });
+        cargarAccesoriosDeRemision(remisionSelect.value);
     }
 
     // ======================================================
@@ -781,12 +923,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function agregarAccesorioCatalogo(id, descripcion) {
-        let cantidad = cantidadAccesorio ? cantidadAccesorio.value : "1";
+    function agregarAccesorioCatalogo(id, descripcion, detalleRemisionId = "", cantidadForzada = "") {
+        let cantidad = cantidadForzada || (cantidadAccesorio ? cantidadAccesorio.value : "1");
         if (!cantidad || parseFloat(cantidad) <= 0) cantidad = "1";
 
         crearFilaAccesorio({
             accesorioId: id,
+            detalleRemisionId: detalleRemisionId,
             descripcion: descripcion,
             cantidad: cantidad,
             esOtro: false,
@@ -821,6 +964,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             crearFilaAccesorio({
                 accesorioId: "",
+                detalleRemisionId: "",
                 descripcion: descripcion,
                 cantidad: cantidad,
                 esOtro: true,
@@ -838,9 +982,24 @@ document.addEventListener("DOMContentLoaded", function () {
     function crearFilaAccesorio(datos) {
         if (!listaAccesorios || !mensajeSinAccesorios) return;
 
+        if (datos.detalleRemisionId) {
+            const yaAgregado = Array.from(
+                listaAccesorios.querySelectorAll("input[name='detalle_remision_id[]']")
+            ).some(function (input) {
+                return input.value === String(datos.detalleRemisionId);
+            });
+            if (yaAgregado) {
+                alert("Este accesorio de la remisión ya fue agregado.");
+                return;
+            }
+        }
+
         mensajeSinAccesorios.style.display = "none";
 
         const fila = document.createElement("div");
+        if (datos.detalleRemisionId) {
+            fila.dataset.detalleRemision = datos.detalleRemisionId;
+        }
         fila.style.display = "grid";
         fila.style.gridTemplateColumns = "1fr 100px auto";
         fila.style.gap = "12px";
@@ -904,6 +1063,11 @@ document.addEventListener("DOMContentLoaded", function () {
         inputCantidad.name = "cantidad[]";
         inputCantidad.value = datos.cantidad;
 
+        const inputDetalleRemision = document.createElement("input");
+        inputDetalleRemision.type = "hidden";
+        inputDetalleRemision.name = "detalle_remision_id[]";
+        inputDetalleRemision.value = datos.detalleRemisionId || "";
+
         const inputEsOtro = document.createElement("input");
         inputEsOtro.type = "hidden";
         inputEsOtro.name = "es_otro[]";
@@ -924,6 +1088,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fila.appendChild(eliminar);
         fila.appendChild(inputId);
         fila.appendChild(inputCantidad);
+        fila.appendChild(inputDetalleRemision);
         fila.appendChild(inputEsOtro);
         fila.appendChild(inputDescripcionOtro);
         fila.appendChild(inputObservacion);

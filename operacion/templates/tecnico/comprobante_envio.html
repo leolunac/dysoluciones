@@ -18,7 +18,19 @@ body{margin:0;background:#eef5f9;font-family:Arial,sans-serif;color:#17324d}.wra
   <div class="dato"><div class="label">Técnico</div><div class="valor">{{ actividad.tecnico.nombre }}</div></div>
   <div class="dato"><div class="label">Fecha y hora del servidor</div><div class="valor">{{ actividad.enviado_en|date:"d/m/Y H:i:s" }}</div></div>
   {% if actividad.servicio %}<div class="dato"><div class="label">Caso relacionado</div><div class="valor">{{ actividad.servicio.numero_caso|default:actividad.servicio.id }}</div></div>{% endif %}
+  {% if actividad.remision %}<div class="dato"><div class="label">Remisión relacionada</div><div class="valor">{{ actividad.remision.numero_remision }}</div></div>{% endif %}
 </div>
+{% if actividad.accesorios_utilizados.all %}
+<div style="margin-top:20px;background:#f5f8fa;border-radius:10px;padding:14px;">
+  <div class="label">Accesorios utilizados</div>
+  {% for uso in actividad.accesorios_utilizados.all %}
+    <div style="margin-top:7px;font-weight:700;">
+      {% if uso.es_otro %}{{ uso.descripcion_otro }}{% elif uso.accesorio %}{{ uso.accesorio.descripcion }}{% else %}Accesorio sin identificar{% endif %}
+      · Cantidad {{ uso.cantidad }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
 <div class="nota">Esta constancia permanece guardada en SIGOB. Puede tomar una captura de pantalla o volver a consultarla desde el informe.</div>
 <div class="acciones">
 {% if actividad.tipo_actividad == "PREVENTIVO" %}
