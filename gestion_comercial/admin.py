@@ -5,6 +5,7 @@ from .models import (
     DetalleLiquidacion,
     CatalogoPrecio,
     TarifaOperativa,
+    RevisionMaterialUtilizado,
 )
 
 
@@ -99,3 +100,23 @@ class TarifaOperativaAdmin(admin.ModelAdmin):
     search_fields = (
         "nombre",
     )
+
+
+@admin.register(RevisionMaterialUtilizado)
+class RevisionMaterialUtilizadoAdmin(admin.ModelAdmin):
+    list_display = (
+        "descripcion_snapshot",
+        "cantidad_snapshot",
+        "estado",
+        "valor_unitario_sugerido",
+        "revisado_por",
+        "revisado_en",
+    )
+    list_filter = ("estado", "revisado_en")
+    search_fields = (
+        "codigo_snapshot",
+        "descripcion_snapshot",
+        "consumo__actividad__cliente__nombre",
+        "consumo__actividad__tecnico__nombre",
+    )
+    readonly_fields = ("creado", "actualizado")

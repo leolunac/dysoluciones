@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import views
 from . import facturacion_pases
+from . import materiales_facturacion
 
 
 app_name = "gestion_comercial"
@@ -17,6 +18,18 @@ urlpatterns = [
         "",
         views.panel_gestion_comercial,
         name="panel",
+    ),
+
+    path(
+        "materiales-utilizados/",
+        materiales_facturacion.lista_materiales_utilizados,
+        name="lista_materiales_utilizados",
+    ),
+
+    path(
+        "materiales-utilizados/<int:consumo_id>/clasificar/",
+        materiales_facturacion.clasificar_material_utilizado,
+        name="clasificar_material_utilizado",
     ),
 
 

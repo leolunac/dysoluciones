@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGOB | Materiales utilizados</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: #eef4f7; color: #12344d; font-size: 13px; }
+        .contenedor { width: 96%; max-width: 1550px; margin: 16px auto; }
+        .encabezado { background: linear-gradient(110deg, #0b4770, #0873ad); color: white; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .encabezado h1 { margin: 0 0 4px; font-size: 22px; }
+        .encabezado p { margin: 0; }
+        .btn { display: inline-block; border: 0; border-radius: 7px; padding: 8px 12px; text-decoration: none; font-weight: bold; cursor: pointer; }
+        .btn-blanco { background: white; color: #075783; }
+        .btn-azul { background: #075783; color: white; }
+        .panel { background: white; border-radius: 12px; padding: 14px; margin-top: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+        .filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+        label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #c4d3dd; border-radius: 6px; background: white; }
+        .tabla { overflow-x: auto; margin-top: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #edf4f8; color: #31546b; text-align: left; padding: 8px 7px; white-space: nowrap; font-size: 11px; }
+        td { border-bottom: 1px solid #e4ecef; padding: 8px 7px; vertical-align: top; }
+        .estado { display: inline-block; border-radius: 14px; padding: 4px 8px; font-size: 10px; font-weight: bold; background: #fff0c2; color: #765500; }
+        .precio-falta { color: #b02020; font-weight: bold; }
+        .gestion { min-width: 245px; }
+        .gestion form { display: grid; gap: 6px; }
+        .mensajes { margin-top: 10px; }
+        .mensaje { padding: 10px 12px; border-radius: 7px; margin-bottom: 7px; background: #dff5e6; color: #176b38; }
+        .mensaje.error { background: #ffdede; color: #9a1919; }
+        .paginacion { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+        @media (max-width: 900px) { .filtros { grid-template-columns: 1fr 1fr; } .encabezado { align-items: flex-start; flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+    <div class="encabezado">
+        <div>
+            <h1>Materiales utilizados</h1>
+            <p>Revisión comercial de consumos reportados por los técnicos.</p>
+        </div>
+        <a class="btn btn-blanco" href="{% url 'gestion_comercial:panel' %}">Volver al panel</a>
+    </div>
+
+    {% if messages %}
+    <div class="mensajes">
+        {% for message in messages %}<div class="mensaje{% if message.tags %} {{ message.tags }}{% endif %}">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <form method="get" class="filtros">
+            <div><label>Buscar</label><input name="buscar" value="{{ buscar }}" placeholder="Código, accesorio, unidad, técnico o remisión"></div>
+            <div><label>Estado</label><select name="estado"><option value="">Todos</option>{% for valor, nombre in estados %}<option value="{{ valor }}"{% if filtro_estado == valor %} selected{% endif %}>{{ nombre }}</option>{% endfor %}</select></div>
+            <div><label>Desde</label><input type="date" name="fecha_desde" value="{{ fecha_desde }}"></div>
+            <div><label>Hasta</label><input type="date" name="fecha_hasta" value="{{ fecha_hasta }}"></div>
+            <button class="btn btn-azul" type="submit">Filtrar</button>
+        </form>
+
+        <div class="tabla">
+            <table>
+                <thead><tr><th>Fecha</th><th>Unidad</th><th>Técnico</th><th>Remisión</th><th>Material</th><th>Cantidad</th><th>Precio sugerido</th><th>Clasificación</th>{% if puede_clasificar %}<th>Gestión</th>{% endif %}</tr></thead>
+                <tbody>
+                {% for consumo in pagina %}
+                    <tr>
+                        <td>{{ consumo.actividad.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ consumo.actividad.cliente.nombre }}</td>
+                        <td>{{ consumo.actividad.tecnico.nombre }}</td>
+                        <td>{% if consumo.actividad.remision %}{{ consumo.actividad.remision.numero_remision }}{% else %}-{% endif %}</td>
+                        <td><strong>{{ consumo.codigo_facturacion }}</strong><br>{{ consumo.descripcion_facturacion }}</td>
+                        <td>{{ consumo.cantidad }}</td>
+                        <td>{% if consumo.revision_actual.valor_unitario_sugerido != None %}${{ consumo.revision_actual.valor_unitario_sugerido|floatformat:2 }}{% elif consumo.precio_actual %}${{ consumo.precio_actual.valor|floatformat:2 }}{% else %}<span class="precio-falta">Sin precio</span>{% endif %}</td>
+                        <td><span class="estado">{% if consumo.revision_actual %}{{ consumo.revision_actual.get_estado_display }}{% else %}Pendiente de revisión{% endif %}</span>{% if consumo.revision_actual.observaciones %}<br>{{ consumo.revision_actual.observaciones }}{% endif %}</td>
+                        {% if puede_clasificar %}
+                        <td class="gestion">
+                            <form method="post" action="{% url 'gestion_comercial:clasificar_material_utilizado' consumo.id %}">
+                                {% csrf_token %}
+                                <select name="estado" required>{% for valor, nombre in estados %}<option value="{{ valor }}"{% if consumo.revision_actual.estado == valor %} selected{% endif %}>{{ nombre }}</option>{% endfor %}</select>
+                                <input name="observaciones" value="{{ consumo.revision_actual.observaciones|default:'' }}" placeholder="Observación comercial">
+                                <button class="btn btn-azul" type="submit">Guardar clasificación</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="9">No hay materiales para los filtros seleccionados.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pagina.has_other_pages %}
+        <div class="paginacion">
+            {% if pagina.has_previous %}<a href="?pagina={{ pagina.previous_page_number }}&estado={{ filtro_estado }}&buscar={{ buscar }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Anterior</a>{% endif %}
+            <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+            {% if pagina.has_next %}<a href="?pagina={{ pagina.next_page_number }}&estado={{ filtro_estado }}&buscar={{ buscar }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Siguiente</a>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

@@ -16,7 +16,7 @@ from .forms import (
     DetalleCotizacionForm,
     ContratoPaseForm,
 )
-from operacion.models import Cliente, ContratoPase
+from operacion.models import AccesorioActividad, Cliente, ContratoPase
 
 from .models import (
     Liquidacion,
@@ -25,6 +25,7 @@ from .models import (
     Cotizacion,
     DetalleCotizacion,
     ImagenCotizacion,
+    RevisionMaterialUtilizado,
 )
 
 
@@ -118,6 +119,17 @@ def panel_gestion_comercial(request):
             GRUPO_FACTURACION,
             GRUPO_GERENCIA,
         ),
+        "puede_ver_materiales": _pertenece(
+            request.user,
+            GRUPO_AUXILIAR,
+            GRUPO_COORDINADOR,
+            GRUPO_FACTURACION,
+            GRUPO_GERENCIA,
+        ),
+        "materiales_pendientes": AccesorioActividad.objects.filter(
+            Q(revision_facturacion__isnull=True)
+            | Q(revision_facturacion__estado="PENDIENTE")
+        ).count(),
     }
 
     return render(

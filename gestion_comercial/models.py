@@ -307,6 +307,77 @@ class CatalogoPrecio(models.Model):
 
 
 # =========================================================
+# REVISIÓN COMERCIAL DE MATERIALES UTILIZADOS
+# =========================================================
+
+class RevisionMaterialUtilizado(models.Model):
+
+    ESTADOS = [
+        ("PENDIENTE", "Pendiente de revisión"),
+        ("FACTURAR", "Facturar"),
+        ("INCLUIDO_CONTRATO", "Incluido en contrato"),
+        ("GARANTIA", "Garantía"),
+        ("CORTESIA", "Cortesía"),
+        ("NO_FACTURABLE", "No facturable"),
+    ]
+
+    consumo = models.OneToOneField(
+        "operacion.AccesorioActividad",
+        on_delete=models.PROTECT,
+        related_name="revision_facturacion",
+    )
+
+    estado = models.CharField(
+        max_length=25,
+        choices=ESTADOS,
+        default="PENDIENTE",
+        db_index=True,
+    )
+
+    catalogo_precio = models.ForeignKey(
+        CatalogoPrecio,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="revisiones_materiales",
+    )
+
+    codigo_snapshot = models.CharField(max_length=50, blank=True)
+    descripcion_snapshot = models.CharField(max_length=250)
+    cantidad_snapshot = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+    valor_unitario_sugerido = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    observaciones = models.TextField(blank=True)
+
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="materiales_comerciales_revisados",
+    )
+    revisado_en = models.DateTimeField(null=True, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-consumo__actividad__fecha", "-consumo_id"]
+        verbose_name = "Revisión comercial de material utilizado"
+        verbose_name_plural = "Revisiones comerciales de materiales utilizados"
+
+    def __str__(self):
+        return f"{self.descripcion_snapshot} - {self.get_estado_display()}"
+
+
+# =========================================================
 # TARIFAS OPERATIVAS
 # =========================================================
 
@@ -739,4 +810,4 @@ class DetalleCotizacion(models.Model):
         return (
             f"{self.descripcion} - "
             f"{self.cantidad}"
-        )   
+        )

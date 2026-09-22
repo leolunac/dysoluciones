@@ -246,6 +246,13 @@
                 Consolidado
             </a>
             {% endif %}
+
+            {% if puede_ver_materiales %}
+            <a href="{% url 'gestion_comercial:lista_materiales_utilizados' %}"
+               class="btn btn-blanco">
+                Materiales utilizados{% if materiales_pendientes %} ({{ materiales_pendientes }}){% endif %}
+            </a>
+            {% endif %}
 	    <a href="{% url 'gestion_comercial:lista_cotizaciones' %}"
    		class="btn btn-blanco">
     		  Cotizaciones
