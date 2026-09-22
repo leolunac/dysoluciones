@@ -76,6 +76,7 @@ from .informes_tecnicos import (
     puede_gestionar_remisiones,
     puede_revisar_preventivos,
 )
+from .lavados import registrar_ejecucion_lavado
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .utils import registrar_evento
@@ -5030,6 +5031,7 @@ def nueva_actividad(request):
                 )
 
             asignar_comprobante(actividad)
+            registrar_ejecucion_lavado(actividad)
 
             # Técnico vuelve al servicio que estaba atendiendo.
             if tecnico_usuario:

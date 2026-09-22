@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIGOB | Tablero de lavados</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#eef4f7;color:#12344d;font:13px Arial,sans-serif}.wrap{width:96%;max-width:1500px;margin:18px auto}.hero{background:linear-gradient(110deg,#07527e,#0780b8);color:#fff;padding:17px 20px;border-radius:14px;display:flex;justify-content:space-between;gap:15px;align-items:center}.hero h1{margin:0 0 4px;font-size:22px}.hero p{margin:0;opacity:.9}.btn{border:0;border-radius:7px;padding:9px 12px;font-weight:700;text-decoration:none;cursor:pointer;font-size:12px}.btn-light{background:#fff;color:#07527e}.btn-blue{background:#0875aa;color:#fff}.btn-green{background:#18864b;color:#fff}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.kpi,.panel{background:#fff;border-radius:12px;box-shadow:0 2px 8px #0000000d}.kpi{padding:13px;border-left:4px solid #1775d1}.kpi.warn{border-color:#f3ad16}.kpi.danger{border-color:#e53b3b}.kpi.success{border-color:#23a45a}.kpi .label{font-size:11px;color:#617487;font-weight:700}.kpi .value{font-size:23px;font-weight:800;color:#073f66;margin-top:5px}.panel{padding:14px;margin-bottom:12px}.panel h2{margin:0 0 12px;color:#064a75}.grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end}label{display:block;font-size:11px;font-weight:700;margin-bottom:4px}input,select,textarea{width:100%;border:1px solid #bdd0dd;border-radius:6px;padding:8px;background:#fff}.form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 2fr auto;gap:8px;align-items:end}.messages{margin:10px 0}.msg{padding:10px;border-radius:7px;margin-bottom:6px}.success{background:#dff4e7;color:#166534}.error{background:#fee2e2;color:#991b1b}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th{background:#e7f1f6;text-align:left;font-size:11px}th,td{padding:8px;border-bottom:1px solid #dce7ed;vertical-align:top}.badge{display:inline-block;padding:4px 7px;border-radius:12px;font-size:10px;font-weight:700}.EJECUTADO{background:#dff4e7;color:#166534}.VENCIDO{background:#fee2e2;color:#991b1b}.REPROGRAMADO{background:#ede9fe;color:#5b21b6}.PROXIMO{background:#fef3c7;color:#92400e}.PROGRAMADO{background:#dbeafe;color:#1e40af}.manage{min-width:230px}.manage form{display:grid;grid-template-columns:1fr auto;gap:5px;margin-bottom:5px}.manage .full{grid-column:1/-1}.charts{display:grid;grid-template-columns:repeat(12,1fr);gap:7px;align-items:end;height:150px}.bar-item{text-align:center;font-size:10px}.bar-shell{height:115px;display:flex;align-items:end;justify-content:center}.bar{width:70%;min-height:2px;background:#0875aa;border-radius:4px 4px 0 0}.muted{color:#617487;font-size:11px}.empty{text-align:center;color:#617487;padding:20px}@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.grid,.form-grid{grid-template-columns:1fr 1fr}.charts{grid-template-columns:repeat(6,1fr)}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="hero"><div><h1>Tablero de lavados de tanques</h1><p>Programación, ejecución, histórico y cumplimiento.</p></div><div><a class="btn btn-light" href="{% url 'home' %}">Volver al panel</a></div></div>
+
+{% if messages %}<div class="messages">{% for message in messages %}<div class="msg {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+<div class="kpis">
+ <div class="kpi"><div class="label">PENDIENTES</div><div class="value">{{ pendientes }}</div></div>
+ <div class="kpi warn"><div class="label">PRÓXIMOS 30 DÍAS</div><div class="value">{{ proximos }}</div></div>
+ <div class="kpi danger"><div class="label">VENCIDOS</div><div class="value">{{ vencidos }}</div></div>
+ <div class="kpi"><div class="label">REPROGRAMADOS</div><div class="value">{{ reprogramados }}</div></div>
+ <div class="kpi success"><div class="label">EJECUTADOS {{ anio }}</div><div class="value">{{ ejecutados_anio }}</div></div>
+</div>
+
+<div class="panel"><form method="get" class="grid">
+ <div><label>Buscar</label><input name="buscar" value="{{ buscar }}" placeholder="Unidad, NIT, técnico o informe"></div>
+ <div><label>Estado</label><select name="estado"><option value="">Todos</option><option value="PROGRAMADO" {% if estado == 'PROGRAMADO' %}selected{% endif %}>Programados</option><option value="PROXIMO" {% if estado == 'PROXIMO' %}selected{% endif %}>Próximos</option><option value="VENCIDO" {% if estado == 'VENCIDO' %}selected{% endif %}>Vencidos</option><option value="REPROGRAMADO" {% if estado == 'REPROGRAMADO' %}selected{% endif %}>Reprogramados</option><option value="EJECUTADO" {% if estado == 'EJECUTADO' %}selected{% endif %}>Ejecutados</option></select></div>
+ <div><label>Año histórico</label><select name="anio">{% for valor in anios %}<option value="{{ valor }}" {% if valor == anio %}selected{% endif %}>{{ valor }}</option>{% endfor %}</select></div>
+ <div></div><button class="btn btn-blue">Filtrar</button>
+</form></div>
+
+{% if puede_gestionar %}<div class="panel"><h2>Programar un lavado</h2><form method="post" action="{% url 'programar_lavado' %}" class="form-grid">{% csrf_token %}
+ <div><label>{{ form.cliente.label }}</label>{{ form.cliente }}</div><div><label>{{ form.fecha_programada.label }}</label>{{ form.fecha_programada }}</div><div><label>{{ form.tecnico.label }}</label>{{ form.tecnico }}</div><div><label>{{ form.observaciones.label }}</label>{{ form.observaciones }}</div><button class="btn btn-green">Programar</button>
+</form><p class="muted">Puede dejar el técnico sin asignar y definirlo posteriormente desde la programación.</p></div>{% endif %}
+
+<div class="panel"><h2>Programación operativa</h2><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Unidad</th><th>Frecuencia</th><th>Técnico</th><th>Estado</th><th>Caso / informe</th>{% if puede_gestionar %}<th>Gestión</th>{% endif %}</tr></thead><tbody>
+{% for lavado in programaciones %}<tr><td>{{ lavado.fecha_tablero|date:"d/m/Y" }}{% if lavado.reprogramado %}<div class="muted">Original: {{ lavado.fecha_programada|date:"d/m/Y" }}</div>{% endif %}</td><td><strong>{{ lavado.cliente.nombre }}</strong><div class="muted">{{ lavado.cliente.nit|default:"Sin NIT" }}</div></td><td>{{ lavado.cliente.frecuencia_lavado }} meses</td><td>{{ lavado.servicio.tecnico.nombre|default:"Sin asignar" }}</td><td><span class="badge {{ lavado.estado_calculado }}">{{ lavado.estado_calculado }}</span></td><td>{{ lavado.servicio.numero_caso|default:"-" }}{% if lavado.actividad %}<div>{{ lavado.actividad.numero_informe }}</div>{% endif %}</td>
+{% if puede_gestionar %}<td class="manage">{% if not lavado.ejecutado %}<form method="post" action="{% url 'gestionar_lavado' lavado.id %}">{% csrf_token %}<input type="hidden" name="accion" value="asignar"><select name="tecnico" required><option value="">Asignar técnico</option>{% for tecnico in tecnicos %}<option value="{{ tecnico.id }}">{{ tecnico.nombre }}</option>{% endfor %}</select><button class="btn btn-blue">Asignar</button></form><form method="post" action="{% url 'gestionar_lavado' lavado.id %}">{% csrf_token %}<input type="hidden" name="accion" value="reprogramar"><input type="date" name="fecha_reprogramada" required><button class="btn btn-blue">Mover</button><input class="full" name="motivo_reprogramacion" placeholder="Motivo obligatorio" required></form>{% else %}<span class="muted">Proceso finalizado</span>{% endif %}</td>{% endif %}</tr>
+{% empty %}<tr><td class="empty" colspan="7">No hay programaciones para los filtros seleccionados.</td></tr>{% endfor %}</tbody></table></div></div>
+
+<div class="panel"><h2>Lavados ejecutados por mes · {{ anio }}</h2><div class="charts">{% for item in meses %}<div class="bar-item"><strong>{{ item.total }}</strong><div class="bar-shell"><div class="bar" style="height:{% widthratio item.total max_mensual 100 %}%"></div></div>{{ item.nombre }}</div>{% endfor %}</div></div>
+
+<div class="panel"><h2>Histórico de informes ejecutados · {{ anio }}</h2><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Unidad</th><th>Técnico</th><th>Informe</th><th>Resultado</th></tr></thead><tbody>{% for actividad in historico %}<tr><td>{{ actividad.fecha|date:"d/m/Y" }}</td><td>{{ actividad.cliente.nombre }}</td><td>{{ actividad.tecnico.nombre }}</td><td>{{ actividad.numero_informe|default:"Pendiente" }}</td><td>{{ actividad.get_resultado_display|default:"-" }}</td></tr>{% empty %}<tr><td class="empty" colspan="5">No hay informes de lavado en este año.</td></tr>{% endfor %}</tbody></table></div></div>
+</div></body></html>

@@ -1,65 +1,57 @@
-from django.core.management.base import BaseCommand
-from django.utils import timezone
 from dateutil.relativedelta import relativedelta
+from django.core.management.base import BaseCommand
 
 from operacion.models import Cliente, LavadoTanque
 
 
 class Command(BaseCommand):
-    help = "Genera programaciones de lavado de tanque para clientes según frecuencia (4 o 6 meses)."
+    help = "Propone el próximo lavado solo para unidades con una ejecución real anterior."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--aplicar",
+            action="store_true",
+            help="Crea las programaciones propuestas. Sin esta opción solo simula.",
+        )
 
     def handle(self, *args, **options):
-        hoy = timezone.now().date()
+        aplicar = options["aplicar"]
+        candidatos = Cliente.objects.filter(
+            activo=True,
+            fecha_ultimo_lavado__isnull=False,
+        ).order_by("nombre")
+        propuestas = []
+        omitidos = 0
+
+        for cliente in candidatos:
+            if LavadoTanque.objects.filter(cliente=cliente, ejecutado=False).exists():
+                omitidos += 1
+                continue
+            proxima = cliente.fecha_ultimo_lavado + relativedelta(
+                months=int(cliente.frecuencia_lavado)
+            )
+            propuestas.append((cliente, proxima))
+
+        self.stdout.write("=" * 64)
+        self.stdout.write("SIMULACIÓN DE PROGRAMACIÓN DE LAVADOS")
+        self.stdout.write("=" * 64)
+        self.stdout.write(f"Unidades con último lavado real: {candidatos.count()}")
+        self.stdout.write(f"Programaciones propuestas: {len(propuestas)}")
+        self.stdout.write(f"Omitidas por tener una programación pendiente: {omitidos}")
+
+        if not aplicar:
+            self.stdout.write(self.style.WARNING(
+                "SIMULACIÓN: no se modificó la base. Use --aplicar después de revisar."
+            ))
+            return
+
         creados = 0
-        revisados = 0
-
-        for c in Cliente.objects.filter(activo=True):
-            revisados += 1
-
-            # Si no hay fecha último lavado, usamos hoy como base (para no bloquear)
-            base = c.fecha_ultimo_lavado or hoy
-
-            # Próxima fecha programada
-            proxima = base + relativedelta(months=int(c.frecuencia_lavado))
-
-            # Crear solo si no existe ya
-            obj, created = LavadoTanque.objects.get_or_create(
-                cliente=c,
+        for cliente, proxima in propuestas:
+            _, created = LavadoTanque.objects.get_or_create(
+                cliente=cliente,
                 fecha_programada=proxima,
             )
-            if created:
-                creados += 1
-
+            creados += int(created)
         self.stdout.write(self.style.SUCCESS(
-            f"Clientes revisados: {revisados} | Programaciones creadas: {creados}"
+            f"PROGRAMACIÓN COMPLETADA. Registros creados: {creados}"
         ))
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-from dateutil.relativedelta import relativedelta
-
-from operacion.models import Cliente, LavadoTanque
-
-
-class Command(BaseCommand):
-
-    help = "Genera programaciones de lavado de tanques automáticamente"
-
-    def handle(self, *args, **kwargs):
-
-        hoy = timezone.now().date()
-
-        for cliente in Cliente.objects.filter(activo=True):
-
-            if not cliente.fecha_ultimo_lavado:
-                continue
-
-            proxima_fecha = cliente.fecha_ultimo_lavado + relativedelta(
-                months=cliente.frecuencia_lavado
-            )
-
-            LavadoTanque.objects.get_or_create(
-                cliente=cliente,
-                fecha_programada=proxima_fecha
-            )
-
-        self.stdout.write(self.style.SUCCESS("Lavados generados correctamente"))        

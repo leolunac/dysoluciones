@@ -316,10 +316,12 @@ class LavadoTanqueAdmin(admin.ModelAdmin):
         "fecha_programada",
         "ejecutado",
         "fecha_ejecucion",
+        "servicio",
+        "actividad",
         "aprobado",
         "publicado_cliente",
     )
-    list_filter = ("ejecutado", "aprobado", "publicado_cliente")
+    list_filter = ("ejecutado", "reprogramado", "aprobado", "publicado_cliente")
     search_fields = ("cliente__nombre",)
     ordering = ("-fecha_programada",)
 

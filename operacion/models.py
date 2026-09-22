@@ -565,7 +565,34 @@ class LavadoTanque(models.Model):
     aprobado = models.BooleanField(default=False)
     publicado_cliente = models.BooleanField(default=False)
 
+    servicio = models.OneToOneField(
+        "Emergencia",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programacion_lavado",
+    )
+    actividad = models.OneToOneField(
+        "ActividadTecnico",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programacion_lavado",
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lavados_programados",
+    )
+
     creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    @property
+    def fecha_vigente(self):
+        return self.fecha_reprogramada if self.reprogramado and self.fecha_reprogramada else self.fecha_programada
     def __str__(self):
         return f"{self.cliente.nombre} - {self.fecha_programada}"
 # Reprogramación

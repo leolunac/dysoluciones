@@ -9,6 +9,7 @@ from .views_revision_preventivos import (
     verificar_preventivo,
 )
 from django.urls import path
+from .lavados import gestionar_lavado, programar_lavado, tablero_lavados
 
 from .views import (
     home,
@@ -55,6 +56,11 @@ from .views import (
 
 
 urlpatterns = [
+
+    # TABLERO DE LAVADOS
+    path("lavados/", tablero_lavados, name="tablero_lavados"),
+    path("lavados/programar/", programar_lavado, name="programar_lavado"),
+    path("lavados/<int:lavado_id>/gestionar/", gestionar_lavado, name="gestionar_lavado"),
 
     # LOGIN
     path("login/", login_view, name="login"),
