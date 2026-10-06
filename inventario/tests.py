@@ -222,6 +222,12 @@ class FormulariosInventarioTest(InventarioBaseTest):
 
     def test_consumo_ofrece_busqueda_y_filas_dinamicas(self):
         respuesta = self.client.get(reverse("inventario:nuevo_consumo"))
+        self.assertContains(respuesta, "Buscar unidad / cliente")
+        self.assertContains(respuesta, "lista-clientes")
+        self.assertContains(respuesta, "resultados-clientes")
+        self.assertContains(respuesta, "No se encontraron unidades")
+        self.assertContains(respuesta, "UNIDAD PRUEBA")
+        self.assertContains(respuesta, "logo_dys.png")
         self.assertContains(respuesta, "lista-productos")
         self.assertContains(respuesta, "A001")
         self.assertContains(respuesta, "+ Agregar otro accesorio")

@@ -10,6 +10,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from operacion.models import Cliente
+
 from .forms import (
     ConsumoInventarioForm,
     DetalleConsumoFormSet,
@@ -161,6 +163,9 @@ def nuevo_consumo(request):
             "form": form,
             "formset": formset,
             "tipo_formulario": "consumo",
+            "clientes_disponibles": Cliente.objects.filter(
+                activo=True,
+            ).order_by("nombre"),
             "productos_disponibles": ProductoInventario.objects.filter(
                 activo=True,
             ).select_related("accesorio").order_by("accesorio__descripcion"),
