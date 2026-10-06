@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -6,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -14,6 +15,7 @@ from operacion.models import Cliente
 
 from .forms import (
     ConsumoInventarioForm,
+    AjusteExistenciaForm,
     DetalleConsumoFormSet,
     DetalleEntradaFormSet,
     EntradaInventarioForm,
@@ -27,7 +29,7 @@ from .models import (
     ProductoInventario,
 )
 from .permisos import exigir_consulta, exigir_gestion, puede_gestionar_inventario
-from .servicios import confirmar_consumo, confirmar_entrada
+from .servicios import ajustar_existencia, confirmar_consumo, confirmar_entrada
 
 
 @login_required
@@ -69,6 +71,25 @@ def tablero(request):
         cantidad__lte=F("producto__stock_minimo"),
         producto__stock_minimo__gt=0,
     ).count()
+    desde_estadisticas = timezone.now() - timedelta(days=30)
+    consumos_periodo = MovimientoInventario.objects.filter(
+        tipo="CONSUMO",
+        creado__gte=desde_estadisticas,
+    )
+    productos_mas_usados = (
+        consumos_periodo.values(
+            "producto__accesorio__codigo",
+            "producto__accesorio__descripcion",
+        )
+        .annotate(total=Sum("cantidad"))
+        .order_by("-total")[:5]
+    )
+    clientes_mayor_consumo = (
+        consumos_periodo.filter(cliente__isnull=False)
+        .values("cliente__nombre")
+        .annotate(total=Sum("cantidad"))
+        .order_by("-total")[:5]
+    )
 
     return render(
         request,
@@ -79,6 +100,11 @@ def tablero(request):
             "total_unidades": resumen["unidades"] or Decimal("0.00"),
             "valor_inventario": resumen["valorizado"] or Decimal("0.00"),
             "productos_bajo_minimo": bajos,
+            "productos_mas_usados": productos_mas_usados,
+            "clientes_mayor_consumo": clientes_mayor_consumo,
+            "ajustes_recientes": MovimientoInventario.objects.filter(
+                tipo__in=("AJUSTE_ENTRADA", "AJUSTE_SALIDA"),
+            ).select_related("producto__accesorio", "registrado_por")[:10],
             "puede_gestionar": puede_gestionar_inventario(request.user),
             "entradas_borrador": EntradaInventario.objects.filter(
                 estado="BORRADOR"
@@ -87,6 +113,42 @@ def tablero(request):
                 estado="BORRADOR"
             ).select_related("cliente", "ubicacion_origen")[:10],
         },
+    )
+
+
+@login_required
+def ajustar_existencia_vista(request, existencia_id):
+    exigir_gestion(request.user)
+    existencia = get_object_or_404(
+        ExistenciaInventario.objects.select_related(
+            "producto__accesorio",
+            "ubicacion",
+        ),
+        pk=existencia_id,
+    )
+    if request.method == "POST":
+        form = AjusteExistenciaForm(request.POST)
+        if form.is_valid():
+            try:
+                ajustar_existencia(
+                    existencia_id=existencia.pk,
+                    cantidad_fisica=form.cleaned_data["cantidad_fisica"],
+                    motivo=dict(AjusteExistenciaForm.MOTIVOS)[
+                        form.cleaned_data["motivo"]
+                    ],
+                    observaciones=form.cleaned_data["observaciones"],
+                    usuario=request.user,
+                )
+                messages.success(request, "La existencia fue ajustada con trazabilidad.")
+                return redirect("inventario:tablero")
+            except ValidationError as exc:
+                form.add_error(None, "; ".join(exc.messages))
+    else:
+        form = AjusteExistenciaForm(initial={"cantidad_fisica": existencia.cantidad})
+    return render(
+        request,
+        "inventario/ajustar_existencia.html",
+        {"existencia": existencia, "form": form},
     )
 
 

@@ -7,6 +7,11 @@ app_name = "inventario"
 
 urlpatterns = [
     path("", views.tablero, name="tablero"),
+    path(
+        "existencias/<int:existencia_id>/ajustar/",
+        views.ajustar_existencia_vista,
+        name="ajustar_existencia",
+    ),
     path("entradas/nueva/", views.nueva_entrada, name="nueva_entrada"),
     path("proveedores/nuevo/", views.nuevo_proveedor, name="nuevo_proveedor"),
     path(

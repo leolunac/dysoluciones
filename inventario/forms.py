@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 
 from .models import (
@@ -82,3 +84,27 @@ DetalleConsumoFormSet = forms.inlineformset_factory(
     extra=1,
     can_delete=True,
 )
+
+
+class AjusteExistenciaForm(forms.Form):
+    MOTIVOS = [
+        ("CONTEO_FISICO", "Conteo físico de inventario"),
+        ("DIFERENCIA_ANTERIOR", "Corrección de diferencia anterior"),
+        ("DAÑO", "Producto dañado o deteriorado"),
+        ("PERDIDA", "Pérdida o faltante"),
+        ("OTRO", "Otro motivo"),
+    ]
+
+    cantidad_fisica = forms.DecimalField(
+        label="Existencia física real",
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal("0.00"),
+    )
+    motivo = forms.ChoiceField(choices=MOTIVOS)
+    observaciones = forms.CharField(
+        label="Detalle del ajuste",
+        widget=forms.Textarea(attrs={"rows": 3}),
+        required=True,
+        help_text="Explique brevemente la razón de la diferencia encontrada.",
+    )

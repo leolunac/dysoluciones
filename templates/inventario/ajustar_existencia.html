@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Ajustar existencia | SIGOB</title>
+    <style>
+        *{box-sizing:border-box}body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#eef6f8,#f8fafc);color:#17324d;margin:0}.contenedor{max-width:820px;margin:28px auto;padding:0 18px}.cabecera{background:linear-gradient(120deg,#064d73,#0879ad);color:#fff;padding:18px 22px;border-radius:14px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 22px #0759852b}.logo{width:66px;height:66px;object-fit:contain;background:#fff;border-radius:12px;padding:5px}.cabecera h1{margin:0;font-size:23px}.cabecera p{margin:5px 0 0;font-size:12px}.tarjeta{background:#fff;margin-top:14px;padding:22px;border:1px solid #dce7ef;border-radius:12px;box-shadow:0 3px 12px #0f172a0d}.producto{background:#eaf5fa;border-left:5px solid #0b83b8;padding:14px;border-radius:8px;margin-bottom:18px}.producto strong{display:block;font-size:18px;color:#075985}.saldo{font-size:26px;font-weight:bold;color:#15803d;margin-top:7px}.campo{margin-bottom:14px}label{font-weight:bold;font-size:13px;display:block;margin-bottom:5px}input,select,textarea{width:100%;padding:10px;border:1px solid #b9cbd8;border-radius:7px}.ayuda{font-size:12px;color:#64748b;margin-top:5px}.errores{color:#b91c1c;font-size:12px}.advertencia{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:12px;border-radius:8px;margin-bottom:16px}.btn{padding:10px 14px;border:0;border-radius:7px;color:#fff;background:#15803d;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}.gris{background:#52677a}
+    </style>
+</head>
+<body><main class="contenedor">
+    <header class="cabecera"><img class="logo" src="{% static 'img/logo_dys.png' %}" alt="Logo D&S"><div><h1>Ajustar existencia</h1><p>SIGOB 7x24 · D&amp;S Soluciones en Bombeo S.A.S.</p></div></header>
+    <section class="tarjeta">
+        <div class="producto"><strong>{{ existencia.producto.accesorio.codigo }} · {{ existencia.producto.accesorio.descripcion }}</strong><div>{{ existencia.ubicacion.nombre }} · {{ existencia.producto.unidad_medida }}</div><div class="saldo">Existencia registrada: {{ existencia.cantidad|floatformat:2 }}</div></div>
+        <div class="advertencia"><strong>Importante:</strong> escriba la cantidad física total encontrada, no la diferencia. SIGOB calculará el ajuste y guardará quién lo realizó.</div>
+        <form method="post">{% csrf_token %}
+            {% if form.non_field_errors %}<div class="errores">{{ form.non_field_errors }}</div>{% endif %}
+            {% for field in form %}<div class="campo"><label>{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="ayuda">{{ field.help_text }}</div>{% endif %}<div class="errores">{{ field.errors }}</div></div>{% endfor %}
+            <button class="btn" type="submit">Registrar ajuste</button>
+            <a class="btn gris" href="{% url 'inventario:tablero' %}">Cancelar</a>
+        </form>
+    </section>
+</main></body></html>

@@ -31,6 +31,7 @@ from .models import (
     Proveedor,
 )
 from .servicios import (
+    ajustar_existencia,
     confirmar_consumo,
     confirmar_entrada,
     fijar_saldo_inicial,
@@ -232,6 +233,78 @@ class FormulariosInventarioTest(InventarioBaseTest):
         self.assertContains(respuesta, "A001")
         self.assertContains(respuesta, "+ Agregar otro accesorio")
         self.assertContains(respuesta, "fila-vacia")
+
+    def test_tablero_muestra_accion_de_ajuste_y_estadisticas(self):
+        fijar_saldo_inicial(
+            producto=self.producto,
+            cantidad=Decimal("5.00"),
+            precio_referencia=Decimal("10000.00"),
+            unidad_medida="UNID",
+            usuario=self.usuario,
+            origen="tablero.sql",
+        )
+        respuesta = self.client.get(reverse("inventario:tablero"))
+        self.assertContains(respuesta, "Ajustar existencia")
+        self.assertContains(respuesta, "Accesorios más utilizados")
+        self.assertContains(respuesta, "Unidades con mayor consumo")
+
+
+class AjusteExistenciaTest(InventarioBaseTest):
+    def setUp(self):
+        super().setUp()
+        fijar_saldo_inicial(
+            producto=self.producto,
+            cantidad=Decimal("5.00"),
+            precio_referencia=Decimal("10000.00"),
+            unidad_medida="UNID",
+            usuario=self.usuario,
+            origen="ajustes.sql",
+        )
+        self.existencia = ExistenciaInventario.objects.get(
+            producto=self.producto,
+            ubicacion=self.bodega,
+        )
+
+    def test_ajuste_entrada_conserva_trazabilidad(self):
+        movimiento = ajustar_existencia(
+            existencia_id=self.existencia.pk,
+            cantidad_fisica=Decimal("8.00"),
+            motivo="Conteo físico de inventario",
+            observaciones="Se realizó conteo en bodega.",
+            usuario=self.usuario,
+        )
+        self.existencia.refresh_from_db()
+        self.assertEqual(self.existencia.cantidad, Decimal("8.00"))
+        self.assertEqual(movimiento.tipo, "AJUSTE_ENTRADA")
+        self.assertEqual(movimiento.cantidad, Decimal("3.00"))
+        self.assertEqual(movimiento.registrado_por, self.usuario)
+        self.assertIn("Saldo anterior: 5.00", movimiento.observaciones)
+
+    def test_ajuste_salida_desde_vista(self):
+        self.client.force_login(self.usuario)
+        respuesta = self.client.post(
+            reverse("inventario:ajustar_existencia", args=[self.existencia.pk]),
+            {
+                "cantidad_fisica": "2.00",
+                "motivo": "PERDIDA",
+                "observaciones": "Faltante confirmado durante conteo.",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:tablero"))
+        self.existencia.refresh_from_db()
+        self.assertEqual(self.existencia.cantidad, Decimal("2.00"))
+        movimiento = MovimientoInventario.objects.get(tipo="AJUSTE_SALIDA")
+        self.assertEqual(movimiento.cantidad, Decimal("3.00"))
+
+    def test_no_permite_ajuste_sin_diferencia(self):
+        with self.assertRaises(ValidationError):
+            ajustar_existencia(
+                existencia_id=self.existencia.pk,
+                cantidad_fisica=Decimal("5.00"),
+                motivo="Conteo físico de inventario",
+                observaciones="Sin diferencia.",
+                usuario=self.usuario,
+            )
 
 
 class IntegracionOperacionTest(InventarioBaseTest):

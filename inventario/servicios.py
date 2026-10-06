@@ -255,3 +255,46 @@ def trasladar_producto(
         observaciones=observaciones,
         usuario=usuario,
     )
+
+
+def ajustar_existencia(*, existencia_id, cantidad_fisica, motivo, observaciones, usuario):
+    cantidad_fisica = Decimal(cantidad_fisica)
+    if cantidad_fisica < 0:
+        raise ValidationError("La existencia física no puede ser negativa.")
+
+    with transaction.atomic():
+        existencia = (
+            ExistenciaInventario.objects.select_for_update()
+            .select_related("producto__accesorio", "ubicacion")
+            .get(pk=existencia_id)
+        )
+        cantidad_anterior = existencia.cantidad
+        diferencia = cantidad_fisica - cantidad_anterior
+        if diferencia == 0:
+            raise ValidationError("La cantidad física es igual a la registrada; no hay ajuste.")
+
+        detalle = (
+            f"Motivo: {motivo}. Saldo anterior: {cantidad_anterior}. "
+            f"Saldo físico: {cantidad_fisica}. {observaciones}"
+        )
+        if diferencia > 0:
+            movimiento, _ = registrar_movimiento(
+                producto=existencia.producto,
+                tipo="AJUSTE_ENTRADA",
+                cantidad=diferencia,
+                destino=existencia.ubicacion,
+                referencia="Ajuste por conteo físico",
+                observaciones=detalle,
+                usuario=usuario,
+            )
+        else:
+            movimiento, _ = registrar_movimiento(
+                producto=existencia.producto,
+                tipo="AJUSTE_SALIDA",
+                cantidad=abs(diferencia),
+                origen=existencia.ubicacion,
+                referencia="Ajuste por conteo físico",
+                observaciones=detalle,
+                usuario=usuario,
+            )
+        return movimiento
