@@ -33,6 +33,14 @@ def siguiente_codigo_interno(prefijo="A"):
     return f"{prefijo}{max(numeros, default=0) + 1:03d}"
 
 
+def accesorio_con_descripcion(descripcion, excluir_id=None):
+    descripcion = " ".join((descripcion or "").strip().split())
+    consulta = Accesorio.objects.filter(descripcion__iexact=descripcion)
+    if excluir_id:
+        consulta = consulta.exclude(pk=excluir_id)
+    return consulta.first()
+
+
 class ProveedorForm(forms.ModelForm):
     class Meta:
         model = Proveedor
@@ -105,6 +113,15 @@ class NuevoProductoInventarioForm(forms.Form):
             )
         return codigo
 
+    def clean_descripcion(self):
+        descripcion = " ".join(self.cleaned_data["descripcion"].strip().split()).upper()
+        existente = accesorio_con_descripcion(descripcion)
+        if existente:
+            raise forms.ValidationError(
+                f"Esta descripción ya existe con el código {existente.codigo}."
+            )
+        return descripcion
+
     def clean(self):
         datos = super().clean()
         prefijo = datos.get("prefijo")
@@ -131,6 +148,44 @@ class NuevoProductoInventarioForm(forms.Form):
         return datos
 
 
+class EditarProductoInventarioForm(forms.Form):
+    descripcion = forms.CharField(label="Descripción", max_length=250)
+    unidad_medida = forms.CharField(label="Unidad de medida", max_length=30)
+    stock_minimo = forms.DecimalField(
+        label="Stock mínimo",
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal("0.00"),
+    )
+
+    def __init__(self, *args, producto, **kwargs):
+        self.producto = producto
+        kwargs.setdefault(
+            "initial",
+            {
+                "descripcion": producto.accesorio.descripcion,
+                "unidad_medida": producto.unidad_medida,
+                "stock_minimo": producto.stock_minimo,
+            },
+        )
+        super().__init__(*args, **kwargs)
+
+    def clean_descripcion(self):
+        descripcion = " ".join(self.cleaned_data["descripcion"].strip().split()).upper()
+        existente = accesorio_con_descripcion(
+            descripcion,
+            excluir_id=self.producto.accesorio_id,
+        )
+        if existente:
+            raise forms.ValidationError(
+                f"Esta descripción ya existe con el código {existente.codigo}."
+            )
+        return descripcion
+
+    def clean_unidad_medida(self):
+        return self.cleaned_data["unidad_medida"].strip().upper()
+
+
 class EntradaInventarioForm(forms.ModelForm):
     class Meta:
         model = EntradaInventario
@@ -147,6 +202,10 @@ class DetalleEntradaInventarioForm(forms.ModelForm):
         self.fields["producto"].queryset = ProductoInventario.objects.filter(
             activo=True,
         ).select_related("accesorio")
+        self.fields["referencia_proveedor"].queryset = (
+            ReferenciaProveedor.objects.filter(activa=True)
+            .select_related("proveedor", "producto__accesorio")
+        )
 
     class Meta:
         model = DetalleEntradaInventario

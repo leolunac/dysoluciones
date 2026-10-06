@@ -20,6 +20,7 @@ from .forms import (
     DetalleConsumoFormSet,
     DetalleEntradaFormSet,
     EntradaInventarioForm,
+    EditarProductoInventarioForm,
     NuevoProductoInventarioForm,
     ProveedorForm,
     siguiente_codigo_interno,
@@ -161,13 +162,12 @@ def nueva_entrada(request):
     exigir_gestion(request.user)
     if request.method == "POST":
         form = EntradaInventarioForm(request.POST)
-        formset = DetalleEntradaFormSet(request.POST)
+        entrada = form.save(commit=False) if form.is_valid() else EntradaInventario()
+        formset = DetalleEntradaFormSet(request.POST, instance=entrada)
         if form.is_valid() and formset.is_valid():
             with transaction.atomic():
-                entrada = form.save(commit=False)
                 entrada.creado_por = request.user
                 entrada.save()
-                formset.instance = entrada
                 formset.save()
             messages.success(request, "Entrada guardada en borrador. Confírmela para aumentar stock.")
             return redirect("inventario:tablero")
@@ -251,6 +251,63 @@ def nuevo_producto(request):
 
 
 @login_required
+def lista_productos(request):
+    exigir_gestion(request.user)
+    buscar = request.GET.get("buscar", "").strip()
+    productos = ProductoInventario.objects.select_related("accesorio").order_by(
+        "accesorio__codigo"
+    )
+    if buscar:
+        productos = productos.filter(
+            Q(accesorio__codigo__icontains=buscar)
+            | Q(accesorio__descripcion__icontains=buscar)
+        )
+    return render(
+        request,
+        "inventario/productos_lista.html",
+        {"productos": productos[:500], "buscar": buscar},
+    )
+
+
+@login_required
+def editar_producto(request, producto_id):
+    exigir_gestion(request.user)
+    producto = get_object_or_404(
+        ProductoInventario.objects.select_related("accesorio"),
+        pk=producto_id,
+    )
+    if request.method == "POST":
+        form = EditarProductoInventarioForm(request.POST, producto=producto)
+        if form.is_valid():
+            with transaction.atomic():
+                accesorio = Accesorio.objects.select_for_update().get(
+                    pk=producto.accesorio_id
+                )
+                accesorio.descripcion = form.cleaned_data["descripcion"]
+                accesorio.save(update_fields=["descripcion", "actualizado"])
+                producto = ProductoInventario.objects.select_for_update().get(
+                    pk=producto.pk
+                )
+                producto.unidad_medida = form.cleaned_data["unidad_medida"]
+                producto.stock_minimo = form.cleaned_data["stock_minimo"]
+                producto.save(
+                    update_fields=["unidad_medida", "stock_minimo", "actualizado"]
+                )
+            messages.success(
+                request,
+                f"El accesorio {accesorio.codigo} fue actualizado sin alterar su historial.",
+            )
+            return redirect("inventario:tablero")
+    else:
+        form = EditarProductoInventarioForm(producto=producto)
+    return render(
+        request,
+        "inventario/producto_editar.html",
+        {"producto": producto, "form": form},
+    )
+
+
+@login_required
 def verificar_codigo_producto(request):
     exigir_gestion(request.user)
     prefijo = request.GET.get("prefijo", "A").strip().upper()[:1]
@@ -280,16 +337,34 @@ def nuevo_consumo(request):
     exigir_gestion(request.user)
     if request.method == "POST":
         form = ConsumoInventarioForm(request.POST)
-        formset = DetalleConsumoFormSet(request.POST)
+        consumo = form.save(commit=False) if form.is_valid() else ConsumoInventario()
+        formset = DetalleConsumoFormSet(request.POST, instance=consumo)
         if form.is_valid() and formset.is_valid():
-            with transaction.atomic():
-                consumo = form.save(commit=False)
-                consumo.creado_por = request.user
-                consumo.save()
-                formset.instance = consumo
-                formset.save()
-            messages.success(request, "Consumo guardado en borrador. Confírmelo para descontar stock.")
-            return redirect("inventario:tablero")
+            try:
+                with transaction.atomic():
+                    consumo.creado_por = request.user
+                    consumo.save()
+                    formset.save()
+                    accion = request.POST.get("accion", "borrador")
+                    if accion in ("confirmar_continuar", "confirmar_terminar"):
+                        confirmar_consumo(consumo.pk, request.user)
+            except ValidationError as exc:
+                form.add_error(None, "; ".join(exc.messages))
+            else:
+                if accion == "confirmar_continuar":
+                    messages.success(
+                        request,
+                        f"Consumo de {consumo.cliente.nombre} confirmado. Registre la siguiente unidad.",
+                    )
+                    return redirect("inventario:nuevo_consumo")
+                if accion == "confirmar_terminar":
+                    messages.success(
+                        request,
+                        f"Consumo de {consumo.cliente.nombre} confirmado correctamente.",
+                    )
+                    return redirect("inventario:tablero")
+                messages.success(request, "Consumo guardado en borrador. Confírmelo para descontar stock.")
+                return redirect("inventario:tablero")
     else:
         form = ConsumoInventarioForm(initial={"fecha": timezone.localtime()})
         formset = DetalleConsumoFormSet()

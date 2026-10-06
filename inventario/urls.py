@@ -14,6 +14,12 @@ urlpatterns = [
     ),
     path("entradas/nueva/", views.nueva_entrada, name="nueva_entrada"),
     path("productos/nuevo/", views.nuevo_producto, name="nuevo_producto"),
+    path("productos/", views.lista_productos, name="lista_productos"),
+    path(
+        "productos/<int:producto_id>/editar/",
+        views.editar_producto,
+        name="editar_producto",
+    ),
     path(
         "productos/verificar-codigo/",
         views.verificar_codigo_producto,

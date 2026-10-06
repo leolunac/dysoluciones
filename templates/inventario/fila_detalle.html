@@ -1,4 +1,5 @@
 <div class="detalle {% if tipo_formulario == 'consumo' %}consumo{% endif %}">
+    {% if detalle.non_field_errors %}<div class="errores error-fila">{{ detalle.non_field_errors }}</div>{% endif %}
     {% for hidden in detalle.hidden_fields %}{{ hidden }}{% endfor %}
     <div><label>Producto</label><input class="buscador-producto" list="lista-productos" placeholder="Código o descripción" autocomplete="off"><div class="producto-select">{{ detalle.producto }}</div><div class="errores">{{ detalle.producto.errors }}</div></div>
     {% if tipo_formulario == "entrada" %}<div><label>{{ detalle.referencia_proveedor.label }}</label>{{ detalle.referencia_proveedor }}<div class="errores">{{ detalle.referencia_proveedor.errors }}</div></div>{% endif %}

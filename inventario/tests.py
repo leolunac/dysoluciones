@@ -29,6 +29,7 @@ from .models import (
     MovimientoInventario,
     ProductoInventario,
     Proveedor,
+    ReferenciaProveedor,
 )
 from .servicios import (
     ajustar_existencia,
@@ -274,6 +275,120 @@ class FormulariosInventarioTest(InventarioBaseTest):
         self.assertContains(respuesta, "ya pertenece a UNIÓN DE PRUEBA")
         self.assertFalse(Accesorio.objects.filter(descripcion="OTRO PRODUCTO").exists())
 
+    def test_no_crea_producto_con_descripcion_duplicada(self):
+        respuesta = self.client.post(
+            reverse("inventario:nuevo_producto"),
+            {
+                "prefijo": "A",
+                "codigo": "A002",
+                "descripcion": "unión de prueba",
+                "unidad_medida": "UNID",
+                "stock_minimo": "0.00",
+                "precio_referencia": "100.00",
+            },
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "ya existe con el código A001")
+        self.assertFalse(Accesorio.objects.filter(codigo="A002").exists())
+
+    def test_entrada_acepta_referencia_del_proveedor_y_producto(self):
+        proveedor = Proveedor.objects.create(nombre="PROVEEDOR REFERENCIA")
+        referencia = ReferenciaProveedor.objects.create(
+            producto=self.producto,
+            proveedor=proveedor,
+            codigo_proveedor="REF-A001",
+        )
+        respuesta = self.client.post(
+            reverse("inventario:nueva_entrada"),
+            {
+                "proveedor": proveedor.pk,
+                "numero_factura": "FV-REFERENCIA",
+                "fecha_factura": "2026-10-06",
+                "observaciones": "Prueba",
+                "detalles-TOTAL_FORMS": "1",
+                "detalles-INITIAL_FORMS": "0",
+                "detalles-MIN_NUM_FORMS": "0",
+                "detalles-MAX_NUM_FORMS": "1000",
+                "detalles-0-producto": self.producto.pk,
+                "detalles-0-referencia_proveedor": referencia.pk,
+                "detalles-0-cantidad": "2.00",
+                "detalles-0-precio_unitario_lista": "12000.00",
+                "detalles-0-porcentaje_descuento": "10.00",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:tablero"))
+        detalle = DetalleEntradaInventario.objects.get(
+            entrada__numero_factura="FV-REFERENCIA"
+        )
+        self.assertEqual(detalle.referencia_proveedor, referencia)
+
+    def test_entrada_muestra_error_si_referencia_no_corresponde(self):
+        proveedor = Proveedor.objects.create(nombre="PROVEEDOR FACTURA")
+        otro = Proveedor.objects.create(nombre="OTRO PROVEEDOR")
+        referencia = ReferenciaProveedor.objects.create(
+            producto=self.producto,
+            proveedor=otro,
+            codigo_proveedor="REF-OTRA",
+        )
+        respuesta = self.client.post(
+            reverse("inventario:nueva_entrada"),
+            {
+                "proveedor": proveedor.pk,
+                "numero_factura": "FV-INVALIDA",
+                "fecha_factura": "2026-10-06",
+                "detalles-TOTAL_FORMS": "1",
+                "detalles-INITIAL_FORMS": "0",
+                "detalles-MIN_NUM_FORMS": "0",
+                "detalles-MAX_NUM_FORMS": "1000",
+                "detalles-0-producto": self.producto.pk,
+                "detalles-0-referencia_proveedor": referencia.pk,
+                "detalles-0-cantidad": "1.00",
+                "detalles-0-precio_unitario_lista": "100.00",
+                "detalles-0-porcentaje_descuento": "0.00",
+            },
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(
+            respuesta,
+            "La referencia no corresponde al proveedor y producto seleccionados.",
+        )
+        self.assertFalse(
+            EntradaInventario.objects.filter(numero_factura="FV-INVALIDA").exists()
+        )
+
+    def test_edita_descripcion_sin_cambiar_codigo_ni_historial(self):
+        movimiento = MovimientoInventario.objects.create(
+            producto=self.producto,
+            tipo="SALDO_INICIAL",
+            cantidad=Decimal("1.00"),
+            destino=self.bodega,
+            registrado_por=self.usuario,
+        )
+        accesorio_id = self.producto.accesorio_id
+        respuesta = self.client.post(
+            reverse("inventario:editar_producto", args=[self.producto.pk]),
+            {
+                "descripcion": "UNIÓN ACTUALIZADA",
+                "unidad_medida": "pieza",
+                "stock_minimo": "3.00",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:tablero"))
+        self.producto.refresh_from_db()
+        self.producto.accesorio.refresh_from_db()
+        movimiento.refresh_from_db()
+        self.assertEqual(self.producto.accesorio_id, accesorio_id)
+        self.assertEqual(self.producto.accesorio.codigo, "A001")
+        self.assertEqual(self.producto.accesorio.descripcion, "UNIÓN ACTUALIZADA")
+        self.assertEqual(self.producto.unidad_medida, "PIEZA")
+        self.assertEqual(self.producto.stock_minimo, Decimal("3.00"))
+        self.assertEqual(movimiento.producto, self.producto)
+
+    def test_lista_accesorios_incluye_productos_sin_existencia(self):
+        respuesta = self.client.get(reverse("inventario:lista_productos"))
+        self.assertContains(respuesta, "A001")
+        self.assertContains(respuesta, "Editar")
+
     def test_entrada_muestra_boton_crear_accesorio(self):
         respuesta = self.client.get(reverse("inventario:nueva_entrada"))
         self.assertContains(respuesta, "+ Crear accesorio")
@@ -290,6 +405,42 @@ class FormulariosInventarioTest(InventarioBaseTest):
         self.assertContains(respuesta, "A001")
         self.assertContains(respuesta, "+ Agregar otro accesorio")
         self.assertContains(respuesta, "fila-vacia")
+        self.assertContains(respuesta, "Confirmar y registrar otra unidad")
+        self.assertContains(respuesta, "Confirmar y terminar")
+
+    def test_confirma_consumo_y_deja_formulario_para_otra_unidad(self):
+        fijar_saldo_inicial(
+            producto=self.producto,
+            cantidad=Decimal("5.00"),
+            precio_referencia=Decimal("10000.00"),
+            unidad_medida="UNID",
+            usuario=self.usuario,
+            origen="consumo-consecutivo.sql",
+        )
+        respuesta = self.client.post(
+            reverse("inventario:nuevo_consumo"),
+            {
+                "cliente": self.cliente.pk,
+                "ubicacion_origen": self.bodega.pk,
+                "fecha": "2026-10-06T14:00",
+                "observaciones": "Consumo consecutivo",
+                "accion": "confirmar_continuar",
+                "detalles-TOTAL_FORMS": "1",
+                "detalles-INITIAL_FORMS": "0",
+                "detalles-MIN_NUM_FORMS": "0",
+                "detalles-MAX_NUM_FORMS": "1000",
+                "detalles-0-producto": self.producto.pk,
+                "detalles-0-cantidad": "2.00",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:nuevo_consumo"))
+        consumo = ConsumoInventario.objects.get()
+        self.assertEqual(consumo.estado, "CONFIRMADO")
+        saldo = ExistenciaInventario.objects.get(
+            producto=self.producto,
+            ubicacion=self.bodega,
+        )
+        self.assertEqual(saldo.cantidad, Decimal("3.00"))
 
     def test_tablero_muestra_accion_de_ajuste_y_estadisticas(self):
         fijar_saldo_inicial(
