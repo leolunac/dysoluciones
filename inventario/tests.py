@@ -221,6 +221,63 @@ class FormulariosInventarioTest(InventarioBaseTest):
         self.assertRedirects(respuesta, reverse("inventario:nueva_entrada"))
         self.assertTrue(Proveedor.objects.filter(nombre="NUEVO PROVEEDOR").exists())
 
+    def test_sugiere_codigo_y_bloquea_codigo_existente(self):
+        respuesta = self.client.get(
+            reverse("inventario:verificar_codigo_producto"),
+            {"prefijo": "A", "codigo": "A001"},
+        )
+        datos = respuesta.json()
+        self.assertFalse(datos["disponible"])
+        self.assertEqual(datos["sugerido"], "A002")
+        self.assertIn("UNIÓN DE PRUEBA", datos["mensaje"])
+
+    def test_crea_accesorio_y_producto_con_referencia_del_proveedor(self):
+        proveedor = Proveedor.objects.create(nombre="PROVEEDOR NUEVO")
+        respuesta = self.client.post(
+            reverse("inventario:nuevo_producto"),
+            {
+                "prefijo": "A",
+                "codigo": "A002",
+                "descripcion": "VÁLVULA NUEVA",
+                "unidad_medida": "UNID",
+                "stock_minimo": "2.00",
+                "precio_referencia": "36120.00",
+                "proveedor": proveedor.pk,
+                "codigo_proveedor": "REF-99",
+                "descripcion_proveedor": "Válvula según factura",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:nueva_entrada"))
+        producto = ProductoInventario.objects.get(accesorio__codigo="A002")
+        self.assertEqual(producto.accesorio.descripcion, "VÁLVULA NUEVA")
+        self.assertEqual(producto.precio_referencia, Decimal("36120.00"))
+        self.assertTrue(
+            producto.referencias_proveedor.filter(
+                proveedor=proveedor,
+                codigo_proveedor="REF-99",
+            ).exists()
+        )
+
+    def test_no_crea_producto_con_codigo_duplicado(self):
+        respuesta = self.client.post(
+            reverse("inventario:nuevo_producto"),
+            {
+                "prefijo": "A",
+                "codigo": "A001",
+                "descripcion": "OTRO PRODUCTO",
+                "unidad_medida": "UNID",
+                "stock_minimo": "0.00",
+                "precio_referencia": "100.00",
+            },
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "ya pertenece a UNIÓN DE PRUEBA")
+        self.assertFalse(Accesorio.objects.filter(descripcion="OTRO PRODUCTO").exists())
+
+    def test_entrada_muestra_boton_crear_accesorio(self):
+        respuesta = self.client.get(reverse("inventario:nueva_entrada"))
+        self.assertContains(respuesta, "+ Crear accesorio")
+
     def test_consumo_ofrece_busqueda_y_filas_dinamicas(self):
         respuesta = self.client.get(reverse("inventario:nuevo_consumo"))
         self.assertContains(respuesta, "Buscar unidad / cliente")

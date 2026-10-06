@@ -4,14 +4,15 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from operacion.models import Cliente
+from gestion_comercial.models import CatalogoPrecio
+from operacion.models import Accesorio, Cliente
 
 from .forms import (
     ConsumoInventarioForm,
@@ -19,7 +20,9 @@ from .forms import (
     DetalleConsumoFormSet,
     DetalleEntradaFormSet,
     EntradaInventarioForm,
+    NuevoProductoInventarioForm,
     ProveedorForm,
+    siguiente_codigo_interno,
 )
 from .models import (
     ConsumoInventario,
@@ -27,6 +30,7 @@ from .models import (
     ExistenciaInventario,
     MovimientoInventario,
     ProductoInventario,
+    ReferenciaProveedor,
 )
 from .permisos import exigir_consulta, exigir_gestion, puede_gestionar_inventario
 from .servicios import ajustar_existencia, confirmar_consumo, confirmar_entrada
@@ -197,6 +201,78 @@ def nuevo_proveedor(request):
     else:
         form = ProveedorForm(initial={"activo": True})
     return render(request, "inventario/proveedor_formulario.html", {"form": form})
+
+
+@login_required
+def nuevo_producto(request):
+    exigir_gestion(request.user)
+    if request.method == "POST":
+        form = NuevoProductoInventarioForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    accesorio = Accesorio.objects.create(
+                        codigo=form.cleaned_data["codigo"],
+                        descripcion=form.cleaned_data["descripcion"].strip().upper(),
+                        activo=True,
+                    )
+                    producto = ProductoInventario.objects.create(
+                        accesorio=accesorio,
+                        unidad_medida=form.cleaned_data["unidad_medida"].strip().upper(),
+                        stock_minimo=form.cleaned_data["stock_minimo"],
+                        precio_referencia=form.cleaned_data["precio_referencia"],
+                        costo_neto_ultimo=Decimal("0.00"),
+                        activo=True,
+                    )
+                    if form.cleaned_data.get("proveedor"):
+                        ReferenciaProveedor.objects.create(
+                            producto=producto,
+                            proveedor=form.cleaned_data["proveedor"],
+                            codigo_proveedor=form.cleaned_data["codigo_proveedor"].strip(),
+                            descripcion_proveedor=(
+                                form.cleaned_data.get("descripcion_proveedor") or ""
+                            ).strip(),
+                            activa=True,
+                        )
+            except IntegrityError:
+                form.add_error(
+                    "codigo",
+                    "El código fue ocupado mientras se guardaba. Solicite uno nuevo.",
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Accesorio {producto} creado correctamente y disponible para la entrada.",
+                )
+                return redirect("inventario:nueva_entrada")
+    else:
+        form = NuevoProductoInventarioForm()
+    return render(request, "inventario/producto_formulario.html", {"form": form})
+
+
+@login_required
+def verificar_codigo_producto(request):
+    exigir_gestion(request.user)
+    prefijo = request.GET.get("prefijo", "A").strip().upper()[:1]
+    codigo = request.GET.get("codigo", "").strip().upper()
+    sugerido = siguiente_codigo_interno(prefijo)
+    respuesta = {"sugerido": sugerido}
+    if codigo:
+        accesorio = Accesorio.objects.filter(codigo__iexact=codigo).first()
+        precio = CatalogoPrecio.objects.filter(codigo__iexact=codigo).first()
+        if accesorio:
+            respuesta.update(
+                disponible=False,
+                mensaje=f"{codigo} ya pertenece a {accesorio.descripcion}.",
+            )
+        elif precio:
+            respuesta.update(
+                disponible=False,
+                mensaje=f"{codigo} está reservado en Gestión Comercial para {precio.descripcion}.",
+            )
+        else:
+            respuesta.update(disponible=True, mensaje=f"{codigo} está disponible.")
+    return JsonResponse(respuesta)
 
 
 @login_required

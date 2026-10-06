@@ -13,6 +13,12 @@ urlpatterns = [
         name="ajustar_existencia",
     ),
     path("entradas/nueva/", views.nueva_entrada, name="nueva_entrada"),
+    path("productos/nuevo/", views.nuevo_producto, name="nuevo_producto"),
+    path(
+        "productos/verificar-codigo/",
+        views.verificar_codigo_producto,
+        name="verificar_codigo_producto",
+    ),
     path("proveedores/nuevo/", views.nuevo_proveedor, name="nuevo_proveedor"),
     path(
         "entradas/<int:entrada_id>/confirmar/",
