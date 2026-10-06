@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # App principal del sistema
     'operacion',
     'gestion_comercial',
+    'inventario',
 ]
 
 
@@ -140,7 +141,6 @@ DATABASES = {
         ),
     }
 }
-
 
 # ===============================
 # VALIDADORES DE PASSWORD

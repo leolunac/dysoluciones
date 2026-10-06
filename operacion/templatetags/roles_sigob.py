@@ -7,6 +7,15 @@ register = template.Library()
 
 
 @register.simple_tag
+def acceso_inventario_sigob(user):
+    if not user or not user.is_authenticated:
+        return False
+    return user.is_superuser or user.groups.filter(
+        name__in=["GESTION_INVENTARIO", "GESTION_GERENCIA"],
+    ).exists()
+
+
+@register.simple_tag
 def rol_menu_sigob(user):
     if not user or not user.is_authenticated:
         return "ANONIMO"

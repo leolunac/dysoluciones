@@ -11,6 +11,7 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q
@@ -81,6 +82,12 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from .utils import registrar_evento
 from gestion_comercial.models import Cotizacion, Liquidacion
+from inventario.integracion_operacion import (
+    registrar_consumo_actividad,
+    registrar_devolucion_detalle,
+    registrar_entrega_remision,
+    validar_stock_para_usos,
+)
 
 # =========================================
 # LOGIN / REDIRECCIÓN POR PERFIL
@@ -3373,16 +3380,19 @@ def nueva_remision(request):
         formset = DetalleRemisionFormSet(request.POST)
 
         if form.is_valid() and formset.is_valid():
-
-            remision = form.save(commit=False)
-            remision.entregado_por = request.user
-            remision.estado = "PENDIENTE"
-            remision.save()
-
-            formset.instance = remision
-            formset.save()
-
-            return redirect("lista_remisiones")
+            try:
+                with transaction.atomic():
+                    remision = form.save(commit=False)
+                    remision.entregado_por = request.user
+                    remision.estado = "PENDIENTE"
+                    remision.save()
+                    formset.instance = remision
+                    formset.save()
+                    registrar_entrega_remision(remision, request.user)
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                return redirect("lista_remisiones")
 
     else:
 
@@ -3426,26 +3436,32 @@ def conciliar_remision(request, remision_id):
         )
 
         if formset.is_valid():
-
-            formset.save()
-
-            # Volvemos a leer la remisión desde la base de datos
-            # para validar con los valores realmente guardados.
-            remision.refresh_from_db()
-
-            if remision.esta_conciliada:
-                remision.estado = "CONCILIADA"
+            try:
+                with transaction.atomic():
+                    detalles = formset.save()
+                    for detalle in detalles:
+                        registrar_devolucion_detalle(detalle, request.user)
+            except ValidationError as exc:
+                formset._non_form_errors = formset.error_class(exc.messages)
             else:
-                remision.estado = "PENDIENTE"
 
-            remision.save(
-                update_fields=[
-                    "estado",
-                    "actualizado",
-                ]
-            )
+                # Volvemos a leer la remisión desde la base de datos
+                # para validar con los valores realmente guardados.
+                remision.refresh_from_db()
 
-            return redirect("lista_remisiones")
+                if remision.esta_conciliada:
+                    remision.estado = "CONCILIADA"
+                else:
+                    remision.estado = "PENDIENTE"
+
+                remision.save(
+                    update_fields=[
+                        "estado",
+                        "actualizado",
+                    ]
+                )
+
+                return redirect("lista_remisiones")
 
     else:
 
@@ -4983,6 +4999,14 @@ def nueva_actividad(request):
                     request,
                     form,
                 )
+            if not form.errors:
+                try:
+                    validar_stock_para_usos(
+                        usos_solicitados,
+                        form.cleaned_data["tecnico"],
+                    )
+                except ValidationError as exc:
+                    form.add_error(None, exc)
             formulario_valido = not form.errors
 
         if formulario_valido:
@@ -5002,7 +5026,7 @@ def nueva_actividad(request):
             detalles_afectados = {}
 
             for uso in usos_solicitados:
-                AccesorioActividad.objects.create(
+                uso_creado = AccesorioActividad.objects.create(
                     actividad=actividad,
                     accesorio=uso["accesorio"],
                     detalle_remision=uso["detalle_remision"],
@@ -5011,6 +5035,7 @@ def nueva_actividad(request):
                     cantidad=uso["cantidad"],
                     observacion=uso["observacion"],
                 )
+                registrar_consumo_actividad(uso_creado, request.user)
 
                 detalle = uso["detalle_remision"]
                 if detalle:

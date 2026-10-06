@@ -13,6 +13,7 @@ urlpatterns = [
         "gestion-comercial/",
         include("gestion_comercial.urls"),
     ),
+    path("inventario/", include("inventario.urls")),
     ]
 if settings.DEBUG:
     urlpatterns += static(

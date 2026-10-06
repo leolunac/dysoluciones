@@ -1,4 +1,5 @@
-{% load static %}
+{% load static roles_sigob %}
+{% acceso_inventario_sigob request.user as acceso_inventario %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -221,6 +222,17 @@
     </section>
 
     <section class="modules">
+
+        {% if acceso_inventario %}
+        <a href="{% url 'inventario:tablero' %}" class="module-card">
+            <div>
+                <div class="module-icon">📦</div>
+                <h3>Inventario</h3>
+                <p>Entradas, existencias, consumos por unidad y reportes valorizados.</p>
+            </div>
+            <div class="module-link">Ingresar al inventario →</div>
+        </a>
+        {% endif %}
 
         <a href="{% url 'centro_operaciones' %}" class="module-card">
             <div>

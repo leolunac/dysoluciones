@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ titulo }} | SIGOB</title>
+    <style>
+        *{box-sizing:border-box}body{font-family:Arial,sans-serif;background:#f3f6f9;color:#17324d;margin:0}.contenedor{max-width:1200px;margin:25px auto;padding:0 18px}.cabecera{background:#075985;color:#fff;padding:18px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}.tarjeta{background:#fff;margin-top:14px;padding:18px;border-radius:10px;box-shadow:0 2px 8px #0f172a12}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px}.detalle{display:grid;grid-template-columns:minmax(280px,3fr) repeat(4,minmax(120px,1fr)) auto;gap:8px;padding:12px 0;border-bottom:1px solid #e2e8f0;align-items:end}.detalle.consumo{grid-template-columns:minmax(320px,4fr) minmax(120px,1fr) auto}.btn{padding:10px 14px;border:0;border-radius:7px;color:#fff;background:#15803d;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block}.azul{background:#0b5fa5}.gris{background:#64748b}.rojo{background:#b91c1c}.ayuda{font-size:12px;color:#64748b;margin-top:5px}.errores{color:#b91c1c}.producto-select{display:none}.acciones-superiores{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:850px){.grid,.detalle,.detalle.consumo{grid-template-columns:1fr}.cabecera{align-items:flex-start;gap:12px;flex-direction:column}}
+    </style>
+</head>
+<body><main class="contenedor">
+    <header class="cabecera"><h1 style="margin:0">{{ titulo }}</h1><div class="acciones-superiores">{% if tipo_formulario == "entrada" %}<a class="btn azul" href="{% url 'inventario:nuevo_proveedor' %}">+ Crear proveedor</a>{% endif %}<a class="btn gris" href="{% url 'inventario:tablero' %}">Volver</a></div></header>
+    <form method="post" id="formulario-inventario">{% csrf_token %}
+        <section class="tarjeta">{% if form.non_field_errors %}<div class="errores">{{ form.non_field_errors }}</div>{% endif %}<div class="grid">{% for field in form %}<div><label>{{ field.label }}</label>{{ field }}<div class="errores">{{ field.errors }}</div></div>{% endfor %}</div></section>
+        <section class="tarjeta"><h2>Productos</h2>{% if not productos_disponibles %}<p class="errores"><strong>No hay productos de inventario cargados.</strong> Primero debe ejecutar la importación del saldo inicial.</p>{% endif %}<p class="ayuda">Escriba el código o parte de la descripción y seleccione el producto. Puede agregar todas las líneas que necesite.</p>{{ formset.management_form }}{% if formset.non_form_errors %}<div class="errores">{{ formset.non_form_errors }}</div>{% endif %}<div id="filas-productos">{% for detalle in formset %}{% include "inventario/fila_detalle.html" with detalle=detalle %}{% endfor %}</div><template id="fila-vacia">{% include "inventario/fila_detalle.html" with detalle=formset.empty_form %}</template><button class="btn azul" id="agregar-fila" type="button">+ Agregar otro accesorio</button></section>
+        <section class="tarjeta"><button class="btn" type="submit">Guardar borrador</button> <a class="btn gris" href="{% url 'inventario:tablero' %}">Cancelar</a></section>
+    </form>
+</main>
+<datalist id="lista-productos">{% for producto in productos_disponibles %}<option data-id="{{ producto.id }}" value="{{ producto.accesorio.codigo }} — {{ producto.accesorio.descripcion }}"></option>{% endfor %}</datalist>
+<script>
+(function(){
+    const contenedor=document.getElementById('filas-productos');
+    const total=document.getElementById('id_detalles-TOTAL_FORMS');
+    const plantilla=document.getElementById('fila-vacia');
+    function asociarFila(fila){
+        const buscador=fila.querySelector('.buscador-producto');
+        const selector=fila.querySelector('.producto-select select');
+        const eliminar=fila.querySelector('.eliminar-fila');
+        const borrar=fila.querySelector('input[name$="-DELETE"]');
+        if(selector && selector.value){const opcion=selector.options[selector.selectedIndex];if(opcion) buscador.value=opcion.text.replace(' - ',' — ');}
+        if(buscador && selector){buscador.addEventListener('change',function(){selector.value='';for(const opcion of document.querySelectorAll('#lista-productos option')){if(opcion.value===buscador.value){selector.value=opcion.dataset.id;break;}}buscador.setCustomValidity(selector.value?'':'Seleccione un producto de la lista.');});}
+        eliminar.addEventListener('click',function(){if(borrar)borrar.checked=true;fila.style.display='none';if(buscador)buscador.required=false;});
+    }
+    document.querySelectorAll('.detalle').forEach(asociarFila);
+    document.getElementById('agregar-fila').addEventListener('click',function(){const indice=parseInt(total.value,10);const html=plantilla.innerHTML.replaceAll('__prefix__',indice);const envoltura=document.createElement('div');envoltura.innerHTML=html.trim();const fila=envoltura.firstElementChild;contenedor.appendChild(fila);total.value=indice+1;asociarFila(fila);fila.querySelector('.buscador-producto').focus();});
+})();
+</script></body></html>

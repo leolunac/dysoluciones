@@ -1,0 +1,8 @@
+<div class="detalle {% if tipo_formulario == 'consumo' %}consumo{% endif %}">
+    {% for hidden in detalle.hidden_fields %}{{ hidden }}{% endfor %}
+    <div><label>Producto</label><input class="buscador-producto" list="lista-productos" placeholder="Código o descripción" autocomplete="off"><div class="producto-select">{{ detalle.producto }}</div><div class="errores">{{ detalle.producto.errors }}</div></div>
+    {% if tipo_formulario == "entrada" %}<div><label>{{ detalle.referencia_proveedor.label }}</label>{{ detalle.referencia_proveedor }}<div class="errores">{{ detalle.referencia_proveedor.errors }}</div></div>{% endif %}
+    <div><label>{{ detalle.cantidad.label }}</label>{{ detalle.cantidad }}<div class="errores">{{ detalle.cantidad.errors }}</div></div>
+    {% if tipo_formulario == "entrada" %}<div><label>Valor unitario sin descuento</label>{{ detalle.precio_unitario_lista }}<div class="errores">{{ detalle.precio_unitario_lista.errors }}</div></div><div><label>Descuento %</label>{{ detalle.porcentaje_descuento }}<div class="errores">{{ detalle.porcentaje_descuento.errors }}</div></div>{% endif %}
+    <div style="display:none">{{ detalle.DELETE }}</div><button class="btn rojo eliminar-fila" type="button">Quitar</button>
+</div>
