@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 
@@ -67,8 +68,11 @@
         </div>
     {% endif %}
 
-    <form method="post">
+    <div id="estado-sincronizacion" role="status" style="display:none;margin-bottom:18px;padding:14px 16px;border-radius:12px;font-weight:700;"></div>
+
+    <form method="post" id="form-actividad-tecnico" data-sigob-offline="actividad">
         {% csrf_token %}
+        <input type="hidden" name="solicitud_sincronizacion" id="id_solicitud_sincronizacion">
 
         <section style="
             background:white;
@@ -1083,6 +1087,11 @@ document.addEventListener("DOMContentLoaded", function () {
         inputObservacion.name = "observacion[]";
         inputObservacion.value = datos.observacion;
 
+        const inputDescripcionMostrada = document.createElement("input");
+        inputDescripcionMostrada.type = "hidden";
+        inputDescripcionMostrada.name = "descripcion_mostrada[]";
+        inputDescripcionMostrada.value = datos.descripcion;
+
         fila.appendChild(informacion);
         fila.appendChild(cantidadVisible);
         fila.appendChild(eliminar);
@@ -1092,11 +1101,25 @@ document.addEventListener("DOMContentLoaded", function () {
         fila.appendChild(inputEsOtro);
         fila.appendChild(inputDescripcionOtro);
         fila.appendChild(inputObservacion);
+        fila.appendChild(inputDescripcionMostrada);
 
         listaAccesorios.appendChild(fila);
     }
 
+    window.sigobCrearFilaAccesorio = crearFilaAccesorio;
+
 });
 </script>
+{% if es_tecnico %}
+<script>
+window.SIGOB_OFFLINE_ACTIVIDAD = {
+    usuario: "{{ request.user.pk }}",
+    servicio: "{{ servicio_forzado.pk }}",
+    formulario: "form-actividad-tecnico",
+    estado: "estado-sincronizacion"
+};
+</script>
+<script src="{% static 'operacion/offline_actividad.js' %}"></script>
+{% endif %}
 
 {% endblock %}

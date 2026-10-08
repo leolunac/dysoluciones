@@ -554,5 +554,15 @@
 
 </div>
 
+<div id="estado-sincronizacion" role="status" style="display:none;position:fixed;left:14px;right:14px;bottom:14px;z-index:1000;padding:14px 16px;border-radius:12px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.18);"></div>
+<script>
+window.SIGOB_OFFLINE_ACTIVIDAD = {
+    usuario: "{{ request.user.pk }}",
+    servicio: "",
+    formulario: "",
+    estado: "estado-sincronizacion"
+};
+</script>
+<script src="{% static 'operacion/offline_actividad.js' %}"></script>
 </body>
 </html>

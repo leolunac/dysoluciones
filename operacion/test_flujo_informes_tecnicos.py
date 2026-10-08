@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+import uuid
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -351,6 +352,85 @@ class FlujoInformesTecnicosTests(TestCase):
         )
         self.assertTrue(actividad.numero_informe.startswith("COR-"))
         self.assertIsNotNone(actividad.enviado_en)
+
+    def test_envio_offline_repetido_no_duplica_informe_ni_consumo(self):
+        servicio = self.crear_servicio_correctivo()
+        accesorio, remision, detalle = self.crear_remision_catalogada(servicio)
+        solicitud = uuid.uuid4()
+        datos = {
+            "servicio": str(servicio.pk),
+            "remision": str(remision.pk),
+            "tipo_actividad": "CORRECTIVO",
+            "fecha": date.today().isoformat(),
+            "hora_llegada": "08:00",
+            "hora_salida": "09:00",
+            "diagnostico": "Flotador defectuoso",
+            "labor_realizada": "Se reemplazó el flotador",
+            "resultado": "OPERATIVO",
+            "solicitud_sincronizacion": str(solicitud),
+            "accesorio_id[]": str(accesorio.pk),
+            "detalle_remision_id[]": str(detalle.pk),
+            "cantidad[]": "1",
+            "es_otro[]": "0",
+            "descripcion_otro[]": "",
+            "observacion[]": "Instalado en la unidad",
+        }
+        url = reverse("nueva_actividad") + f"?servicio={servicio.pk}"
+        cabecera = {"HTTP_X_SIGOB_SINCRONIZACION": "1"}
+        self.client.force_login(self.usuario_tecnico)
+
+        primera = self.client.post(url, datos, **cabecera)
+        segunda = self.client.post(url, datos, **cabecera)
+
+        self.assertEqual(primera.status_code, 200)
+        self.assertEqual(segunda.status_code, 200)
+        self.assertFalse(primera.json()["duplicado"])
+        self.assertTrue(segunda.json()["duplicado"])
+        self.assertEqual(
+            ActividadTecnico.objects.filter(
+                solicitud_sincronizacion=solicitud,
+            ).count(),
+            1,
+        )
+        actividad = ActividadTecnico.objects.get(
+            solicitud_sincronizacion=solicitud,
+        )
+        self.assertEqual(
+            AccesorioActividad.objects.filter(actividad=actividad).count(),
+            1,
+        )
+        detalle.refresh_from_db()
+        self.assertEqual(detalle.cantidad_utilizada, Decimal("1.00"))
+
+    def test_envio_offline_rechaza_identificador_invalido(self):
+        servicio = self.crear_servicio_correctivo()
+        self.client.force_login(self.usuario_tecnico)
+        respuesta = self.client.post(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}",
+            {
+                "servicio": str(servicio.pk),
+                "solicitud_sincronizacion": "no-es-un-uuid",
+            },
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertFalse(respuesta.json()["ok"])
+        self.assertFalse(ActividadTecnico.objects.filter(servicio=servicio).exists())
+
+    def test_formulario_y_panel_tecnico_cargan_soporte_offline(self):
+        servicio = self.crear_servicio_correctivo()
+        self.client.force_login(self.usuario_tecnico)
+
+        formulario = self.client.get(
+            reverse("nueva_actividad") + f"?servicio={servicio.pk}"
+        )
+        panel = self.client.get(reverse("panel_tecnico"))
+
+        self.assertContains(formulario, "solicitud_sincronizacion")
+        self.assertContains(formulario, "offline_actividad.js")
+        self.assertContains(formulario, "estado-sincronizacion")
+        self.assertContains(panel, "offline_actividad.js")
+        self.assertContains(panel, "estado-sincronizacion")
 
     def test_remision_catalogada_alimenta_consumo_y_comprobante(self):
         servicio = self.crear_servicio_correctivo()

@@ -1438,6 +1438,17 @@ class ActividadTecnico(models.Model):
         help_text="Fecha y hora del servidor en que el técnico envió el informe.",
     )
 
+    solicitud_sincronizacion = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text=(
+            "Identificador generado en el dispositivo para impedir envíos "
+            "y consumos duplicados al recuperar la conexión."
+        ),
+    )
+
     registrado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

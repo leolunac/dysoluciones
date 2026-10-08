@@ -5,6 +5,7 @@ from django.db import transaction
 from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
 import os
+import uuid
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -4961,6 +4962,69 @@ def nueva_actividad(request):
     # =====================================================
     if request.method == "POST":
 
+        sincronizacion_offline = (
+            request.headers.get("X-SIGOB-SINCRONIZACION") == "1"
+        )
+
+        solicitud_sincronizacion = None
+        solicitud_texto = request.POST.get("solicitud_sincronizacion", "").strip()
+        if sincronizacion_offline and not solicitud_texto:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "mensaje": "El envío no tiene identificación de sincronización.",
+                },
+                status=400,
+            )
+        if solicitud_texto:
+            try:
+                solicitud_sincronizacion = uuid.UUID(solicitud_texto)
+            except (ValueError, AttributeError):
+                if sincronizacion_offline:
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "mensaje": "La identificación del envío no es válida.",
+                        },
+                        status=400,
+                    )
+
+        if tecnico_usuario and solicitud_sincronizacion:
+            actividad_existente = (
+                ActividadTecnico.objects
+                .filter(solicitud_sincronizacion=solicitud_sincronizacion)
+                .first()
+            )
+            if actividad_existente:
+                if (
+                    actividad_existente.tecnico_id != tecnico_usuario.pk
+                    or actividad_existente.servicio_id != getattr(servicio_forzado, "pk", None)
+                ):
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "mensaje": "La identificación del envío ya está en uso.",
+                        },
+                        status=409,
+                    )
+                if sincronizacion_offline:
+                    return JsonResponse(
+                        {
+                            "ok": True,
+                            "duplicado": True,
+                            "actividad_id": actividad_existente.pk,
+                            "numero_informe": actividad_existente.numero_informe,
+                            "comprobante_url": reverse(
+                                "comprobante_actividad",
+                                args=[actividad_existente.pk],
+                            ),
+                        }
+                    )
+                return redirect(
+                    "comprobante_actividad",
+                    actividad_id=actividad_existente.pk,
+                )
+
         datos_post = request.POST.copy()
 
         # Si es técnico, estos valores NO los decide el formulario.
@@ -5021,6 +5085,7 @@ def nueva_actividad(request):
                 actividad.servicio = servicio_forzado
 
             actividad.registrado_por = request.user
+            actividad.solicitud_sincronizacion = solicitud_sincronizacion
             actividad.save()
 
             detalles_afectados = {}
@@ -5060,6 +5125,19 @@ def nueva_actividad(request):
 
             # Técnico vuelve al servicio que estaba atendiendo.
             if tecnico_usuario:
+                if sincronizacion_offline:
+                    return JsonResponse(
+                        {
+                            "ok": True,
+                            "duplicado": False,
+                            "actividad_id": actividad.pk,
+                            "numero_informe": actividad.numero_informe,
+                            "comprobante_url": reverse(
+                                "comprobante_actividad",
+                                args=[actividad.pk],
+                            ),
+                        }
+                    )
                 return redirect(
                     "comprobante_actividad",
                     actividad_id=actividad.id,
@@ -5067,6 +5145,16 @@ def nueva_actividad(request):
 
             # Personal interno conserva su flujo actual.
             return redirect("lista_actividades")
+
+        if sincronizacion_offline:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "mensaje": "Revise los datos del informe antes de enviarlo.",
+                    "errores": form.errors.get_json_data(),
+                },
+                status=422,
+            )
 
     # =====================================================
     # GET - MOSTRAR FORMULARIO
