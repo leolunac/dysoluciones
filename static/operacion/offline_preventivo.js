@@ -199,9 +199,10 @@
         const identificador = await asegurarIdentificador(item);
         const datos = new FormData();
         item.entradas.forEach(function (entrada) {
-            if (entrada.nombre === "solicitud_sincronizacion") return;
+            if (["solicitud_sincronizacion", "accion"].includes(entrada.nombre)) return;
             datos.append(entrada.nombre, entrada.valor);
         });
+        datos.append("accion", item.accion);
         datos.append("solicitud_sincronizacion", identificador);
         const csrf = tokenCsrf();
         if (csrf) datos.append("csrfmiddlewaretoken", csrf);
