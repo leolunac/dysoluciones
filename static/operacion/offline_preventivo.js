@@ -323,10 +323,17 @@
                 guardarBorrador(formulario).catch(function () {});
             });
             formulario.addEventListener("submit", async function (evento) {
-                evento.preventDefault();
                 if (!formulario.reportValidity()) return;
                 const confirmacion = formulario.dataset.confirmar;
-                if (confirmacion && !window.confirm(confirmacion)) return;
+                if (confirmacion && !window.confirm(confirmacion)) {
+                    evento.preventDefault();
+                    return;
+                }
+                if (navigator.onLine) {
+                    guardarBorrador(formulario).catch(function () {});
+                    return;
+                }
+                evento.preventDefault();
                 await guardarBorrador(formulario);
                 await encolar(formulario);
                 await sincronizar();
