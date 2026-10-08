@@ -1840,6 +1840,26 @@ class MantenimientoPreventivo(models.Model):
         )
 
 
+class SolicitudSincronizacionPreventivo(models.Model):
+    solicitud = models.UUIDField(unique=True, editable=False)
+    preventivo = models.ForeignKey(
+        MantenimientoPreventivo,
+        on_delete=models.CASCADE,
+        related_name="solicitudes_sincronizacion",
+    )
+    accion = models.CharField(max_length=40)
+    respuesta = models.JSONField(default=dict)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["creado", "id"]
+        verbose_name = "Solicitud de sincronización preventiva"
+        verbose_name_plural = "Solicitudes de sincronización preventiva"
+
+    def __str__(self):
+        return f"{self.accion} - {self.solicitud}"
+
+
 class SeguimientoAnomaliaPreventivo(models.Model):
     preventivo = models.ForeignKey(
         MantenimientoPreventivo,

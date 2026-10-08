@@ -6,6 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from django.contrib.auth.models import Group, User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -22,6 +23,7 @@ from .models import (
     MedicionEquipoPreventivo,
     ProgramacionMantenimientoPreventivo,
     RemisionTecnico,
+    SolicitudSincronizacionPreventivo,
     SectorCliente,
     SeguimientoAnomaliaPreventivo,
     Tecnico,
@@ -247,6 +249,110 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertEqual(preventivo.estado_revision, "PENDIENTE")
         self.assertTrue(actividad.numero_informe.startswith("PREV-"))
         self.assertIsNotNone(actividad.enviado_en)
+
+    def test_sincronizacion_preventivo_no_duplica_componente(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        programacion.refresh_from_db()
+        solicitud = uuid.uuid4()
+        datos = {
+            "accion": "agregar_componente",
+            "tipo": "VALVULA",
+            "estado": "OK",
+            "observaciones": "Componente revisado sin novedad.",
+            "solicitud_sincronizacion": str(solicitud),
+        }
+        url = reverse("formulario_preventivo", args=[programacion.pk])
+        cabecera = {"HTTP_X_SIGOB_SINCRONIZACION": "1"}
+
+        primera = self.client.post(url, datos, **cabecera)
+        segunda = self.client.post(url, datos, **cabecera)
+
+        self.assertEqual(primera.status_code, 200)
+        self.assertEqual(segunda.status_code, 200)
+        self.assertFalse(primera.json()["duplicado"])
+        self.assertTrue(segunda.json()["duplicado"])
+        preventivo = programacion.actividad.preventivo
+        self.assertEqual(preventivo.componentes_revisados.count(), 1)
+        self.assertEqual(
+            SolicitudSincronizacionPreventivo.objects.filter(
+                solicitud=solicitud,
+            ).count(),
+            1,
+        )
+
+    @override_settings(MEDIA_ROOT=tempfile.gettempdir())
+    def test_sincronizacion_preventivo_conserva_firma(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        programacion.refresh_from_db()
+        respuesta = self.client.post(
+            reverse("formulario_preventivo", args=[programacion.pk]),
+            {
+                "accion": "guardar_general",
+                "control_nivel": "Control de nivel revisado completamente.",
+                "tablero_electrico": "Tablero revisado y probado.",
+                "novedades": "",
+                "resultado_preventivo": "SIN_NOVEDAD",
+                "persona_recibe": "Administración",
+                "cargo_recibe": "Administrador",
+                "firma_recibido": SimpleUploadedFile(
+                    "firma-prueba.png",
+                    b"firma de prueba",
+                    content_type="image/png",
+                ),
+                "solicitud_sincronizacion": str(uuid.uuid4()),
+            },
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+        self.assertEqual(respuesta.status_code, 200)
+        programacion.actividad.preventivo.refresh_from_db()
+        self.assertTrue(programacion.actividad.preventivo.firma_recibido.name)
+
+    def test_reintento_final_preventivo_devuelve_mismo_comprobante(self):
+        programacion, preventivo = self.preparar_preventivo()
+        solicitud = uuid.uuid4()
+        datos = {
+            "accion": "finalizar",
+            "solicitud_sincronizacion": str(solicitud),
+        }
+        url = reverse("formulario_preventivo", args=[programacion.pk])
+        self.client.force_login(self.usuario_tecnico)
+
+        primera = self.client.post(
+            url,
+            datos,
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+        segunda = self.client.post(
+            url,
+            datos,
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+
+        self.assertEqual(primera.status_code, 200)
+        self.assertEqual(segunda.status_code, 200)
+        self.assertFalse(primera.json()["duplicado"])
+        self.assertTrue(segunda.json()["duplicado"])
+        self.assertEqual(
+            primera.json()["comprobante_url"],
+            segunda.json()["comprobante_url"],
+        )
+        programacion.refresh_from_db()
+        self.assertEqual(programacion.estado, "PENDIENTE_REVISION")
+
+    def test_formulario_preventivo_carga_soporte_offline(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        respuesta = self.client.get(
+            reverse("formulario_preventivo", args=[programacion.pk])
+        )
+        self.assertContains(respuesta, "offline_preventivo.js")
+        self.assertContains(respuesta, "data-sigob-preventivo")
+        self.assertContains(respuesta, "estado-sincronizacion-preventivo")
 
     def test_sin_rol_no_puede_revisar(self):
         self.client.force_login(self.sin_rol)

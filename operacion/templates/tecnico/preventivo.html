@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -229,6 +230,8 @@ textarea{
 
 <div class="container">
 
+    <div id="estado-sincronizacion-preventivo" role="status" style="display:none;margin-bottom:15px;padding:14px 16px;border-radius:12px;font-weight:700;"></div>
+
     <!-- ================================================= -->
     <!-- ENCABEZADO -->
     <!-- ================================================= -->
@@ -365,7 +368,8 @@ textarea{
 
         <form
             method="post"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data"
+            data-sigob-preventivo="guardar_general">
 
             {% csrf_token %}
 
@@ -507,7 +511,7 @@ textarea{
 
     <div class="acordeon-contenido">
 
-        <form method="post">
+        <form method="post" data-sigob-preventivo="agregar_equipo">
 
             {% csrf_token %}
 
@@ -676,7 +680,7 @@ textarea{
 
     <div class="acordeon-contenido">
 
-        <form method="post">
+        <form method="post" data-sigob-preventivo="agregar_componente">
 
             {% csrf_token %}
 
@@ -807,7 +811,7 @@ textarea{
 
     <div class="acordeon-contenido">
 
-        <form method="post">
+        <form method="post" data-sigob-preventivo="agregar_tanque">
 
             {% csrf_token %}
 
@@ -954,7 +958,8 @@ textarea{
 
     <form
         method="post"
-        onsubmit="return confirm('¿Confirma el envío? Recibirá un comprobante y el informe quedará pendiente de revisión.');">
+        data-sigob-preventivo="finalizar"
+        data-confirmar="¿Confirma el envío? Recibirá un comprobante y el informe quedará pendiente de revisión.">
 
         {% csrf_token %}
 
@@ -999,5 +1004,13 @@ function toggleAcordeon(boton){
     acordeon.classList.toggle("abierto");
 }
 </script>
+<script>
+window.SIGOB_OFFLINE_PREVENTIVO = {
+    usuario: "{{ request.user.pk }}",
+    programacion: "{{ programacion.pk }}",
+    estado: "estado-sincronizacion-preventivo"
+};
+</script>
+<script src="{% static 'operacion/offline_preventivo.js' %}"></script>
 </body>
 </html>

@@ -62,6 +62,7 @@ from .models import (
     AccesorioActividad,
     ProgramacionMantenimientoPreventivo,
     MantenimientoPreventivo,
+    SolicitudSincronizacionPreventivo,
     RevisionComponentePreventivo,
     RevisionTanquePreventivo,
     
@@ -528,6 +529,7 @@ def iniciar_preventivo(request, programacion_id):
 # FORMULARIO MANTENIMIENTO PREVENTIVO
 # =========================================
 @login_required
+@transaction.atomic
 def formulario_preventivo(request, programacion_id):
 
     # =====================================================
@@ -567,6 +569,38 @@ def formulario_preventivo(request, programacion_id):
     actividad = programacion.actividad
 
     if programacion.estado not in {"EN_PROCESO", "DEVUELTO"}:
+        if (
+            request.method == "POST"
+            and request.headers.get("X-SIGOB-SINCRONIZACION") == "1"
+        ):
+            try:
+                solicitud = uuid.UUID(
+                    request.POST.get("solicitud_sincronizacion", "").strip()
+                )
+            except (ValueError, AttributeError):
+                return JsonResponse(
+                    {"ok": False, "mensaje": "La identificación del envío no es válida."},
+                    status=400,
+                )
+            solicitud_existente = (
+                SolicitudSincronizacionPreventivo.objects
+                .filter(
+                    solicitud=solicitud,
+                    preventivo__actividad=actividad,
+                )
+                .first()
+            )
+            if solicitud_existente:
+                respuesta = dict(solicitud_existente.respuesta)
+                respuesta["duplicado"] = True
+                return JsonResponse(respuesta)
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "mensaje": "Este preventivo ya no admite nuevos cambios.",
+                },
+                status=409,
+            )
         return redirect(
             "detalle_preventivo",
             programacion_id=programacion.id,
@@ -613,6 +647,70 @@ def formulario_preventivo(request, programacion_id):
     if request.method == "POST":
 
         accion = request.POST.get("accion")
+        sincronizacion_offline = (
+            request.headers.get("X-SIGOB-SINCRONIZACION") == "1"
+        )
+        solicitud_sincronizacion = None
+
+        if sincronizacion_offline:
+            solicitud_texto = request.POST.get(
+                "solicitud_sincronizacion",
+                "",
+            ).strip()
+            try:
+                solicitud_sincronizacion = uuid.UUID(solicitud_texto)
+            except (ValueError, AttributeError):
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "mensaje": "La identificación del envío no es válida.",
+                    },
+                    status=400,
+                )
+
+            solicitud_existente = (
+                SolicitudSincronizacionPreventivo.objects
+                .filter(solicitud=solicitud_sincronizacion)
+                .first()
+            )
+            if solicitud_existente:
+                if solicitud_existente.preventivo_id != preventivo.pk:
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "mensaje": "La identificación del envío ya está en uso.",
+                        },
+                        status=409,
+                    )
+                respuesta = dict(solicitud_existente.respuesta)
+                respuesta["duplicado"] = True
+                return JsonResponse(respuesta)
+
+        def responder_sincronizacion(mensaje, **datos):
+            respuesta = {
+                "ok": True,
+                "duplicado": False,
+                "accion": accion,
+                "mensaje": mensaje,
+                **datos,
+            }
+            SolicitudSincronizacionPreventivo.objects.create(
+                solicitud=solicitud_sincronizacion,
+                preventivo=preventivo,
+                accion=accion or "",
+                respuesta=respuesta,
+            )
+            return JsonResponse(respuesta)
+
+        def errores_sincronizacion(formulario, mensaje):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "mensaje": mensaje,
+                    "errores": formulario.errors.get_json_data(),
+                },
+                status=422,
+            )
 
         # -------------------------------------------------
         # DATOS GENERALES
@@ -629,9 +727,20 @@ def formulario_preventivo(request, programacion_id):
 
                 form_general.save()
 
+                if sincronizacion_offline:
+                    return responder_sincronizacion(
+                        "Revisión general guardada correctamente.",
+                    )
+
                 return redirect(
                     "formulario_preventivo",
                     programacion_id=programacion.id,
+                )
+
+            if sincronizacion_offline:
+                return errores_sincronizacion(
+                    form_general,
+                    "Revise los datos de la revisión general.",
                 )
 
         # -------------------------------------------------
@@ -668,9 +777,21 @@ def formulario_preventivo(request, programacion_id):
 
                 medicion.save()
 
+                if sincronizacion_offline:
+                    return responder_sincronizacion(
+                        "Equipo agregado correctamente.",
+                        registro_id=medicion.pk,
+                    )
+
                 return redirect(
                     "formulario_preventivo",
                     programacion_id=programacion.id,
+                )
+
+            if sincronizacion_offline:
+                return errores_sincronizacion(
+                    form_equipo,
+                    "Revise los datos del equipo.",
                 )
 
         # -------------------------------------------------
@@ -691,9 +812,21 @@ def formulario_preventivo(request, programacion_id):
                 componente.preventivo = preventivo
                 componente.save()
 
+                if sincronizacion_offline:
+                    return responder_sincronizacion(
+                        "Componente agregado correctamente.",
+                        registro_id=componente.pk,
+                    )
+
                 return redirect(
                     "formulario_preventivo",
                     programacion_id=programacion.id,
+                )
+
+            if sincronizacion_offline:
+                return errores_sincronizacion(
+                    form_componente,
+                    "Revise los datos del componente.",
                 )
 
         # -------------------------------------------------
@@ -740,9 +873,21 @@ def formulario_preventivo(request, programacion_id):
 
                 revision_tanque.save()
 
+                if sincronizacion_offline:
+                    return responder_sincronizacion(
+                        "Tanque agregado correctamente.",
+                        registro_id=revision_tanque.pk,
+                    )
+
                 return redirect(
                     "formulario_preventivo",
                     programacion_id=programacion.id,
+                )
+
+            if sincronizacion_offline:
+                return errores_sincronizacion(
+                    form_tanque,
+                    "Revise los datos del tanque.",
                 )
         # -------------------------------------------------
         # FINALIZAR MANTENIMIENTO PREVENTIVO
@@ -778,10 +923,36 @@ def formulario_preventivo(request, programacion_id):
                     programacion.estado = "PENDIENTE_REVISION"
                     programacion.save(update_fields=["estado", "actualizado"])
 
+                if sincronizacion_offline:
+                    return responder_sincronizacion(
+                        "Mantenimiento enviado a revisión.",
+                        numero_informe=actividad.numero_informe,
+                        comprobante_url=reverse(
+                            "comprobante_actividad",
+                            args=[actividad.pk],
+                        ),
+                    )
+
                 return redirect(
                     "comprobante_actividad",
                     actividad_id=actividad.id,
                 )
+
+            if sincronizacion_offline:
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "mensaje": "No se pudo finalizar el mantenimiento.",
+                        "errores": errores_envio,
+                    },
+                    status=422,
+                )
+
+        elif sincronizacion_offline:
+            return JsonResponse(
+                {"ok": False, "mensaje": "La acción solicitada no es válida."},
+                status=400,
+            )
     # =====================================================
     # REGISTROS YA GUARDADOS
     # =====================================================

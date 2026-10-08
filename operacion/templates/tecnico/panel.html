@@ -564,5 +564,13 @@ window.SIGOB_OFFLINE_ACTIVIDAD = {
 };
 </script>
 <script src="{% static 'operacion/offline_actividad.js' %}"></script>
+<script>
+window.SIGOB_OFFLINE_PREVENTIVO = {
+    usuario: "{{ request.user.pk }}",
+    programacion: "",
+    estado: "estado-sincronizacion"
+};
+</script>
+<script src="{% static 'operacion/offline_preventivo.js' %}"></script>
 </body>
 </html>
