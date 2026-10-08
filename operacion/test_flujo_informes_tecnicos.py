@@ -350,6 +350,29 @@ class FlujoInformesTecnicosTests(TestCase):
             ).exists()
         )
 
+    def test_sincronizacion_preventivo_prioriza_accion_de_cabecera(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+
+        respuesta = self.client.post(
+            reverse("formulario_preventivo", args=[programacion.pk]),
+            {
+                "accion": "",
+                "tipo": "VALVULA",
+                "estado": "OK",
+                "solicitud_sincronizacion": str(uuid.uuid4()),
+            },
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+            HTTP_X_SIGOB_ACCION="agregar_componente",
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.json()["ok"])
+        programacion.refresh_from_db()
+        preventivo = programacion.actividad.preventivo
+        self.assertEqual(preventivo.componentes_revisados.count(), 1)
+
     @override_settings(MEDIA_ROOT=tempfile.gettempdir())
     def test_sincronizacion_preventivo_conserva_firma(self):
         programacion = self.crear_programacion()

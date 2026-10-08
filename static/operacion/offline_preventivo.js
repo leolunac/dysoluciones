@@ -212,7 +212,8 @@
             credentials: "same-origin",
             headers: {
                 "X-SIGOB-SINCRONIZACION": "1",
-                "X-SIGOB-SOLICITUD": identificador
+                "X-SIGOB-SOLICITUD": identificador,
+                "X-SIGOB-ACCION": item.accion
             }
         });
         const tipo = respuesta.headers.get("content-type") || "";

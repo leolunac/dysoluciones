@@ -668,7 +668,10 @@ def formulario_preventivo(request, programacion_id):
     # =====================================================
     if request.method == "POST":
 
-        accion = request.POST.get("accion")
+        accion = (
+            request.headers.get("X-SIGOB-ACCION", "")
+            or request.POST.get("accion")
+        )
         sincronizacion_offline = (
             request.headers.get("X-SIGOB-SINCRONIZACION") == "1"
         )
