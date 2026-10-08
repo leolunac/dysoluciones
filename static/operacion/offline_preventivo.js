@@ -179,8 +179,10 @@
     async function enviar(item) {
         const datos = new FormData();
         item.entradas.forEach(function (entrada) {
+            if (entrada.nombre === "solicitud_sincronizacion") return;
             datos.append(entrada.nombre, entrada.valor);
         });
+        datos.append("solicitud_sincronizacion", item.id);
         const csrf = tokenCsrf();
         if (csrf) datos.append("csrfmiddlewaretoken", csrf);
         const respuesta = await fetch(item.url, {
