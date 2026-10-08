@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from portal_cliente.models import DocumentoCliente
@@ -281,6 +281,48 @@ class FlujoInformesTecnicosTests(TestCase):
             ).count(),
             1,
         )
+
+    def test_sincronizacion_preventivo_funciona_tras_renovar_sesion(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        cliente_csrf = Client(enforce_csrf_checks=True)
+        cliente_csrf.force_login(self.usuario_tecnico)
+        url = reverse("formulario_preventivo", args=[programacion.pk])
+        datos = {
+            "accion": "agregar_componente",
+            "tipo": "VALVULA",
+            "estado": "OK",
+            "observaciones": "Sincronizado después de renovar la sesión.",
+            "solicitud_sincronizacion": str(uuid.uuid4()),
+        }
+
+        sincronizacion = cliente_csrf.post(
+            url,
+            datos,
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+
+        self.assertEqual(sincronizacion.status_code, 200)
+        self.assertTrue(sincronizacion.json()["ok"])
+
+    def test_formulario_preventivo_normal_conserva_proteccion_csrf(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        cliente_csrf = Client(enforce_csrf_checks=True)
+        cliente_csrf.force_login(self.usuario_tecnico)
+
+        respuesta = cliente_csrf.post(
+            reverse("formulario_preventivo", args=[programacion.pk]),
+            {
+                "accion": "agregar_componente",
+                "tipo": "VALVULA",
+                "estado": "OK",
+            },
+        )
+
+        self.assertEqual(respuesta.status_code, 403)
 
     @override_settings(MEDIA_ROOT=tempfile.gettempdir())
     def test_sincronizacion_preventivo_conserva_firma(self):

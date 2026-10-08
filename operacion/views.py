@@ -6,6 +6,7 @@ from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
 import os
 import uuid
+from functools import wraps
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -81,6 +82,7 @@ from .informes_tecnicos import (
 )
 from .lavados import registrar_ejecucion_lavado
 from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from .utils import registrar_evento
 from gestion_comercial.models import Cotizacion, Liquidacion
@@ -102,6 +104,22 @@ GRUPOS_GESTION_COMERCIAL = {
     "GESTION_GERENCIA",
     
 }
+
+
+def csrf_formulario_o_sincronizacion(view_func):
+    """Mantiene CSRF en formularios y permite la cola offline identificada."""
+    @wraps(view_func)
+    @csrf_exempt
+    def wrapper(request, *args, **kwargs):
+        es_sincronizacion = (
+            request.method == "POST"
+            and request.headers.get("X-SIGOB-SINCRONIZACION") == "1"
+        )
+        if es_sincronizacion:
+            return view_func(request, *args, **kwargs)
+        return csrf_protect(view_func)(request, *args, **kwargs)
+
+    return wrapper
 
 
 def es_usuario_gestion_comercial(user):
@@ -528,6 +546,7 @@ def iniciar_preventivo(request, programacion_id):
 # =========================================
 # FORMULARIO MANTENIMIENTO PREVENTIVO
 # =========================================
+@csrf_formulario_o_sincronizacion
 @login_required
 @transaction.atomic
 def formulario_preventivo(request, programacion_id):
@@ -5091,6 +5110,7 @@ def _usos_accesorios_solicitados(request, form):
 
     return usos
 
+@csrf_formulario_o_sincronizacion
 @login_required
 @transaction.atomic
 def nueva_actividad(request):
