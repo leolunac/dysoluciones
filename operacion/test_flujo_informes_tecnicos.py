@@ -324,6 +324,32 @@ class FlujoInformesTecnicosTests(TestCase):
 
         self.assertEqual(respuesta.status_code, 403)
 
+    def test_sincronizacion_preventivo_prioriza_identificador_de_cabecera(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        solicitud = uuid.uuid4()
+
+        respuesta = self.client.post(
+            reverse("formulario_preventivo", args=[programacion.pk]),
+            {
+                "accion": "agregar_componente",
+                "tipo": "VALVULA",
+                "estado": "OK",
+                "solicitud_sincronizacion": "identificador-antiguo-invalido",
+            },
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+            HTTP_X_SIGOB_SOLICITUD=str(solicitud),
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.json()["ok"])
+        self.assertTrue(
+            SolicitudSincronizacionPreventivo.objects.filter(
+                solicitud=solicitud,
+            ).exists()
+        )
+
     @override_settings(MEDIA_ROOT=tempfile.gettempdir())
     def test_sincronizacion_preventivo_conserva_firma(self):
         programacion = self.crear_programacion()

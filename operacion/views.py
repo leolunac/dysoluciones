@@ -594,7 +594,10 @@ def formulario_preventivo(request, programacion_id):
         ):
             try:
                 solicitud = uuid.UUID(
-                    request.POST.get("solicitud_sincronizacion", "").strip()
+                    (
+                        request.headers.get("X-SIGOB-SOLICITUD", "")
+                        or request.POST.get("solicitud_sincronizacion", "")
+                    ).strip()
                 )
             except (ValueError, AttributeError):
                 return JsonResponse(
@@ -672,9 +675,9 @@ def formulario_preventivo(request, programacion_id):
         solicitud_sincronizacion = None
 
         if sincronizacion_offline:
-            solicitud_texto = request.POST.get(
-                "solicitud_sincronizacion",
-                "",
+            solicitud_texto = (
+                request.headers.get("X-SIGOB-SOLICITUD", "")
+                or request.POST.get("solicitud_sincronizacion", "")
             ).strip()
             try:
                 solicitud_sincronizacion = uuid.UUID(solicitud_texto)

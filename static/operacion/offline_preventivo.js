@@ -209,7 +209,10 @@
             method: "POST",
             body: datos,
             credentials: "same-origin",
-            headers: {"X-SIGOB-SINCRONIZACION": "1"}
+            headers: {
+                "X-SIGOB-SINCRONIZACION": "1",
+                "X-SIGOB-SOLICITUD": identificador
+            }
         });
         const tipo = respuesta.headers.get("content-type") || "";
         if (!tipo.includes("application/json")) {
