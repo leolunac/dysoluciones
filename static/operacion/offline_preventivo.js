@@ -176,13 +176,33 @@
         return parte ? decodeURIComponent(parte.split("=")[1]) : "";
     }
 
+    function esUuidValido(valor) {
+        return typeof valor === "string" &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(valor.trim());
+    }
+
+    async function asegurarIdentificador(item) {
+        let identificador = esUuidValido(item.solicitud)
+            ? item.solicitud.trim()
+            : (esUuidValido(item.id) ? item.id.trim() : uuid());
+        if (!esUuidValido(identificador)) identificador = uuid();
+        if (item.solicitud !== identificador) {
+            item.solicitud = identificador;
+            await operar("cola", "readwrite", function (almacen) {
+                return almacen.put(item);
+            });
+        }
+        return identificador;
+    }
+
     async function enviar(item) {
+        const identificador = await asegurarIdentificador(item);
         const datos = new FormData();
         item.entradas.forEach(function (entrada) {
             if (entrada.nombre === "solicitud_sincronizacion") return;
             datos.append(entrada.nombre, entrada.valor);
         });
-        datos.append("solicitud_sincronizacion", item.id);
+        datos.append("solicitud_sincronizacion", identificador);
         const csrf = tokenCsrf();
         if (csrf) datos.append("csrfmiddlewaretoken", csrf);
         const respuesta = await fetch(item.url, {
