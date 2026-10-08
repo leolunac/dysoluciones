@@ -166,6 +166,10 @@
     }
 
     function tokenCsrf() {
+        const campo = document.querySelector(
+            'input[name="csrfmiddlewaretoken"]'
+        );
+        if (campo && campo.value) return campo.value;
         const parte = document.cookie.split(";").map(function (valor) {
             return valor.trim();
         }).find(function (valor) { return valor.startsWith("csrftoken="); });

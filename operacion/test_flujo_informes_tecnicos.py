@@ -537,6 +537,7 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertContains(formulario, "estado-sincronizacion")
         self.assertContains(panel, "offline_actividad.js")
         self.assertContains(panel, "estado-sincronizacion")
+        self.assertContains(panel, 'name="csrfmiddlewaretoken"')
 
     def test_remision_catalogada_alimenta_consumo_y_comprobante(self):
         servicio = self.crear_servicio_correctivo()
