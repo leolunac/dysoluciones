@@ -402,6 +402,34 @@ class FlujoInformesTecnicosTests(TestCase):
         programacion.actividad.preventivo.refresh_from_db()
         self.assertTrue(programacion.actividad.preventivo.firma_recibido.name)
 
+    def test_sincronizacion_preventivo_rechaza_revision_general_vacia(self):
+        programacion = self.crear_programacion()
+        self.client.force_login(self.usuario_tecnico)
+        self.client.get(reverse("iniciar_preventivo", args=[programacion.pk]))
+        programacion.refresh_from_db()
+        solicitud = uuid.uuid4()
+
+        respuesta = self.client.post(
+            reverse("formulario_preventivo", args=[programacion.pk]),
+            {
+                "accion": "guardar_general",
+                "solicitud_sincronizacion": str(solicitud),
+            },
+            HTTP_X_SIGOB_SINCRONIZACION="1",
+        )
+
+        self.assertEqual(respuesta.status_code, 422)
+        self.assertFalse(respuesta.json()["ok"])
+        self.assertIn(
+            "llegó sin información",
+            respuesta.json()["mensaje"],
+        )
+        self.assertFalse(
+            SolicitudSincronizacionPreventivo.objects.filter(
+                solicitud=solicitud,
+            ).exists()
+        )
+
     def test_reintento_final_preventivo_devuelve_mismo_comprobante(self):
         programacion, preventivo = self.preparar_preventivo()
         solicitud = uuid.uuid4()

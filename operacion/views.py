@@ -742,6 +742,30 @@ def formulario_preventivo(request, programacion_id):
         # -------------------------------------------------
         if accion == "guardar_general":
 
+            if sincronizacion_offline:
+                campos_generales = {
+                    "control_nivel",
+                    "tablero_electrico",
+                    "novedades",
+                    "resultado_preventivo",
+                    "persona_recibe",
+                    "cargo_recibe",
+                }
+                if not any(
+                    str(request.POST.get(campo, "")).strip()
+                    for campo in campos_generales
+                ) and not request.FILES.get("firma_recibido"):
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "mensaje": (
+                                "La revisión general llegó sin información. "
+                                "Los datos continúan guardados en este dispositivo."
+                            ),
+                        },
+                        status=422,
+                    )
+
             form_general = MantenimientoPreventivoForm(
                 request.POST,
                 request.FILES,

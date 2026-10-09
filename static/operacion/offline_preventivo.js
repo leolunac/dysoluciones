@@ -73,8 +73,23 @@
 
     function entradasFormulario(formulario, identificador) {
         const entradas = [];
-        new FormData(formulario).forEach(function (valor, nombre) {
-            if (nombre !== "csrfmiddlewaretoken") entradas.push({nombre: nombre, valor: valor});
+        Array.from(formulario.elements).forEach(function (campo) {
+            if (!campo.name || campo.disabled || campo.name === "csrfmiddlewaretoken") return;
+            if (["submit", "button", "reset"].includes(campo.type)) return;
+            if (["checkbox", "radio"].includes(campo.type) && !campo.checked) return;
+            if (campo.type === "file") {
+                Array.from(campo.files || []).forEach(function (archivo) {
+                    entradas.push({nombre: campo.name, valor: archivo});
+                });
+                return;
+            }
+            if (campo.tagName === "SELECT" && campo.multiple) {
+                Array.from(campo.selectedOptions).forEach(function (opcion) {
+                    entradas.push({nombre: campo.name, valor: opcion.value});
+                });
+                return;
+            }
+            entradas.push({nombre: campo.name, valor: campo.value});
         });
         entradas.push({nombre: "solicitud_sincronizacion", valor: identificador});
         return entradas;
