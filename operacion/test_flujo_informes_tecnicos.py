@@ -483,6 +483,22 @@ class FlujoInformesTecnicosTests(TestCase):
         respuesta = self.client.get(reverse("bandeja_revision_preventivos"))
         self.assertEqual(respuesta.status_code, 200)
 
+    def test_coordinador_visualiza_y_descarga_borrador_preventivo(self):
+        programacion, _ = self.preparar_preventivo()
+        self.enviar_preventivo(programacion)
+        self.client.force_login(self.coordinador)
+        url = reverse("preventivo_pdf", args=[programacion.pk])
+
+        vista = self.client.get(url)
+        self.assertEqual(vista.status_code, 200)
+        self.assertEqual(vista["Content-Type"], "application/pdf")
+        self.assertTrue(vista["Content-Disposition"].startswith("inline;"))
+        self.assertEqual(vista["X-SIGOB-TIPO-INFORME"], "BORRADOR_INTERNO")
+
+        descarga = self.client.get(f"{url}?descargar=1")
+        self.assertEqual(descarga.status_code, 200)
+        self.assertTrue(descarga["Content-Disposition"].startswith("attachment;"))
+
     @override_settings(MEDIA_ROOT=tempfile.gettempdir())
     def test_coordinador_aprueba_y_publica_sin_novedad(self):
         programacion, preventivo = self.preparar_preventivo()
@@ -507,6 +523,8 @@ class FlujoInformesTecnicosTests(TestCase):
         self.assertEqual(documento.tipo, "PREVENTIVO")
         with documento.archivo.open("rb") as archivo:
             self.assertEqual(archivo.read(4), b"%PDF")
+        pdf_final = self.client.get(reverse("preventivo_pdf", args=[programacion.pk]))
+        self.assertEqual(pdf_final["X-SIGOB-TIPO-INFORME"], "CLIENTE_DEFINITIVO")
 
     def test_anomalia_exige_constancia_de_aviso(self):
         programacion, preventivo = self.preparar_preventivo(con_novedad=True)

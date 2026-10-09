@@ -1281,12 +1281,22 @@ def preventivo_pdf(request, programacion_id):
         content_type="application/pdf"
     )
 
+    es_borrador = not (
+        programacion.estado == "PUBLICADO"
+        and preventivo
+        and preventivo.estado_revision == "PUBLICADO"
+    )
+
     nombre_pdf = (
         actividad.numero_informe
         if actividad and actividad.numero_informe
         else f"mantenimiento_preventivo_{programacion.id}"
     )
-    response["Content-Disposition"] = f'attachment; filename="{nombre_pdf}.pdf"'
+    disposicion = "attachment" if request.GET.get("descargar") == "1" else "inline"
+    response["Content-Disposition"] = f'{disposicion}; filename="{nombre_pdf}.pdf"'
+    response["X-SIGOB-TIPO-INFORME"] = (
+        "BORRADOR_INTERNO" if es_borrador else "CLIENTE_DEFINITIVO"
+    )
 
     pdf = canvas.Canvas(
         response,
@@ -1402,6 +1412,16 @@ def preventivo_pdf(request, programacion_id):
             width - margen,
             height - 98,
         )
+
+        if es_borrador:
+            pdf.setFillColorRGB(0.80, 0.36, 0.04)
+            pdf.setFont("Helvetica-Bold", 8)
+            pdf.drawCentredString(
+                width / 2,
+                height - 111,
+                "BORRADOR PARA REVISIÓN INTERNA - NO ENTREGAR AL CLIENTE",
+            )
+            pdf.setFillColorRGB(0, 0, 0)
 
     def pie():
 
@@ -1764,7 +1784,7 @@ def preventivo_pdf(request, programacion_id):
 
     encabezado()
 
-    y = height - 108
+    y = height - (124 if es_borrador else 108)
 
     # =====================================================
     # 1. INFORMACIÓN GENERAL
@@ -1841,19 +1861,13 @@ def preventivo_pdf(request, programacion_id):
                 if preventivo and preventivo.resultado_preventivo
                 else "Sin definir",
             ),
-            (
-                "REVISIÓN",
-                preventivo.get_estado_revision_display()
-                if preventivo
-                else "Pendiente",
-            ),
         ],
         y,
-        [58, 58, 235, ancho_util - 375],
+        [70, 70, ancho_util - 156],
         separacion=espacio,
     )
 
-    if programacion.observaciones:
+    if es_borrador and programacion.observaciones:
 
         pdf.setFont(
             "Helvetica-Bold",
@@ -1865,7 +1879,7 @@ def preventivo_pdf(request, programacion_id):
         pdf.drawString(
             margen,
             y,
-            "OBSERVACIONES DE PROGRAMACIÓN",
+            "OBSERVACIONES INTERNAS DE PROGRAMACIÓN",
         )
 
         pdf.setFillColorRGB(0, 0, 0)
@@ -2132,98 +2146,11 @@ def preventivo_pdf(request, programacion_id):
         y -= 18
 
     # =====================================================
-    # 6. REVISIÓN, AVISO Y VERIFICACIÓN
-    # =====================================================
-
-    y = asegurar_espacio(y, 145)
-    y = seccion(
-        "6. REVISIÓN, AVISO Y ESTADO DE LA CORRECCIÓN",
-        y,
-    )
-
-    revisor = "Pendiente"
-    fecha_revision = "Pendiente"
-    cliente_informado = "No registrado"
-    estado_anomalia = "Sin anomalías"
-    if preventivo:
-        if preventivo.revisado_por:
-            revisor = preventivo.revisado_por.get_full_name() or preventivo.revisado_por.username
-        if preventivo.revisado_en:
-            fecha_revision = timezone.localtime(preventivo.revisado_en).strftime("%d/%m/%Y %H:%M")
-        if preventivo.cliente_informado:
-            cliente_informado = f"Sí - {preventivo.medio_notificacion or 'medio no indicado'}"
-        estado_anomalia = preventivo.get_estado_anomalia_display()
-
-    y = fila_campos(
-        [
-            ("REVISADO POR", revisor),
-            ("FECHA DE REVISIÓN", fecha_revision),
-        ],
-        y,
-        [ancho_caja, ancho_caja],
-    )
-    y = fila_campos(
-        [
-            ("CLIENTE / ADMINISTRACIÓN INFORMADO", cliente_informado),
-            ("ESTADO DE LA CORRECCIÓN", estado_anomalia),
-        ],
-        y,
-        [ancho_caja, ancho_caja],
-    )
-
-    if preventivo and preventivo.observaciones_revision:
-        y = asegurar_espacio(y, 35)
-        pdf.setFont("Helvetica-Bold", 7.5)
-        pdf.setFillColorRGB(*gris)
-        pdf.drawString(margen, y - 2, "OBSERVACIONES DE REVISIÓN")
-        pdf.setFillColorRGB(0, 0, 0)
-        y = envolver_texto(
-            preventivo.observaciones_revision,
-            margen + 5,
-            y - 14,
-            ancho_util - 10,
-        )
-        y -= 5
-
-    if preventivo and preventivo.estado_revision == "PUBLICADO":
-        # El QR, su título y su explicación deben permanecer juntos.
-        y = asegurar_espacio(y, 68)
-        url_verificacion = request.build_absolute_uri(
-            reverse("verificar_preventivo", args=[preventivo.codigo_verificacion])
-        )
-        codigo_qr = QrCodeWidget(url_verificacion)
-        x1, y1, x2, y2 = codigo_qr.getBounds()
-        lado = 46
-        dibujo_qr = Drawing(
-            lado,
-            lado,
-            transform=[lado / (x2 - x1), 0, 0, lado / (y2 - y1), 0, 0],
-        )
-        dibujo_qr.add(codigo_qr)
-        renderPDF.draw(dibujo_qr, pdf, margen, y - lado + 4)
-        pdf.setFont("Helvetica-Bold", 7.5)
-        pdf.setFillColorRGB(*azul)
-        pdf.drawString(margen + 58, y - 9, "VERIFICACIÓN DEL INFORME")
-        pdf.setFillColorRGB(0, 0, 0)
-        y_texto = envolver_texto(
-            "Escanee el código QR para comprobar que este informe fue aprobado y publicado en SIGOB.",
-            margen + 58,
-            y - 22,
-            ancho_util - 65,
-            tamano=7.5,
-        )
-        pdf.setFillColorRGB(*gris)
-        pdf.setFont("Helvetica", 6.5)
-        pdf.drawString(margen + 58, y_texto - 2, str(preventivo.codigo_verificacion))
-        pdf.setFillColorRGB(0, 0, 0)
-        y -= 56
-
-    # =====================================================
-    # 7. RECIBIDO DEL SERVICIO
+    # 6. RECIBIDO DEL SERVICIO
     # =====================================================
 
     y = seccion(
-        "7. RECIBIDO DEL SERVICIO",
+        "6. RECIBIDO DEL SERVICIO",
         y,
     )
 
@@ -2397,6 +2324,39 @@ def preventivo_pdf(request, programacion_id):
         y - 32,
         "D&S Soluciones en Bombeo S.A.S.",
     )
+
+    if not es_borrador:
+        # El QR solo forma parte del informe definitivo aprobado.
+        y = asegurar_espacio(y - 48, 68)
+        url_verificacion = request.build_absolute_uri(
+            reverse("verificar_preventivo", args=[preventivo.codigo_verificacion])
+        )
+        codigo_qr = QrCodeWidget(url_verificacion)
+        x1, y1, x2, y2 = codigo_qr.getBounds()
+        lado = 46
+        dibujo_qr = Drawing(
+            lado,
+            lado,
+            transform=[lado / (x2 - x1), 0, 0, lado / (y2 - y1), 0, 0],
+        )
+        dibujo_qr.add(codigo_qr)
+        renderPDF.draw(dibujo_qr, pdf, margen, y - lado + 4)
+        pdf.setFont("Helvetica-Bold", 7.5)
+        pdf.setFillColorRGB(*azul)
+        pdf.drawString(margen + 58, y - 9, "VERIFICACIÓN DEL INFORME")
+        pdf.setFillColorRGB(0, 0, 0)
+        y_texto = envolver_texto(
+            "Escanee el código QR para comprobar que este informe fue aprobado y publicado en SIGOB.",
+            margen + 58,
+            y - 22,
+            ancho_util - 65,
+            tamano=7.5,
+        )
+        pdf.setFillColorRGB(*gris)
+        pdf.setFont("Helvetica", 6.5)
+        pdf.drawString(margen + 58, y_texto - 2, str(preventivo.codigo_verificacion))
+        pdf.setFillColorRGB(0, 0, 0)
+
     # =====================================================
     # CIERRE
     # =====================================================
