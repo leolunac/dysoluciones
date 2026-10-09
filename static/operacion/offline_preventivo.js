@@ -125,6 +125,24 @@
         mostrar("Borrador preventivo guardado en este dispositivo.", "local");
     }
 
+    async function conservarArchivosBorrador(formulario, entradasCapturadas) {
+        const entradas = entradasCapturadas.slice();
+        const borrador = await leerBorrador(formulario);
+        if (!borrador || !Array.isArray(borrador.entradas)) return entradas;
+
+        borrador.entradas.forEach(function (entrada) {
+            if (!(entrada.valor instanceof Blob)) return;
+            const archivoActual = entradas.some(function (actual) {
+                return actual.nombre === entrada.nombre && actual.valor instanceof Blob;
+            });
+            if (!archivoActual) {
+                entradas.push({nombre: entrada.nombre, valor: entrada.valor});
+            }
+        });
+
+        return entradas;
+    }
+
     function siguienteOrden() {
         const clave = `sigob:preventivo:orden:${config.usuario}`;
         const anterior = Number(localStorage.getItem(clave) || 0);
@@ -355,9 +373,10 @@
                     return;
                 }
                 evento.preventDefault();
-                const entradas = entradasFormulario(formulario, "").filter(function (entrada) {
+                let entradas = entradasFormulario(formulario, "").filter(function (entrada) {
                     return entrada.nombre !== "solicitud_sincronizacion";
                 });
+                entradas = await conservarArchivosBorrador(formulario, entradas);
                 await guardarBorrador(formulario, entradas);
                 await encolar(formulario, entradas);
                 await sincronizar();
