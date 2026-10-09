@@ -322,6 +322,55 @@ class FormulariosInventarioTest(InventarioBaseTest):
         )
         self.assertEqual(detalle.referencia_proveedor, referencia)
 
+    def test_entrada_acepta_producto_sin_referencia_del_proveedor(self):
+        proveedor = Proveedor.objects.create(nombre="PROVEEDOR SIN REFERENCIA")
+        respuesta = self.client.post(
+            reverse("inventario:nueva_entrada"),
+            {
+                "proveedor": proveedor.pk,
+                "numero_factura": "FV-SIN-REFERENCIA",
+                "fecha_factura": "2026-10-09",
+                "detalles-TOTAL_FORMS": "1",
+                "detalles-INITIAL_FORMS": "0",
+                "detalles-MIN_NUM_FORMS": "0",
+                "detalles-MAX_NUM_FORMS": "1000",
+                "detalles-0-producto": self.producto.pk,
+                "detalles-0-referencia_proveedor": "",
+                "detalles-0-cantidad": "1.00",
+                "detalles-0-precio_unitario_lista": "100.00",
+                "detalles-0-porcentaje_descuento": "0.00",
+            },
+        )
+        self.assertRedirects(respuesta, reverse("inventario:tablero"))
+        detalle = DetalleEntradaInventario.objects.get(
+            entrada__numero_factura="FV-SIN-REFERENCIA"
+        )
+        self.assertIsNone(detalle.referencia_proveedor)
+
+    def test_entrada_entrega_referencias_para_filtrar_por_producto_y_proveedor(self):
+        proveedor = Proveedor.objects.create(nombre="PROVEEDOR FILTRO")
+        referencia = ReferenciaProveedor.objects.create(
+            producto=self.producto,
+            proveedor=proveedor,
+            codigo_proveedor="REF-A001",
+            descripcion_proveedor="Referencia de prueba",
+        )
+        respuesta = self.client.get(reverse("inventario:nueva_entrada"))
+
+        self.assertEqual(
+            respuesta.context["referencias_disponibles"],
+            [
+                {
+                    "id": referencia.pk,
+                    "producto_id": self.producto.pk,
+                    "proveedor_id": proveedor.pk,
+                    "etiqueta": "REF-A001 — Referencia de prueba",
+                }
+            ],
+        )
+        self.assertContains(respuesta, "referencias-proveedor-data")
+        self.assertContains(respuesta, "Sin referencia del proveedor (opcional)")
+
     def test_entrada_muestra_error_si_referencia_no_corresponde(self):
         proveedor = Proveedor.objects.create(nombre="PROVEEDOR FACTURA")
         otro = Proveedor.objects.create(nombre="OTRO PROVEEDOR")

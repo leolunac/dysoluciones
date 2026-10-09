@@ -185,6 +185,27 @@ def nueva_entrada(request):
             "productos_disponibles": ProductoInventario.objects.filter(
                 activo=True,
             ).select_related("accesorio").order_by("accesorio__descripcion"),
+            "referencias_disponibles": [
+                {
+                    "id": referencia.pk,
+                    "producto_id": referencia.producto_id,
+                    "proveedor_id": referencia.proveedor_id,
+                    "etiqueta": " — ".join(
+                        parte
+                        for parte in (
+                            referencia.codigo_proveedor.strip()
+                            or "Sin código del proveedor",
+                            referencia.descripcion_proveedor.strip(),
+                        )
+                        if parte
+                    ),
+                }
+                for referencia in ReferenciaProveedor.objects.filter(
+                    activa=True,
+                    producto__activo=True,
+                    proveedor__activo=True,
+                ).select_related("producto", "proveedor")
+            ],
         },
     )
 

@@ -16,6 +16,7 @@
     </form>
 </main>
 <datalist id="lista-productos">{% for producto in productos_disponibles %}<option data-id="{{ producto.id }}" value="{{ producto.accesorio.codigo }} — {{ producto.accesorio.descripcion }}"></option>{% endfor %}</datalist>
+{% if tipo_formulario == "entrada" %}{{ referencias_disponibles|json_script:"referencias-proveedor-data" }}{% endif %}
 {% if tipo_formulario == "consumo" %}<datalist id="lista-clientes">{% for cliente in clientes_disponibles %}<option data-id="{{ cliente.id }}" value="{{ cliente.nombre }}{% if cliente.nit %} — NIT {{ cliente.nit }}{% endif %}"></option>{% endfor %}</datalist>{% endif %}
 <script>
 (function(){
@@ -46,17 +47,40 @@
     const contenedor=document.getElementById('filas-productos');
     const total=document.getElementById('id_detalles-TOTAL_FORMS');
     const plantilla=document.getElementById('fila-vacia');
+    const selectorProveedor=document.getElementById('id_proveedor');
+    const datosReferencias=document.getElementById('referencias-proveedor-data');
+    const referencias=datosReferencias?JSON.parse(datosReferencias.textContent):[];
+    function filtrarReferencias(fila,seleccionarUnica){
+        const selectorProducto=fila.querySelector('.producto-select select');
+        const selectorReferencia=fila.querySelector('select[name$="-referencia_proveedor"]');
+        if(!selectorReferencia)return;
+        const valorAnterior=selectorReferencia.value;
+        const productoId=selectorProducto?String(selectorProducto.value):'';
+        const proveedorId=selectorProveedor?String(selectorProveedor.value):'';
+        const compatibles=referencias.filter(referencia=>String(referencia.producto_id)===productoId&&String(referencia.proveedor_id)===proveedorId);
+        selectorReferencia.innerHTML='';
+        const opcionVacia=document.createElement('option');
+        opcionVacia.value='';
+        opcionVacia.textContent='Sin referencia del proveedor (opcional)';
+        selectorReferencia.appendChild(opcionVacia);
+        compatibles.forEach(referencia=>{const opcion=document.createElement('option');opcion.value=String(referencia.id);opcion.textContent=referencia.etiqueta;selectorReferencia.appendChild(opcion);});
+        if(compatibles.some(referencia=>String(referencia.id)===valorAnterior))selectorReferencia.value=valorAnterior;
+        else if(seleccionarUnica&&compatibles.length===1)selectorReferencia.value=String(compatibles[0].id);
+        else selectorReferencia.value='';
+    }
     function asociarFila(fila){
         const buscador=fila.querySelector('.buscador-producto');
         const selector=fila.querySelector('.producto-select select');
         const eliminar=fila.querySelector('.eliminar-fila');
         const borrar=fila.querySelector('input[name$="-DELETE"]');
         if(selector && selector.value){const opcion=selector.options[selector.selectedIndex];if(opcion) buscador.value=opcion.text.replace(' - ',' — ');}
-        function sincronizarProducto(){selector.value='';for(const opcion of document.querySelectorAll('#lista-productos option')){if(opcion.value===buscador.value){selector.value=opcion.dataset.id;break;}}buscador.setCustomValidity(selector.value?'':'Seleccione un producto de la lista.');return Boolean(selector.value);}
+        function sincronizarProducto(){const productoAnterior=selector.value;selector.value='';for(const opcion of document.querySelectorAll('#lista-productos option')){if(opcion.value===buscador.value){selector.value=opcion.dataset.id;break;}}buscador.setCustomValidity(selector.value?'':'Seleccione un producto de la lista.');filtrarReferencias(fila,selector.value!==productoAnterior);return Boolean(selector.value);}
         if(buscador && selector){buscador.addEventListener('input',sincronizarProducto);buscador.addEventListener('change',sincronizarProducto);fila.sincronizarProducto=sincronizarProducto;}
+        filtrarReferencias(fila,false);
         eliminar.addEventListener('click',function(){if(borrar)borrar.checked=true;fila.style.display='none';if(buscador)buscador.required=false;});
     }
     document.querySelectorAll('.detalle').forEach(asociarFila);
+    if(selectorProveedor)selectorProveedor.addEventListener('change',function(){document.querySelectorAll('.detalle').forEach(fila=>filtrarReferencias(fila,true));});
     document.getElementById('agregar-fila').addEventListener('click',function(){const indice=parseInt(total.value,10);const html=plantilla.innerHTML.replaceAll('__prefix__',indice);const envoltura=document.createElement('div');envoltura.innerHTML=html.trim();const fila=envoltura.firstElementChild;contenedor.appendChild(fila);total.value=indice+1;asociarFila(fila);fila.querySelector('.buscador-producto').focus();});
     document.getElementById('formulario-inventario').addEventListener('submit',function(event){let valido=true;document.querySelectorAll('.detalle').forEach(fila=>{if(fila.style.display!=='none' && fila.sincronizarProducto && !fila.sincronizarProducto())valido=false;});if(!valido)event.preventDefault();});
 })();
