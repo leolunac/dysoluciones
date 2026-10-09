@@ -237,10 +237,22 @@
     async function enviar(item) {
         const identificador = await asegurarIdentificador(item);
         const datos = new FormData();
-        item.entradas.forEach(function (entrada) {
-            if (["solicitud_sincronizacion", "accion"].includes(entrada.nombre)) return;
-            datos.append(entrada.nombre, entrada.valor);
-        });
+        for (const entrada of item.entradas) {
+            if (["solicitud_sincronizacion", "accion"].includes(entrada.nombre)) continue;
+            if (entrada.valor instanceof Blob) {
+                const contenido = await entrada.valor.arrayBuffer();
+                const archivo = new Blob([contenido], {
+                    type: entrada.valor.type || "application/octet-stream"
+                });
+                datos.append(
+                    entrada.nombre,
+                    archivo,
+                    entrada.valor.name || "firma_preventivo"
+                );
+            } else {
+                datos.append(entrada.nombre, entrada.valor);
+            }
+        }
         datos.append("accion", item.accion);
         datos.append("solicitud_sincronizacion", identificador);
         const csrf = tokenCsrf();
