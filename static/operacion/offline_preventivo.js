@@ -110,14 +110,15 @@
         });
     }
 
-    async function guardarBorrador(formulario) {
+    async function guardarBorrador(formulario, entradasCapturadas) {
         if (!config.programacion) return;
+        const entradas = (entradasCapturadas || entradasFormulario(formulario, "")).filter(function (entrada) {
+            return entrada.nombre !== "solicitud_sincronizacion";
+        });
         await operar("borradores", "readwrite", function (almacen) {
             return almacen.put({
                 clave: claveBorrador(formulario),
-                entradas: entradasFormulario(formulario, "").filter(function (entrada) {
-                    return entrada.nombre !== "solicitud_sincronizacion";
-                }),
+                entradas: entradas,
                 guardado: Date.now()
             });
         });
@@ -132,20 +133,25 @@
         return orden;
     }
 
-    async function encolar(formulario) {
+    async function encolar(formulario, entradasCapturadas) {
         const id = uuid();
         const accion = formulario.dataset.sigobPreventivo;
-        const entradas = entradasFormulario(formulario, id);
-        const borrador = await leerBorrador(formulario);
-        if (borrador && Array.isArray(borrador.entradas)) {
-            borrador.entradas.forEach(function (entrada) {
-                const esArchivo = entrada.valor instanceof Blob;
-                const yaIncluido = entradas.some(function (actual) {
-                    return actual.nombre === entrada.nombre && actual.valor instanceof Blob;
-                });
-                if (esArchivo && !yaIncluido) entradas.push(entrada);
-            });
+        let entradasBase = entradasCapturadas;
+        if (!Array.isArray(entradasBase)) {
+            const borrador = await leerBorrador(formulario);
+            if (borrador && Array.isArray(borrador.entradas)) {
+                entradasBase = borrador.entradas;
+            }
         }
+        if (!Array.isArray(entradasBase)) {
+            entradasBase = entradasFormulario(formulario, "");
+        }
+        const entradas = entradasBase.filter(function (entrada) {
+            return entrada.nombre !== "solicitud_sincronizacion";
+        }).map(function (entrada) {
+            return {nombre: entrada.nombre, valor: entrada.valor};
+        });
+        entradas.push({nombre: "solicitud_sincronizacion", valor: id});
         const item = {
             id: id,
             usuario: String(config.usuario),
@@ -349,8 +355,11 @@
                     return;
                 }
                 evento.preventDefault();
-                await guardarBorrador(formulario);
-                await encolar(formulario);
+                const entradas = entradasFormulario(formulario, "").filter(function (entrada) {
+                    return entrada.nombre !== "solicitud_sincronizacion";
+                });
+                await guardarBorrador(formulario, entradas);
+                await encolar(formulario, entradas);
                 await sincronizar();
             });
         });
