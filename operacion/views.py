@@ -151,95 +151,53 @@ def es_coordinador_operativo(user):
     return user.groups.filter(
         name__in=[
             "GESTION_COORDINADOR",
+            "GESTION_SUPERVISOR",
             "GESTION_GERENCIA",
         ]
     ).exists()
 def login_view(request):
-
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
-
-        user = authenticate(
-            request,
-            username=username,
-            password=password,
-        )
+        user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
 
-            # =========================================
-            # GERENCIA / SUPERUSUARIO
-            # =========================================
             if (
                 user.is_superuser
-                or user.groups.filter(
-                    name="GESTION_GERENCIA"
-                ).exists()
+                or user.groups.filter(name="GESTION_GERENCIA").exists()
             ):
                 return redirect("/gerencia/")
 
-            # =========================================
-            # TÉCNICO
-            # =========================================
-            if Tecnico.objects.filter(
-                user=user,
-                activo=True,
+            if user.groups.filter(
+                name__in=["GESTION_COORDINADOR", "GESTION_SUPERVISOR"]
             ).exists():
+                return redirect("escritorio_coordinador")
+
+            if Tecnico.objects.filter(user=user, activo=True).exists():
                 return redirect("/tecnico/")
-    # =========================================
-# SUPERVISOR
-# =========================================
-    if user.groups.filter(
-        name="GESTION_SUPERVISOR"
-    ).exists():
-        return redirect(
-        "gestion_comercial:lista_cotizaciones"
-    )        
 
-            # =========================================
-# COORDINADOR OPERATIVO
-# =========================================
-    if user.groups.filter(
-    name="GESTION_COORDINADOR"
-    ).exists():
-        return redirect("escritorio_coordinador")
+            if user.groups.filter(name="GESTION_FACTURACION").exists():
+                return redirect("gestion_comercial:panel")
 
-# =========================================
-# FACTURACIÓN
-# =========================================
-    if user.groups.filter(
-    name="GESTION_FACTURACION"
-    ).exists():
-        return redirect("gestion_comercial:panel")
+            if es_usuario_gestion_comercial(user):
+                return redirect("/gestion-comercial/")
 
-# =========================================
-# GESTIÓN COMERCIAL
-# =========================================
-    if es_usuario_gestion_comercial(user):
-        return redirect("/gestion-comercial/")
+            if user.is_staff:
+                return redirect("/")
 
-# =========================================
-# OTROS USUARIOS INTERNOS
-# =========================================
-    if user.is_staff:
-        return redirect("/")
+            return redirect("/mis-unidades/")
 
-# =========================================
-# USUARIOS CLIENTE
-# =========================================
-    return redirect("/mis-unidades/")
-
-    return render(
+        return render(
             request,
             "login.html",
-            {
-                "error": "Usuario o contraseña incorrectos",
-            },
+            {"error": "Usuario o contraseña incorrectos"},
         )
 
     return render(request, "login.html")
+
+
 # =========================================
 # LOGOUT
 # =========================================
@@ -255,71 +213,31 @@ def logout_view(request):
 
 @login_required
 def home(request):
-
-    # =========================================
-    # GERENCIA / SUPERUSUARIO
-    # =========================================
     if (
         request.user.is_superuser
-        or request.user.groups.filter(
-            name="GESTION_GERENCIA"
-        ).exists()
+        or request.user.groups.filter(name="GESTION_GERENCIA").exists()
     ):
         return redirect("/gerencia/")
 
-# =========================================
-# SUPERVISOR
-# =========================================
     if request.user.groups.filter(
-        name="GESTION_SUPERVISOR"
-    ).exists():
-        return redirect(
-        "gestion_comercial:lista_cotizaciones"
-    )
-    # =========================================
-    # TÉCNICO
-    # =========================================
-    if Tecnico.objects.filter(
-        user=request.user,
-        activo=True,
-    ).exists():
-        return redirect("/tecnico/")
-
-    # =========================================
-    # GESTIÓN COMERCIAL
-    # =========================================
-    if request.user.groups.filter(
-    name="GESTION_COORDINADOR"
+        name__in=["GESTION_COORDINADOR", "GESTION_SUPERVISOR"]
     ).exists():
         return redirect("escritorio_coordinador")
 
-# =========================================
-# FACTURACIÓN
-# =========================================
-    if request.user.groups.filter(
-    name="GESTION_FACTURACION"
-    ).exists():
+    if Tecnico.objects.filter(user=request.user, activo=True).exists():
+        return redirect("/tecnico/")
+
+    if request.user.groups.filter(name="GESTION_FACTURACION").exists():
         return redirect("gestion_comercial:panel")
 
-# =========================================
-# GESTIÓN COMERCIAL
-# =========================================
     if es_usuario_gestion_comercial(request.user):
         return redirect("/gestion-comercial/")
 
-    # =========================================
-    # OTROS USUARIOS INTERNOS
-    # =========================================
     if request.user.is_staff:
-        return render(
-            request,
-            "menu_principal.html",
-        )
+        return render(request, "menu_principal.html")
 
-    # =========================================
-    # CLIENTES
-    # =========================================
     return redirect("/mis-unidades/")
+
 
 # =========================================
 # PANEL DEL TÉCNICO
@@ -2462,10 +2380,8 @@ def usuario_puede_gestionar_servicio(user, servicio):
     ):
         return True
 
-    # Coordinador.
-    if user.groups.filter(
-        name="GESTION_COORDINADOR"
-    ).exists():
+    # Coordinación y supervisión comparten la gestión operativa.
+    if es_coordinador_operativo(user):
         return True
 
     # Conservamos acceso del personal interno/staff existente.
@@ -3198,7 +3114,7 @@ def escritorio_coordinador(request):
 
     if not es_coordinador_operativo(request.user):
         return HttpResponseForbidden(
-            "No está autorizado para acceder al escritorio del coordinador."
+            "No está autorizado para acceder al escritorio operativo."
         )
 
     ahora = timezone.now()
@@ -3250,6 +3166,7 @@ def escritorio_coordinador(request):
         "inicio_noche": inicio_noche,
         "fin_noche": fin_noche,
         "servicios_sin_asignar": servicios_sin_asignar,
+        "puede_gestionar_comercial": es_usuario_gestion_comercial(request.user),
     }
 
     return render(request, "escritorio_coordinador.html", context)

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Escritorio del Coordinador</title>
+<title>Escritorio Operativo</title>
 
 <style>
 body{
@@ -93,8 +93,8 @@ th{
 <body>
 
 <div class="header">
-    <h1>&#128203; Escritorio del Coordinador</h1>
-    <p>Resumen operativo de servicios nocturnos y pendientes de seguimiento</p>
+    <h1>&#128203; Escritorio Operativo</h1>
+    <p>Coordinación y supervisión de servicios, lavados, preventivos y cotizaciones</p>
 </div>
 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
 
@@ -102,8 +102,14 @@ th{
         Bit&#225;cora
     </a>
 
+    {% if puede_gestionar_comercial %}
     <a class="btn" href="{% url 'gestion_comercial:panel' %}">
-        Gesti&#243;n Comercial / Revisi&#243;n
+        Gesti&#243;n Comercial / Liquidaciones
+    </a>
+    {% endif %}
+
+    <a class="btn" href="{% url 'gestion_comercial:lista_cotizaciones' %}">
+        Cotizaciones
     </a>
 
     <a class="btn" href="{% url 'bandeja_revision_preventivos' %}">
