@@ -71,7 +71,7 @@
                         <td><strong>{{ consumo.codigo_facturacion }}</strong><br>{{ consumo.descripcion_facturacion }}</td>
                         <td>{{ consumo.cantidad }}</td>
                         <td>{% if consumo.revision_actual.valor_unitario_sugerido != None %}${{ consumo.revision_actual.valor_unitario_sugerido|floatformat:2 }}{% elif consumo.precio_actual %}${{ consumo.precio_actual.valor|floatformat:2 }}{% else %}<span class="precio-falta">Sin precio</span>{% endif %}</td>
-                        <td><span class="estado">{% if consumo.revision_actual %}{{ consumo.revision_actual.get_estado_display }}{% else %}Pendiente de revisión{% endif %}</span>{% if consumo.revision_actual.observaciones %}<br>{{ consumo.revision_actual.observaciones }}{% endif %}</td>
+                        <td><span class="estado">{% if consumo.revision_actual %}{{ consumo.revision_actual.get_estado_display }}{% else %}Pendiente de revisión{% endif %}</span>{% if consumo.revision_actual.detalle_liquidacion %}<br><strong>Liquidación #{{ consumo.revision_actual.detalle_liquidacion.liquidacion_id }}</strong>{% endif %}{% if consumo.revision_actual.observaciones %}<br>{{ consumo.revision_actual.observaciones }}{% endif %}</td>
                         {% if puede_clasificar %}
                         <td class="gestion">
                             <form method="post" action="{% url 'gestion_comercial:clasificar_material_utilizado' consumo.id %}">

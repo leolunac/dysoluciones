@@ -342,6 +342,18 @@ class RevisionMaterialUtilizado(models.Model):
         related_name="revisiones_materiales",
     )
 
+    detalle_liquidacion = models.OneToOneField(
+        DetalleLiquidacion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="revision_material_origen",
+        help_text=(
+            "Detalle de liquidación creado a partir de este consumo. "
+            "Impide incluir el mismo material más de una vez."
+        ),
+    )
+
     codigo_snapshot = models.CharField(max_length=50, blank=True)
     descripcion_snapshot = models.CharField(max_length=250)
     cantidad_snapshot = models.DecimalField(

@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -9,7 +10,12 @@ from django.views.decorators.http import require_POST
 
 from operacion.models import AccesorioActividad
 
-from .models import CatalogoPrecio, RevisionMaterialUtilizado
+from .models import (
+    CatalogoPrecio,
+    DetalleLiquidacion,
+    Liquidacion,
+    RevisionMaterialUtilizado,
+)
 
 
 GRUPO_AUXILIAR = "GESTION_AUXILIAR"
@@ -43,6 +49,11 @@ def _exigir_clasificacion(user):
         raise PermissionDenied
 
 
+def _exigir_elaboracion(user):
+    if not _pertenece(user, GRUPO_AUXILIAR):
+        raise PermissionDenied
+
+
 @login_required
 def lista_materiales_utilizados(request):
     _exigir_consulta(request.user)
@@ -55,6 +66,7 @@ def lista_materiales_utilizados(request):
             "actividad__tecnico",
             "actividad__remision",
             "revision_facturacion__catalogo_precio",
+            "revision_facturacion__detalle_liquidacion__liquidacion",
             "revision_facturacion__revisado_por",
         )
         .order_by("-actividad__fecha", "-id")
@@ -170,6 +182,19 @@ def clasificar_material_utilizado(request, consumo_id):
         messages.error(request, "La clasificación seleccionada no es válida.")
         return redirect("gestion_comercial:lista_materiales_utilizados")
 
+    revision_existente = RevisionMaterialUtilizado.objects.filter(
+        consumo=consumo,
+    ).first()
+    if (
+        revision_existente
+        and revision_existente.detalle_liquidacion_id
+    ):
+        messages.error(
+            request,
+            "El material ya pertenece a una liquidación y no puede reclasificarse.",
+        )
+        return redirect("gestion_comercial:lista_materiales_utilizados")
+
     catalogo = None
     if consumo.accesorio_id:
         catalogo = CatalogoPrecio.objects.filter(
@@ -208,3 +233,92 @@ def clasificar_material_utilizado(request, consumo_id):
 
     messages.success(request, "El material fue clasificado correctamente.")
     return redirect("gestion_comercial:lista_materiales_utilizados")
+
+
+@login_required
+@require_POST
+def agregar_materiales_liquidacion(request, liquidacion_id):
+    _exigir_elaboracion(request.user)
+
+    liquidacion = get_object_or_404(
+        Liquidacion.objects.select_related("cliente"),
+        pk=liquidacion_id,
+    )
+    if (
+        not request.user.is_superuser
+        and liquidacion.creado_por_id != request.user.id
+    ):
+        raise PermissionDenied
+    if liquidacion.estado not in {"BORRADOR", "DEVUELTA"}:
+        raise PermissionDenied
+
+    ids_texto = request.POST.getlist("materiales")
+    try:
+        ids = {int(valor) for valor in ids_texto}
+    except (TypeError, ValueError):
+        ids = set()
+    if not ids:
+        messages.error(request, "Seleccione al menos un material para agregar.")
+        return redirect(
+            "gestion_comercial:editar_liquidacion",
+            liquidacion_id=liquidacion.pk,
+        )
+
+    with transaction.atomic():
+        revisiones = list(
+            RevisionMaterialUtilizado.objects
+            .select_for_update()
+            .filter(
+                pk__in=ids,
+                estado="FACTURAR",
+                detalle_liquidacion__isnull=True,
+                consumo__actividad__cliente_id=liquidacion.cliente_id,
+                catalogo_precio__isnull=False,
+                valor_unitario_sugerido__isnull=False,
+            )
+            .select_related(
+                "catalogo_precio",
+            )
+        )
+        if len(revisiones) != len(ids):
+            messages.error(
+                request,
+                "Uno de los materiales ya fue liquidado o no pertenece a esta unidad.",
+            )
+            return redirect(
+                "gestion_comercial:editar_liquidacion",
+                liquidacion_id=liquidacion.pk,
+            )
+
+        for revision in revisiones:
+            actividad = revision.consumo.actividad
+            referencias = []
+            if actividad.numero_informe:
+                referencias.append(actividad.numero_informe)
+            if actividad.remision_id:
+                referencias.append(
+                    f"Remisión {actividad.remision.numero_remision}"
+                )
+            detalle = DetalleLiquidacion.objects.create(
+                liquidacion=liquidacion,
+                catalogo=revision.catalogo_precio,
+                tipo="MATERIAL",
+                descripcion=revision.descripcion_snapshot,
+                cantidad=revision.cantidad_snapshot,
+                valor_unitario=revision.valor_unitario_sugerido,
+                observaciones=" · ".join(referencias),
+            )
+            revision.detalle_liquidacion = detalle
+            revision.save(
+                update_fields=["detalle_liquidacion", "actualizado"]
+            )
+
+    liquidacion.recalcular_totales()
+    messages.success(
+        request,
+        f"Se agregaron {len(revisiones)} materiales a la liquidación.",
+    )
+    return redirect(
+        "gestion_comercial:editar_liquidacion",
+        liquidacion_id=liquidacion.pk,
+    )

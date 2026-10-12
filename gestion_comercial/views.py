@@ -74,6 +74,24 @@ def _puede_consultar(user):
     )
 
 
+def _materiales_disponibles_liquidacion(liquidacion):
+    return (
+        RevisionMaterialUtilizado.objects
+        .filter(
+            estado="FACTURAR",
+            detalle_liquidacion__isnull=True,
+            consumo__actividad__cliente=liquidacion.cliente,
+            catalogo_precio__isnull=False,
+            valor_unitario_sugerido__isnull=False,
+        )
+        .select_related(
+            "catalogo_precio",
+            "consumo__actividad__remision",
+        )
+        .order_by("consumo__actividad__fecha", "consumo_id")
+    )
+
+
 @login_required
 def panel_gestion_comercial(request):
     _exigir(
@@ -245,6 +263,9 @@ def editar_liquidacion(request, liquidacion_id):
             "puede_revisar": _puede_revisar(request.user),
             "puede_facturar": _puede_facturar(request.user),
             "puede_consultar": _puede_consultar(request.user),
+            "materiales_disponibles": _materiales_disponibles_liquidacion(
+                liquidacion
+            ),
         },
     )
 
@@ -312,6 +333,9 @@ def crear_accesorio(request, liquidacion_id):
             "puede_revisar": _puede_revisar(request.user),
             "puede_facturar": _puede_facturar(request.user),
             "puede_consultar": _puede_consultar(request.user),
+            "materiales_disponibles": _materiales_disponibles_liquidacion(
+                liquidacion
+            ),
         },
     )
 
@@ -407,6 +431,19 @@ def editar_detalle(request, detalle_id):
 
         if form.is_valid():
             detalle_editado = form.save(commit=False)
+
+            revision_origen = getattr(
+                detalle,
+                "revision_material_origen",
+                None,
+            )
+            if revision_origen:
+                detalle_editado.tipo = "MATERIAL"
+                detalle_editado.catalogo = revision_origen.catalogo_precio
+                detalle_editado.descripcion = (
+                    revision_origen.descripcion_snapshot
+                )
+                detalle_editado.cantidad = revision_origen.cantidad_snapshot
 
             if (
                 detalle_editado.tipo == "MATERIAL"

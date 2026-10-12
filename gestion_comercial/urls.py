@@ -32,6 +32,12 @@ urlpatterns = [
         name="clasificar_material_utilizado",
     ),
 
+    path(
+        "<int:liquidacion_id>/agregar-materiales-utilizados/",
+        materiales_facturacion.agregar_materiales_liquidacion,
+        name="agregar_materiales_liquidacion",
+    ),
+
 
     # =====================================================
     # FACTURACION RECURRENTE DE CONTRATOS / PASES

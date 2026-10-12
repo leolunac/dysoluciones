@@ -373,6 +373,14 @@
 
 <div class="contenedor">
 
+    {% if messages %}
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}errores{% else %}ayuda{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
     <!-- CABECERA -->
 
     <div class="encabezado">
@@ -440,6 +448,55 @@
         <!-- COLUMNA IZQUIERDA -->
 
         <div>
+
+            {% if puede_elaborar and materiales_disponibles and liquidacion.estado == "BORRADOR" or puede_elaborar and materiales_disponibles and liquidacion.estado == "DEVUELTA" %}
+            <div class="panel">
+                <h2>Materiales utilizados pendientes de liquidar</h2>
+                <div class="ayuda">
+                    Seleccione los accesorios utilizados en esta unidad. El valor
+                    mostrado corresponde al precio comercial guardado durante la revisión.
+                </div>
+                <form method="post" action="{% url 'gestion_comercial:agregar_materiales_liquidacion' liquidacion.id %}">
+                    {% csrf_token %}
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="seleccionar_materiales"></th>
+                                    <th>Informe / remisión</th>
+                                    <th>Material</th>
+                                    <th>Cantidad</th>
+                                    <th>Valor unitario</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for revision in materiales_disponibles %}
+                                <tr>
+                                    <td>
+                                        <input class="material-pendiente" type="checkbox"
+                                            name="materiales" value="{{ revision.id }}"
+                                            data-cantidad="{{ revision.cantidad_snapshot|unlocalize }}"
+                                            data-valor="{{ revision.valor_unitario_sugerido|unlocalize }}">
+                                    </td>
+                                    <td>
+                                        {{ revision.consumo.actividad.numero_informe|default:"Sin número" }}
+                                        {% if revision.consumo.actividad.remision %}<br>{{ revision.consumo.actividad.remision.numero_remision }}{% endif %}
+                                    </td>
+                                    <td><strong>{{ revision.codigo_snapshot }}</strong><br>{{ revision.descripcion_snapshot }}</td>
+                                    <td class="numero">{{ revision.cantidad_snapshot|floatformat:2 }}</td>
+                                    <td class="numero">${{ revision.valor_unitario_sugerido|floatformat:0 }}</td>
+                                    <td class="numero"><strong>${% widthratio revision.cantidad_snapshot 1 revision.valor_unitario_sugerido %}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p><strong>Total seleccionado:</strong> <span id="total_materiales_seleccionados">$0</span></p>
+                    <button class="btn btn-verde" type="submit">Agregar materiales seleccionados</button>
+                </form>
+            </div>
+            {% endif %}
 
             <!-- AGREGAR CONCEPTO -->
 
@@ -1147,6 +1204,40 @@ campoTipo.addEventListener("change", function() {
 
 controlarCatalogo();
 actualizarEtiquetas();
+
+const selectorTodosMateriales = document.getElementById("seleccionar_materiales");
+const materialesPendientes = Array.from(
+    document.querySelectorAll(".material-pendiente")
+);
+const totalMaterialesSeleccionados = document.getElementById(
+    "total_materiales_seleccionados"
+);
+
+function actualizarTotalMateriales() {
+    if (!totalMaterialesSeleccionados) return;
+    const total = materialesPendientes.reduce(function(acumulado, campo) {
+        if (!campo.checked) return acumulado;
+        const cantidad = Number(campo.dataset.cantidad || 0);
+        const valor = Number(campo.dataset.valor || 0);
+        return acumulado + cantidad * valor;
+    }, 0);
+    totalMaterialesSeleccionados.textContent = total.toLocaleString(
+        "es-CO",
+        {style: "currency", currency: "COP", maximumFractionDigits: 0}
+    );
+}
+
+if (selectorTodosMateriales) {
+    selectorTodosMateriales.addEventListener("change", function() {
+        materialesPendientes.forEach(function(campo) {
+            campo.checked = selectorTodosMateriales.checked;
+        });
+        actualizarTotalMateriales();
+    });
+}
+materialesPendientes.forEach(function(campo) {
+    campo.addEventListener("change", actualizarTotalMateriales);
+});
 </script>
 </body>
 </html>
