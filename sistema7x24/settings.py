@@ -193,3 +193,13 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 # ===============================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===============================
+# ASISTENTE DE REDACCIÓN CON IA
+# ===============================
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
+OPENAI_TIMEOUT = int(os.environ.get("OPENAI_TIMEOUT", "30"))
+OPENAI_MAX_OUTPUT_TOKENS = int(os.environ.get("OPENAI_MAX_OUTPUT_TOKENS", "1800"))
+OPENAI_MAX_REQUESTS_HOUR = int(os.environ.get("OPENAI_MAX_REQUESTS_HOUR", "20"))

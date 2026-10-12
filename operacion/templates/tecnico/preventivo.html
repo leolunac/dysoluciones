@@ -461,6 +461,12 @@ textarea{
 
             </div>
 
+            <button type="button" class="btn" data-ia-revisar
+                data-ia-contexto="revisión general de mantenimiento preventivo"
+                style="border:0;background:#6842a8;">
+                ✨ Revisar redacción con IA
+            </button>
+
             <button
                 type="submit"
                 class="btn"
@@ -581,6 +587,12 @@ textarea{
                 {{ form_equipo.observaciones.errors }}
 
             </div>
+
+            <button type="button" class="btn" data-ia-revisar
+                data-ia-contexto="medición de equipo en mantenimiento preventivo"
+                style="border:0;background:#6842a8;">
+                ✨ Revisar redacción con IA
+            </button>
 
             <button
                 type="submit"
@@ -723,6 +735,12 @@ textarea{
                 {{ form_componente.observaciones.errors }}
 
             </div>
+
+            <button type="button" class="btn" data-ia-revisar
+                data-ia-contexto="revisión de componente hidráulico"
+                style="border:0;background:#6842a8;">
+                ✨ Revisar redacción con IA
+            </button>
 
             <button
                 type="submit"
@@ -873,6 +891,12 @@ textarea{
 
             </div>
 
+            <button type="button" class="btn" data-ia-revisar
+                data-ia-contexto="revisión de tanque hidroneumático"
+                style="border:0;background:#6842a8;">
+                ✨ Revisar redacción con IA
+            </button>
+
             <button
                 type="submit"
                 class="btn"
@@ -1012,5 +1036,11 @@ window.SIGOB_OFFLINE_PREVENTIVO = {
 };
 </script>
 <script src="{% static 'operacion/offline_preventivo.js' %}?v=12"></script>
+<script>
+window.SIGOB_IA_REDACCION = {
+    url: "{% url 'revisar_redaccion_ia' %}"
+};
+</script>
+<script src="{% static 'operacion/ia_redaccion.js' %}"></script>
 </body>
 </html>

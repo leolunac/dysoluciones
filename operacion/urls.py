@@ -52,10 +52,17 @@ from .views import (
     historial_preventivos,
     detalle_preventivo,
     preventivo_pdf,
+    revisar_redaccion_ia,
 )
 
 
 urlpatterns = [
+
+    path(
+        "ia/revisar-redaccion/",
+        revisar_redaccion_ia,
+        name="revisar_redaccion_ia",
+    ),
 
     # TABLERO DE LAVADOS
     path("lavados/", tablero_lavados, name="tablero_lavados"),

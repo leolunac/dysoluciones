@@ -4,6 +4,7 @@ from .sectores import filtrar_sector, sectores_en
 from django.db import transaction
 from .historial_bitacora import capturar_campos, registrar_edicion
 import csv
+import json
 import os
 import uuid
 from functools import wraps
@@ -14,6 +15,7 @@ import openpyxl
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Prefetch, Sum, Q
@@ -81,6 +83,7 @@ from .informes_tecnicos import (
     puede_revisar_preventivos,
 )
 from .lavados import registrar_ejecucion_lavado
+from .ia_redaccion import ErrorRevisionIA, revisar_redaccion
 from django.views.decorators.http import require_GET, require_http_methods
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
@@ -120,6 +123,52 @@ def csrf_formulario_o_sincronizacion(view_func):
         return csrf_protect(view_func)(request, *args, **kwargs)
 
     return wrapper
+
+
+@login_required
+@require_http_methods(["POST"])
+def revisar_redaccion_ia(request):
+    tecnico = Tecnico.objects.filter(user=request.user, activo=True).exists()
+    if not tecnico and not es_coordinador_operativo(request.user):
+        return JsonResponse(
+            {"ok": False, "mensaje": "No está autorizado para usar esta función."},
+            status=403,
+        )
+
+    periodo = timezone.now().strftime("%Y%m%d%H")
+    clave_limite = f"ia-redaccion:{request.user.pk}:{periodo}"
+    if cache.add(clave_limite, 1, timeout=3700):
+        usos = 1
+    else:
+        usos = cache.incr(clave_limite)
+    if usos > getattr(settings, "OPENAI_MAX_REQUESTS_HOUR", 20):
+        return JsonResponse(
+            {
+                "ok": False,
+                "mensaje": (
+                    "Alcanzó el límite temporal de revisiones. "
+                    "Puede continuar guardando el informe normalmente."
+                ),
+            },
+            status=429,
+        )
+
+    try:
+        datos = json.loads(request.body or b"{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return JsonResponse(
+            {"ok": False, "mensaje": "La solicitud no contiene datos válidos."},
+            status=400,
+        )
+
+    campos = datos.get("campos")
+    contexto = str(datos.get("contexto") or "informe técnico")
+    try:
+        corregidos = revisar_redaccion(campos, contexto=contexto)
+    except ErrorRevisionIA as exc:
+        return JsonResponse({"ok": False, "mensaje": str(exc)}, status=503)
+
+    return JsonResponse({"ok": True, "campos": corregidos})
 
 
 def es_usuario_gestion_comercial(user):

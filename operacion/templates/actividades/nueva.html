@@ -307,6 +307,20 @@
                     {{ form.labor_realizada }}
                 </div>
             </div>
+
+            <div style="margin-top:16px;">
+                <button
+                    type="button"
+                    data-ia-revisar
+                    data-ia-contexto="informe correctivo"
+                    data-ia-selectores="#id_diagnostico,#id_labor_realizada,#id_observaciones"
+                    style="border:0;border-radius:9px;padding:10px 15px;background:#6842a8;color:white;font-weight:700;cursor:pointer;">
+                    ✨ Revisar redacción con IA
+                </button>
+                <div style="font-size:11px;color:#64748b;margin-top:6px;">
+                    La propuesta no se guardará ni enviará hasta que usted la acepte.
+                </div>
+            </div>
         </section>
 
         <section style="
@@ -1121,5 +1135,11 @@ window.SIGOB_OFFLINE_ACTIVIDAD = {
 </script>
 <script src="{% static 'operacion/offline_actividad.js' %}"></script>
 {% endif %}
+<script>
+window.SIGOB_IA_REDACCION = {
+    url: "{% url 'revisar_redaccion_ia' %}"
+};
+</script>
+<script src="{% static 'operacion/ia_redaccion.js' %}"></script>
 
 {% endblock %}
