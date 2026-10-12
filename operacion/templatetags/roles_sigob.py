@@ -20,6 +20,8 @@ def rol_menu_sigob(user):
     if not user or not user.is_authenticated:
         return "ANONIMO"
 
+    grupos = set(user.groups.values_list("name", flat=True))
+
     if user.is_superuser:
         return "ADMIN"
 
