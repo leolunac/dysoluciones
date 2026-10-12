@@ -124,6 +124,36 @@ class MaterialesLiquidacionTests(TestCase):
             1,
         )
 
+    def test_segundo_envio_a_revision_informa_que_ya_fue_enviada(self):
+        DetalleLiquidacion.objects.create(
+            liquidacion=self.liquidacion,
+            tipo="MANO_OBRA",
+            descripcion="Mano de obra de prueba",
+            cantidad=Decimal("1.00"),
+            valor_unitario=Decimal("10000.00"),
+        )
+        url = reverse(
+            "gestion_comercial:enviar_revision",
+            args=[self.liquidacion.pk],
+        )
+
+        primera_respuesta = self.client.post(url, follow=True)
+        self.assertContains(
+            primera_respuesta,
+            "La liquidación fue enviada a revisión.",
+        )
+        self.liquidacion.refresh_from_db()
+        self.assertEqual(self.liquidacion.estado, "REVISION")
+
+        segunda_respuesta = self.client.post(url, follow=True)
+        self.assertEqual(segunda_respuesta.status_code, 200)
+        self.assertContains(
+            segunda_respuesta,
+            "Esta liquidación ya fue enviada a revisión.",
+        )
+        self.liquidacion.refresh_from_db()
+        self.assertEqual(self.liquidacion.estado, "REVISION")
+
     def test_rechaza_material_de_otra_unidad(self):
         revision_ajena = self._crear_revision(
             self.otro_cliente,

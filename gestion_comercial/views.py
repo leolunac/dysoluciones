@@ -1,4 +1,5 @@
 from pathlib import Path
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
@@ -356,7 +357,29 @@ def enviar_revision(request, liquidacion_id):
         raise PermissionDenied
 
     if liquidacion.estado not in ["BORRADOR", "DEVUELTA"]:
-        raise PermissionDenied
+        mensajes_estado = {
+            "REVISION": "Esta liquidación ya fue enviada a revisión.",
+            "APROBADA": "Esta liquidación ya fue aprobada.",
+            "LISTA_FACTURAR": (
+                "Esta liquidación ya fue aprobada y está lista para facturar."
+            ),
+            "FACTURADA": (
+                f"Esta liquidación ya fue facturada con el número "
+                f"{liquidacion.numero_factura or 'registrado'}."
+            ),
+            "ANULADA": "Esta liquidación está anulada y no puede enviarse.",
+        }
+        messages.info(
+            request,
+            mensajes_estado.get(
+                liquidacion.estado,
+                "Esta liquidación ya no está disponible para enviarla a revisión.",
+            ),
+        )
+        return redirect(
+            "gestion_comercial:editar_liquidacion",
+            liquidacion_id=liquidacion.id,
+        )
 
     if request.method == "POST" and liquidacion.detalles.exists():
         liquidacion.estado = "REVISION"
@@ -366,8 +389,17 @@ def enviar_revision(request, liquidacion_id):
                 "fecha_actualizacion",
             ]
         )
+        messages.success(request, "La liquidación fue enviada a revisión.")
+    elif request.method == "POST":
+        messages.error(
+            request,
+            "La liquidación debe tener al menos un concepto antes de enviarse.",
+        )
 
-    return redirect("gestion_comercial:panel")
+    return redirect(
+        "gestion_comercial:editar_liquidacion",
+        liquidacion_id=liquidacion.id,
+    )
 
 
 @login_required
