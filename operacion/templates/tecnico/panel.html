@@ -466,6 +466,53 @@
         {% endfor %}
 
     </section>
+
+    {% if servicios_realizados %}
+    <h2 class="section-title" id="servicios-realizados">Servicios realizados recientemente</h2>
+
+    <section class="services">
+        {% for servicio in servicios_realizados %}
+        <article class="service-card">
+            <div class="service-top">
+                <div>
+                    <div class="service-title">
+                        {{ servicio.cliente.nombre }} <small>· Sector: {{ servicio.sector.nombre|default:"Sin sector / por identificar" }}</small>
+                    </div>
+                    <div class="service-meta">
+                        Caso: {{ servicio.numero_caso|default:servicio.id }}
+                    </div>
+                    <div class="service-meta">
+                        Tipo: {{ servicio.get_tipo_servicio_display }}
+                    </div>
+                </div>
+                <span class="badge badge-atendida">
+                    {{ servicio.get_estado_display }}
+                </span>
+            </div>
+
+            <div class="service-meta" style="margin-top:12px;">
+                <strong>Falla / solicitud:</strong><br>
+                {{ servicio.descripcion_falla }}
+            </div>
+
+            {% with informe=servicio.informes_enviados.0 %}
+            <div class="service-actions">
+                {% if informe %}
+                <a
+                    class="btn btn-secondary"
+                    href="{% url 'comprobante_actividad' informe.id %}">
+                    Ver informe {{ informe.numero_informe }}
+                </a>
+                {% else %}
+                <span class="service-meta">Sin informe técnico disponible.</span>
+                {% endif %}
+            </div>
+            {% endwith %}
+        </article>
+        {% endfor %}
+    </section>
+    {% endif %}
+
     <h2 class="section-title" id="preventivos-programados">Mis mantenimientos preventivos programados</h2>
 
 <section class="services">

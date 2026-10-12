@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Prefetch, Sum, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -346,8 +346,24 @@ def panel_tecnico(request):
         .order_by("-fecha_llamada")
     )
 
-    servicios_activos = servicios.exclude(
-        estado="CERRADA"
+    servicios_activos = servicios.filter(
+        estado__in=["PENDIENTE", "EN_PROCESO"]
+    )
+
+    servicios_realizados = (
+        servicios
+        .filter(estado__in=["ATENDIDA", "CERRADA"])
+        .prefetch_related(
+            Prefetch(
+                "actividades_tecnicas",
+                queryset=(
+                    ActividadTecnico.objects
+                    .filter(enviado_en__isnull=False)
+                    .order_by("-enviado_en", "-id")
+                ),
+                to_attr="informes_enviados",
+            )
+        )[:10]
     )
 
     actividades_hoy = ActividadTecnico.objects.filter(
@@ -387,7 +403,8 @@ def panel_tecnico(request):
 
     context = {
         "tecnico": tecnico,
-        "servicios": servicios[:20],
+        "servicios": servicios_activos[:20],
+        "servicios_realizados": servicios_realizados,
         "pendientes": pendientes,
         "en_proceso": en_proceso,
         "atendidos": atendidos,
