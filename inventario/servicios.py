@@ -44,6 +44,7 @@ def registrar_movimiento(
     clave_idempotencia=None,
     precio_referencia=None,
     costo_neto=None,
+    fecha_operacion=None,
 ):
     cantidad = Decimal(cantidad)
     if cantidad <= 0:
@@ -95,6 +96,7 @@ def registrar_movimiento(
             observaciones=observaciones,
             registrado_por=usuario,
             clave_idempotencia=clave_idempotencia,
+            fecha_operacion=fecha_operacion or timezone.now(),
         )
         return movimiento, True
 
@@ -234,6 +236,7 @@ def confirmar_consumo(consumo_id, usuario):
                 usuario=usuario,
                 clave_idempotencia=f"CONSUMO:{consumo.pk}:{detalle.pk}",
                 precio_referencia=detalle.precio_referencia_snapshot,
+                fecha_operacion=consumo.fecha,
             )
 
         consumo.estado = "CONFIRMADO"

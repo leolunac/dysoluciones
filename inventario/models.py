@@ -218,10 +218,11 @@ class MovimientoInventario(models.Model):
         blank=True,
         related_name="movimientos_inventario_registrados",
     )
+    fecha_operacion = models.DateTimeField(default=timezone.now, db_index=True)
     creado = models.DateTimeField(default=timezone.now, db_index=True)
 
     class Meta:
-        ordering = ["-creado", "-id"]
+        ordering = ["-fecha_operacion", "-id"]
 
     def clean(self):
         if self.cantidad < 0 or (

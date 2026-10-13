@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -8,6 +8,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from openpyxl import load_workbook
 
 from operacion.models import (
@@ -148,6 +149,34 @@ class ServiciosInventarioTest(InventarioBaseTest):
         self.assertEqual(movimiento.cliente, self.cliente)
         self.assertEqual(movimiento.precio_referencia_snapshot, Decimal("10000.00"))
 
+    def test_consumo_manual_conserva_fecha_operativa_indicada(self):
+        fijar_saldo_inicial(
+            producto=self.producto,
+            cantidad=Decimal("5.00"),
+            precio_referencia=Decimal("10000.00"),
+            unidad_medida="UNID",
+            usuario=self.usuario,
+            origen="fecha-operativa.sql",
+        )
+        fecha = timezone.make_aware(datetime(2026, 10, 9, 11, 30))
+        consumo = ConsumoInventario.objects.create(
+            cliente=self.cliente,
+            ubicacion_origen=self.bodega,
+            fecha=fecha,
+            creado_por=self.usuario,
+        )
+        DetalleConsumoInventario.objects.create(
+            consumo=consumo,
+            producto=self.producto,
+            cantidad=Decimal("1.00"),
+        )
+
+        confirmar_consumo(consumo.pk, self.usuario)
+
+        movimiento = MovimientoInventario.objects.get(tipo="CONSUMO")
+        self.assertEqual(movimiento.fecha_operacion, fecha)
+        self.assertGreaterEqual(movimiento.creado, fecha)
+
     def test_consumo_no_permite_stock_negativo(self):
         consumo = ConsumoInventario.objects.create(
             cliente=self.cliente,
@@ -207,6 +236,31 @@ class ReporteConsumosTest(InventarioBaseTest):
         self.client.force_login(otro)
         respuesta = self.client.get(reverse("inventario:exportar_consumos"))
         self.assertEqual(respuesta.status_code, 403)
+
+    def test_excel_filtra_por_fecha_operativa_y_no_por_fecha_de_registro(self):
+        fecha_operacion = timezone.make_aware(datetime(2026, 10, 9, 12, 5))
+        movimiento = MovimientoInventario.objects.create(
+            producto=self.producto,
+            tipo="CONSUMO",
+            cantidad=Decimal("1.00"),
+            origen=self.bodega,
+            cliente=self.cliente,
+            fecha_operacion=fecha_operacion,
+            registrado_por=self.usuario,
+        )
+        movimiento.creado = timezone.make_aware(datetime(2026, 10, 13, 17, 5))
+        movimiento.save(update_fields=["creado"])
+        self.client.force_login(self.usuario)
+
+        respuesta = self.client.get(
+            reverse("inventario:exportar_consumos"),
+            {"fecha_desde": "2026-10-09", "fecha_hasta": "2026-10-09"},
+        )
+
+        libro = load_workbook(BytesIO(respuesta.content), data_only=True)
+        hoja = libro["Consumos"]
+        self.assertEqual(hoja["A2"].value, "2026-10-09 12:05")
+        self.assertEqual(hoja["B2"].value, "UNIDAD PRUEBA")
 
 
 class FormulariosInventarioTest(InventarioBaseTest):
@@ -646,3 +700,7 @@ class IntegracionOperacionTest(InventarioBaseTest):
         consumo = MovimientoInventario.objects.get(tipo="CONSUMO")
         self.assertEqual(consumo.cliente, self.cliente)
         self.assertEqual(consumo.cantidad, Decimal("3.00"))
+        self.assertEqual(
+            timezone.localtime(consumo.fecha_operacion).date(),
+            actividad.fecha,
+        )

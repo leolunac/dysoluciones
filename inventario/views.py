@@ -79,7 +79,7 @@ def tablero(request):
     desde_estadisticas = timezone.now() - timedelta(days=30)
     consumos_periodo = MovimientoInventario.objects.filter(
         tipo="CONSUMO",
-        creado__gte=desde_estadisticas,
+        fecha_operacion__gte=desde_estadisticas,
     )
     productos_mas_usados = (
         consumos_periodo.values(
@@ -442,12 +442,12 @@ def exportar_consumos_excel(request):
     movimientos = (
         MovimientoInventario.objects.filter(tipo="CONSUMO")
         .select_related("cliente", "producto__accesorio")
-        .order_by("creado", "id")
+        .order_by("fecha_operacion", "id")
     )
     if fecha_desde:
-        movimientos = movimientos.filter(creado__date__gte=fecha_desde)
+        movimientos = movimientos.filter(fecha_operacion__date__gte=fecha_desde)
     if fecha_hasta:
-        movimientos = movimientos.filter(creado__date__lte=fecha_hasta)
+        movimientos = movimientos.filter(fecha_operacion__date__lte=fecha_hasta)
 
     libro = Workbook()
     hoja = libro.active
@@ -472,7 +472,9 @@ def exportar_consumos_excel(request):
         total_general += total
         hoja.append(
             [
-                timezone.localtime(movimiento.creado).strftime("%Y-%m-%d %H:%M"),
+                timezone.localtime(movimiento.fecha_operacion).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
                 movimiento.cliente.nombre if movimiento.cliente_id else "",
                 movimiento.producto.accesorio.codigo,
                 movimiento.producto.accesorio.descripcion,

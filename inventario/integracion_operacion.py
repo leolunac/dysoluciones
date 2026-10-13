@@ -1,9 +1,11 @@
 from collections import defaultdict
+from datetime import datetime, time
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
+from django.utils import timezone
 
 from .models import MovimientoInventario, ProductoInventario, UbicacionInventario
 from .servicios import obtener_bodega_principal, registrar_movimiento
@@ -28,6 +30,15 @@ def _producto_para_accesorio(accesorio):
         accesorio=accesorio,
         activo=True,
     ).first()
+
+
+def _fecha_operacion_actividad(actividad):
+    """Conserva como fecha operativa la fecha informada por el técnico."""
+    hora = actividad.hora_salida or actividad.hora_llegada or time(hour=12)
+    valor = datetime.combine(actividad.fecha, hora)
+    if timezone.is_naive(valor) and timezone.is_aware(timezone.now()):
+        valor = timezone.make_aware(valor, timezone.get_current_timezone())
+    return valor
 
 
 @transaction.atomic
@@ -107,6 +118,7 @@ def registrar_consumo_actividad(uso, usuario):
         observaciones=uso.observacion,
         usuario=usuario,
         clave_idempotencia=f"ACTIVIDAD_CONSUMO:{uso.pk}",
+        fecha_operacion=_fecha_operacion_actividad(uso.actividad),
     )
 
 
