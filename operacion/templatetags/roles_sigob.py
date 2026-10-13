@@ -16,11 +16,18 @@ def acceso_inventario_sigob(user):
 
 
 @register.simple_tag
+def acceso_gestion_humana_sigob(user):
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+    return user.is_superuser or user.groups.filter(
+        name__in=["GESTION_ADMINISTRATIVA", "GESTION_GERENCIA", "GESTION_HUMANA"],
+    ).exists()
+
+
+@register.simple_tag
 def rol_menu_sigob(user):
     if not user or not user.is_authenticated:
         return "ANONIMO"
-
-    grupos = set(user.groups.values_list("name", flat=True))
 
     if user.is_superuser:
         return "ADMIN"
@@ -32,6 +39,8 @@ def rol_menu_sigob(user):
         return "SUPERVISOR"
     if "GESTION_GERENCIA" in grupos:
         return "GERENCIA"
+    if grupos & {"GESTION_ADMINISTRATIVA", "GESTION_HUMANA"}:
+        return "ADMINISTRATIVA"
     if grupos & {"GESTION_FACTURACION", "GESTION_AUXILIAR"}:
         return "COMERCIAL"
     if Tecnico.objects.filter(user_id=user.pk, activo=True).exists():

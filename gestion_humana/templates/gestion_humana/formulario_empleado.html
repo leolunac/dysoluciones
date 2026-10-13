@@ -1,0 +1,13 @@
+{% extends "gestion_humana/base.html" %}
+
+{% block gestion_humana_content %}
+<section class="gh-hero"><div><h1>{% if empleado %}Editar empleado{% else %}Nuevo empleado{% endif %}</h1><p>La información y los archivos de esta ficha son privados.</p></div><a class="gh-btn secondary" href="{% if empleado %}{% url 'gestion_humana:detalle' empleado.id %}{% else %}{% url 'gestion_humana:panel' %}{% endif %}">Volver</a></section>
+<form method="post" enctype="multipart/form-data" class="gh-card">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="gh-errors">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="gh-form-grid">
+  {% for field in form %}<div class="gh-field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% if field.help_text %}<div class="gh-muted">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="gh-errors">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
+  </div>
+  <div style="margin-top:18px"><button class="gh-btn success" type="submit">Guardar empleado</button></div>
+</form>
+{% endblock %}

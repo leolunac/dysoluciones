@@ -150,6 +150,7 @@ body{
         <a href="/gerencia/">📊 Dashboard</a>
         <a href="{% url 'lista_bitacora' %}">📋 Bitácora operativa</a>
         <a href="{% url 'lista_actividades' %}">🧾 Informes y consumos</a>
+        <a href="{% url 'gestion_humana:panel' %}">👥 Gestión humana</a>
 
     {% elif rol_menu == "COMERCIAL" %}
 
@@ -157,6 +158,10 @@ body{
         <a href="{% url 'gestion_comercial:panel' %}">💼 Gestión comercial</a>
         <a href="{% url 'gestion_comercial:lista_cotizaciones' %}">📄 Cotizaciones</a>
         <a href="{% url 'lista_actividades' %}">🧾 Informes y consumos</a>
+
+    {% elif rol_menu == "ADMINISTRATIVA" %}
+
+        <a href="{% url 'gestion_humana:panel' %}">👥 Gestión humana</a>
 
     {% elif rol_menu == "TECNICO" %}
 
@@ -171,6 +176,7 @@ body{
         <a href="{% url 'centro_operaciones' %}">🚨 Emergencias</a>
         <a href="{% url 'levantamiento_equipo' %}">🔧 Equipos</a>
         <a href="{% url 'tablero_lavados' %}">💧 Lavados</a>
+        <a href="{% url 'gestion_humana:panel' %}">👥 Gestión humana</a>
         <a href="/admin/">⚙ Administración</a>
 
     {% elif rol_menu == "CLIENTE" %}

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'operacion',
     'gestion_comercial',
     'inventario',
+    'gestion_humana',
 ]
 
 
@@ -176,6 +177,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Documentos laborales y fotografías: no se publican mediante MEDIA_URL.
+PRIVATE_MEDIA_ROOT = BASE_DIR / 'private_media'
 
 
 # ===============================

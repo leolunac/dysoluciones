@@ -1,5 +1,6 @@
 {% load static roles_sigob %}
 {% acceso_inventario_sigob request.user as acceso_inventario %}
+{% acceso_gestion_humana_sigob request.user as acceso_gestion_humana %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -222,6 +223,17 @@
     </section>
 
     <section class="modules">
+
+        {% if acceso_gestion_humana %}
+        <a href="{% url 'gestion_humana:panel' %}" class="module-card">
+            <div>
+                <div class="module-icon">👥</div>
+                <h3>Gestión humana</h3>
+                <p>Empleados, contratos, seguridad social, cursos, documentos y vencimientos.</p>
+            </div>
+            <div class="module-link">Ingresar a Gestión Humana →</div>
+        </a>
+        {% endif %}
 
         {% if acceso_inventario %}
         <a href="{% url 'inventario:tablero' %}" class="module-card">

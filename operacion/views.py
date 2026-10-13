@@ -220,6 +220,11 @@ def login_view(request):
                 return redirect("/gerencia/")
 
             if user.groups.filter(
+                name__in=["GESTION_ADMINISTRATIVA", "GESTION_HUMANA"]
+            ).exists():
+                return redirect("gestion_humana:panel")
+
+            if user.groups.filter(
                 name__in=["GESTION_COORDINADOR", "GESTION_SUPERVISOR"]
             ).exists():
                 return redirect("escritorio_coordinador")
@@ -267,6 +272,11 @@ def home(request):
         or request.user.groups.filter(name="GESTION_GERENCIA").exists()
     ):
         return redirect("/gerencia/")
+
+    if request.user.groups.filter(
+        name__in=["GESTION_ADMINISTRATIVA", "GESTION_HUMANA"]
+    ).exists():
+        return redirect("gestion_humana:panel")
 
     if request.user.groups.filter(
         name__in=["GESTION_COORDINADOR", "GESTION_SUPERVISOR"]
