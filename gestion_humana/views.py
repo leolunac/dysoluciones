@@ -120,11 +120,13 @@ def crear_empleado(request):
     inicial = None
     if request.method == "GET":
         tecnico_id = request.GET.get("tecnico", "").strip()
-        tecnico = Tecnico.objects.filter(
-            pk=tecnico_id,
-            activo=True,
-            ficha_empleado__isnull=True,
-        ).first()
+        tecnico = None
+        if tecnico_id:
+            tecnico = Tecnico.objects.filter(
+                pk=tecnico_id,
+                activo=True,
+                ficha_empleado__isnull=True,
+            ).first()
         if tecnico:
             inicial = {
                 "tipo_empleado": "TECNICO",

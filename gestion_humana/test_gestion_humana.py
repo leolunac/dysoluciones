@@ -91,6 +91,13 @@ class GestionHumanaTests(TestCase):
         self.assertEqual(respuesta.context["form"].initial["tipo_empleado"], "TECNICO")
         self.assertEqual(respuesta.context["form"].initial["tecnico"], tecnico)
 
+    def test_nuevo_empleado_sin_tecnico_abre_formulario(self):
+        self.client.force_login(self.administrativa)
+        respuesta = self.client.get(reverse("gestion_humana:crear"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.context["form"].initial, {})
+
     def test_empleado_tecnico_exige_perfil_existente(self):
         self.client.force_login(self.administrativa)
         respuesta = self.client.post(
