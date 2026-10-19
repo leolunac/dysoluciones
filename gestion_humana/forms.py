@@ -40,6 +40,7 @@ class EmpleadoForm(forms.ModelForm):
             "fecha_nacimiento": FechaInput(),
             "fecha_ingreso": FechaInput(),
             "fecha_retiro": FechaInput(),
+            "foto": forms.FileInput(),
             "observaciones": forms.Textarea(attrs={"rows": 3}),
         }
 

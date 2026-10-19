@@ -164,6 +164,17 @@ class GestionHumanaTests(TestCase):
         self.client.force_login(self.no_autorizado)
         self.assertEqual(self.client.get(url).status_code, 403)
 
+    def test_editar_empleado_con_foto_privada_abre_formulario(self):
+        empleado = self.crear_empleado(foto="gestion_humana/empleado/foto.jpg")
+        self.client.force_login(self.administrativa)
+
+        respuesta = self.client.get(
+            reverse("gestion_humana:editar", args=[empleado.pk])
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Editar empleado")
+
     def test_menu_no_expone_gestion_humana_a_usuario_no_autorizado(self):
         self.client.force_login(self.no_autorizado)
         respuesta = self.client.get(reverse("gestion_humana:panel"))
