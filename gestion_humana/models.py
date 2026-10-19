@@ -24,6 +24,10 @@ def ruta_privada(instancia, nombre):
 
 
 class Empleado(models.Model):
+    TIPOS_EMPLEADO = [
+        ("TECNICO", "Técnico"),
+        ("ADMINISTRATIVO", "Administrativo"),
+    ]
     TIPOS_DOCUMENTO = [
         ("CC", "Cédula de ciudadanía"),
         ("CE", "Cédula de extranjería"),
@@ -42,6 +46,12 @@ class Empleado(models.Model):
         null=True,
         blank=True,
         related_name="ficha_empleado",
+    )
+    tipo_empleado = models.CharField(
+        max_length=20,
+        choices=TIPOS_EMPLEADO,
+        default="ADMINISTRATIVO",
+        db_index=True,
     )
     tipo_documento = models.CharField(max_length=5, choices=TIPOS_DOCUMENTO, default="CC")
     numero_documento = models.CharField(max_length=30, unique=True, db_index=True)
@@ -95,6 +105,14 @@ class Empleado(models.Model):
     def clean(self):
         super().clean()
         self.numero_documento = self.numero_documento.strip()
+        if self.tipo_empleado == "TECNICO" and not self.tecnico_id:
+            raise ValidationError(
+                {"tecnico": "Seleccione el perfil técnico existente de este empleado."}
+            )
+        if self.tipo_empleado == "ADMINISTRATIVO" and self.tecnico_id:
+            raise ValidationError(
+                {"tecnico": "Un empleado administrativo no debe tener perfil técnico."}
+            )
         if self.fecha_retiro and self.fecha_retiro < self.fecha_ingreso:
             raise ValidationError({"fecha_retiro": "No puede ser anterior al ingreso."})
 

@@ -8,6 +8,7 @@
   <div class="gh-form-grid">
   {% for field in form %}<div class="gh-field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% if field.help_text %}<div class="gh-muted">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="gh-errors">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
   </div>
+  <p class="gh-muted">Si selecciona Técnico, debe vincular el perfil que ya existe en el módulo operativo. Esta ficha no crea un técnico nuevo.</p>
   <div style="margin-top:18px"><button class="gh-btn success" type="submit">Guardar empleado</button></div>
 </form>
 {% endblock %}

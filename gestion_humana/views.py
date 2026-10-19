@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from operacion.models import Tecnico
+
 from .forms import (
     AfiliacionSeguridadSocialForm,
     CertificacionEmpleadoForm,
@@ -69,6 +71,7 @@ def panel(request):
     exigir_gestion_humana(request.user)
     busqueda = request.GET.get("q", "").strip()
     estado = request.GET.get("estado", "ACTIVO").strip()
+    tipo_empleado = request.GET.get("tipo_empleado", "").strip()
     empleados = Empleado.objects.select_related("tecnico").all()
     if busqueda:
         empleados = empleados.filter(
@@ -79,6 +82,8 @@ def panel(request):
         )
     if estado:
         empleados = empleados.filter(estado=estado)
+    if tipo_empleado:
+        empleados = empleados.filter(tipo_empleado=tipo_empleado)
     alertas = _alertas_vencimiento()
     return render(
         request,
@@ -87,7 +92,17 @@ def panel(request):
             "empleados": empleados,
             "busqueda": busqueda,
             "filtro_estado": estado,
+            "filtro_tipo_empleado": tipo_empleado,
             "total_activos": Empleado.objects.filter(estado="ACTIVO").count(),
+            "total_tecnicos": Empleado.objects.filter(
+                estado="ACTIVO", tipo_empleado="TECNICO"
+            ).count(),
+            "total_administrativos": Empleado.objects.filter(
+                estado="ACTIVO", tipo_empleado="ADMINISTRATIVO"
+            ).count(),
+            "tecnicos_sin_ficha": Tecnico.objects.filter(
+                activo=True, ficha_empleado__isnull=True
+            ).order_by("nombre"),
             "alertas": alertas,
             "total_proximos": sum(
                 conjunto.count()
@@ -102,7 +117,23 @@ def panel(request):
 @require_http_methods(["GET", "POST"])
 def crear_empleado(request):
     exigir_gestion_humana(request.user)
-    form = EmpleadoForm(request.POST or None, request.FILES or None)
+    inicial = None
+    if request.method == "GET":
+        tecnico_id = request.GET.get("tecnico", "").strip()
+        tecnico = Tecnico.objects.filter(
+            pk=tecnico_id,
+            activo=True,
+            ficha_empleado__isnull=True,
+        ).first()
+        if tecnico:
+            inicial = {
+                "tipo_empleado": "TECNICO",
+                "tecnico": tecnico,
+                "telefono": tecnico.telefono,
+                "cargo": "Técnico",
+                "area": "Operaciones",
+            }
+    form = EmpleadoForm(request.POST or None, request.FILES or None, initial=inicial)
     if request.method == "POST" and form.is_valid():
         empleado = form.save(commit=False)
         empleado.creado_por = request.user

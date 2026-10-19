@@ -8,25 +8,40 @@
 
 <section class="gh-grid gh-kpis">
   <div class="gh-card gh-kpi">Empleados activos<strong>{{ total_activos }}</strong></div>
+  <div class="gh-card gh-kpi">Técnicos activos<strong>{{ total_tecnicos }}</strong></div>
+  <div class="gh-card gh-kpi">Administrativos activos<strong>{{ total_administrativos }}</strong></div>
   <div class="gh-card gh-kpi gh-alert">Próximos a vencer (30 días)<strong>{{ total_proximos }}</strong></div>
   <div class="gh-card gh-kpi gh-alert gh-danger">Registros vencidos<strong>{{ alertas.vencidos }}</strong></div>
 </section>
 
 <section class="gh-card" style="margin-bottom:16px">
-  <form method="get" class="gh-form-grid" style="grid-template-columns:2fr 1fr auto">
+  <form method="get" class="gh-form-grid" style="grid-template-columns:2fr 1fr 1fr auto">
     <div class="gh-field"><label>Buscar</label><input name="q" value="{{ busqueda }}" placeholder="Nombre, documento o cargo"></div>
     <div class="gh-field"><label>Estado</label><select name="estado"><option value="">Todos</option><option value="ACTIVO" {% if filtro_estado == 'ACTIVO' %}selected{% endif %}>Activos</option><option value="INACTIVO" {% if filtro_estado == 'INACTIVO' %}selected{% endif %}>Inactivos</option><option value="RETIRADO" {% if filtro_estado == 'RETIRADO' %}selected{% endif %}>Retirados</option></select></div>
+    <div class="gh-field"><label>Tipo</label><select name="tipo_empleado"><option value="">Todos</option><option value="TECNICO" {% if filtro_tipo_empleado == 'TECNICO' %}selected{% endif %}>Técnicos</option><option value="ADMINISTRATIVO" {% if filtro_tipo_empleado == 'ADMINISTRATIVO' %}selected{% endif %}>Administrativos</option></select></div>
     <button class="gh-btn" type="submit">Buscar</button>
   </form>
 </section>
 
+{% if tecnicos_sin_ficha %}
+<section class="gh-card" style="margin-bottom:16px">
+  <h2 style="margin-top:0;color:#073b6f">Técnicos pendientes de ficha laboral</h2>
+  <p class="gh-muted">Estos técnicos ya existen en Operación. Complete su ficha sin volver a crearlos.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+  {% for tecnico in tecnicos_sin_ficha %}
+    <a class="gh-btn secondary" href="{% url 'gestion_humana:crear' %}?tecnico={{ tecnico.id }}">Completar ficha de {{ tecnico.nombre }}</a>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <section class="gh-card gh-table-wrap">
   <table class="gh-table">
-    <thead><tr><th>Empleado</th><th>Documento</th><th>Cargo / área</th><th>Ingreso</th><th>Estado</th><th></th></tr></thead>
+    <thead><tr><th>Empleado</th><th>Tipo</th><th>Documento</th><th>Cargo / área</th><th>Ingreso</th><th>Estado</th><th></th></tr></thead>
     <tbody>
     {% for empleado in empleados %}
-      <tr><td><strong>{{ empleado.nombre_completo }}</strong>{% if empleado.tecnico %}<div class="gh-muted">Vinculado con técnico</div>{% endif %}</td><td>{{ empleado.get_tipo_documento_display }}<br>{{ empleado.numero_documento }}</td><td>{{ empleado.cargo }}<div class="gh-muted">{{ empleado.area|default:"Sin área" }}</div></td><td>{{ empleado.fecha_ingreso|date:"d/m/Y" }}</td><td><span class="gh-badge {{ empleado.estado }}">{{ empleado.get_estado_display }}</span></td><td><a class="gh-btn secondary" href="{% url 'gestion_humana:detalle' empleado.id %}">Ver ficha</a></td></tr>
-    {% empty %}<tr><td colspan="6">No hay empleados que coincidan con la búsqueda.</td></tr>{% endfor %}
+      <tr><td><strong>{{ empleado.nombre_completo }}</strong>{% if empleado.tecnico %}<div class="gh-muted">Perfil: {{ empleado.tecnico.nombre }}</div>{% endif %}</td><td>{{ empleado.get_tipo_empleado_display }}</td><td>{{ empleado.get_tipo_documento_display }}<br>{{ empleado.numero_documento }}</td><td>{{ empleado.cargo }}<div class="gh-muted">{{ empleado.area|default:"Sin área" }}</div></td><td>{{ empleado.fecha_ingreso|date:"d/m/Y" }}</td><td><span class="gh-badge {{ empleado.estado }}">{{ empleado.get_estado_display }}</span></td><td><a class="gh-btn secondary" href="{% url 'gestion_humana:detalle' empleado.id %}">Ver ficha</a></td></tr>
+    {% empty %}<tr><td colspan="7">No hay empleados que coincidan con la búsqueda.</td></tr>{% endfor %}
     </tbody>
   </table>
 </section>

@@ -12,8 +12,15 @@ from .models import (
 
 @admin.register(Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
-    list_display = ("numero_documento", "nombre_completo", "cargo", "estado", "fecha_ingreso")
-    list_filter = ("estado", "area")
+    list_display = (
+        "numero_documento",
+        "nombre_completo",
+        "tipo_empleado",
+        "cargo",
+        "estado",
+        "fecha_ingreso",
+    )
+    list_filter = ("tipo_empleado", "estado", "area")
     search_fields = ("numero_documento", "nombres", "apellidos", "cargo")
     readonly_fields = ("creado", "actualizado")
 

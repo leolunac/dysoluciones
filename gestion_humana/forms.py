@@ -1,4 +1,7 @@
 from django import forms
+from django.db.models import Q
+
+from operacion.models import Tecnico
 
 from .models import (
     AfiliacionSeguridadSocial,
@@ -14,6 +17,22 @@ class FechaInput(forms.DateInput):
 
 
 class EmpleadoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tecnico_actual = self.instance.tecnico_id if self.instance.pk else None
+        disponibles = Tecnico.objects.filter(
+            Q(activo=True) | Q(pk=tecnico_actual)
+        ).filter(
+            Q(ficha_empleado__isnull=True) | Q(pk=tecnico_actual)
+        ).order_by("nombre")
+        self.fields["tecnico"].queryset = disponibles
+        self.fields["tecnico"].label = "Perfil técnico existente"
+        self.fields["tecnico"].help_text = (
+            "Obligatorio si el tipo de empleado es Técnico. "
+            "No crea otro técnico: vincula la ficha laboral con el registro existente."
+        )
+        self.fields["tipo_empleado"].label = "Tipo de empleado"
+
     class Meta:
         model = Empleado
         exclude = ["creado_por", "actualizado_por"]
