@@ -15,6 +15,9 @@ from .models import (
 class FechaInput(forms.DateInput):
     input_type = "date"
 
+    def __init__(self, attrs=None, format=None):
+        super().__init__(attrs=attrs, format=format or "%Y-%m-%d")
+
 
 class EmpleadoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

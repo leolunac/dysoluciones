@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
@@ -174,6 +174,22 @@ class GestionHumanaTests(TestCase):
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "Editar empleado")
+
+    def test_editar_empleado_muestra_fechas_en_formato_html(self):
+        empleado = self.crear_empleado(
+            fecha_nacimiento=date(1990, 5, 14),
+            fecha_ingreso=date(2023, 1, 24),
+            fecha_retiro=date(2026, 10, 19),
+        )
+        self.client.force_login(self.administrativa)
+
+        respuesta = self.client.get(
+            reverse("gestion_humana:editar", args=[empleado.pk])
+        )
+
+        self.assertContains(respuesta, 'value="1990-05-14"')
+        self.assertContains(respuesta, 'value="2023-01-24"')
+        self.assertContains(respuesta, 'value="2026-10-19"')
 
     def test_menu_no_expone_gestion_humana_a_usuario_no_autorizado(self):
         self.client.force_login(self.no_autorizado)
