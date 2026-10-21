@@ -432,6 +432,98 @@ def confirmar_consumo_vista(request, consumo_id):
 
 
 @login_required
+def exportar_existencias_excel(request):
+    exigir_consulta(request.user)
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    existencias = (
+        ExistenciaInventario.objects
+        .filter(ubicacion__tipo="BODEGA")
+        .select_related("producto__accesorio", "ubicacion")
+        .order_by("producto__accesorio__codigo", "ubicacion__nombre")
+    )
+
+    libro = Workbook()
+    hoja = libro.active
+    hoja.title = "Existencias"
+    encabezados = [
+        "Código",
+        "Descripción",
+        "Ubicación",
+        "U.M.",
+        "Existencia",
+        "Stock mínimo",
+        "Valor unitario",
+        "Valor total",
+        "Estado",
+    ]
+    hoja.append(encabezados)
+    for celda in hoja[1]:
+        celda.font = Font(bold=True, color="FFFFFF")
+        celda.fill = PatternFill("solid", fgColor="0B5FA5")
+        celda.alignment = Alignment(horizontal="center")
+
+    total_unidades = Decimal("0.00")
+    total_valorizado = Decimal("0.00")
+    for existencia in existencias.iterator():
+        cantidad = existencia.cantidad
+        stock_minimo = existencia.producto.stock_minimo
+        valor_unitario = existencia.producto.precio_referencia
+        valor_total = cantidad * valor_unitario
+        total_unidades += cantidad
+        total_valorizado += valor_total
+        if cantidad <= 0:
+            estado = "AGOTADO"
+        elif stock_minimo > 0 and cantidad <= stock_minimo:
+            estado = "BAJO MÍNIMO"
+        else:
+            estado = "DISPONIBLE"
+        hoja.append(
+            [
+                existencia.producto.accesorio.codigo,
+                existencia.producto.accesorio.descripcion,
+                existencia.ubicacion.nombre,
+                existencia.producto.unidad_medida,
+                float(cantidad),
+                float(stock_minimo),
+                float(valor_unitario),
+                float(valor_total),
+                estado,
+            ]
+        )
+
+    hoja.append(
+        ["", "TOTAL", "", "", float(total_unidades), "", "", float(total_valorizado), ""]
+    )
+    fila_total = hoja.max_row
+    for celda in hoja[fila_total]:
+        celda.font = Font(bold=True)
+
+    for fila in range(2, hoja.max_row + 1):
+        hoja.cell(fila, 5).number_format = "0.00"
+        hoja.cell(fila, 6).number_format = "0.00"
+        hoja.cell(fila, 7).number_format = '$#,##0.00'
+        hoja.cell(fila, 8).number_format = '$#,##0.00'
+
+    anchos = [14, 52, 24, 12, 14, 14, 18, 18, 16]
+    for indice, ancho in enumerate(anchos, start=1):
+        hoja.column_dimensions[get_column_letter(indice)].width = ancho
+    hoja.freeze_panes = "A2"
+    hoja.auto_filter.ref = f"A1:I{max(1, hoja.max_row - 1)}"
+
+    respuesta = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    respuesta["Content-Disposition"] = (
+        f'attachment; filename="existencias_{timezone.localdate().isoformat()}.xlsx"'
+    )
+    libro.save(respuesta)
+    return respuesta
+
+
+@login_required
 def exportar_consumos_excel(request):
     exigir_consulta(request.user)
     from openpyxl import Workbook

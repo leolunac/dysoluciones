@@ -194,6 +194,55 @@ class ServiciosInventarioTest(InventarioBaseTest):
         self.assertEqual(consumo.estado, "BORRADOR")
 
 
+class ReporteExistenciasTest(InventarioBaseTest):
+    def test_excel_conserva_cantidades_y_valores_como_numeros(self):
+        ExistenciaInventario.objects.create(
+            producto=self.producto,
+            ubicacion=self.bodega,
+            cantidad=Decimal("3.00"),
+        )
+        self.producto.stock_minimo = Decimal("2.00")
+        self.producto.save(update_fields=["stock_minimo"])
+        self.client.force_login(self.usuario)
+
+        respuesta = self.client.get(reverse("inventario:exportar_existencias"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn("existencias_", respuesta["Content-Disposition"])
+        libro = load_workbook(BytesIO(respuesta.content), data_only=True)
+        hoja = libro["Existencias"]
+        self.assertEqual(
+            [celda.value for celda in hoja[1]],
+            [
+                "Código",
+                "Descripción",
+                "Ubicación",
+                "U.M.",
+                "Existencia",
+                "Stock mínimo",
+                "Valor unitario",
+                "Valor total",
+                "Estado",
+            ],
+        )
+        self.assertEqual(hoja["A2"].value, "A001")
+        self.assertEqual(hoja["E2"].value, 3)
+        self.assertEqual(hoja["F2"].value, 2)
+        self.assertEqual(hoja["G2"].value, 10000)
+        self.assertEqual(hoja["H2"].value, 30000)
+        self.assertEqual(hoja["I2"].value, "DISPONIBLE")
+        self.assertEqual(hoja["E3"].value, 3)
+        self.assertEqual(hoja["H3"].value, 30000)
+
+    def test_usuario_sin_grupo_no_puede_exportar_existencias(self):
+        otro = User.objects.create_user("sin_inventario", password="segura")
+        self.client.force_login(otro)
+
+        respuesta = self.client.get(reverse("inventario:exportar_existencias"))
+
+        self.assertEqual(respuesta.status_code, 403)
+
+
 class ReporteConsumosTest(InventarioBaseTest):
     def test_excel_contiene_unidad_codigo_cantidad_y_valores(self):
         MovimientoInventario.objects.create(

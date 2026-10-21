@@ -16,6 +16,7 @@
 <body><main class="contenedor">
     <section class="cabecera"><div class="marca"><img class="logo" src="{% static 'img/logo_dys.png' %}" alt="Logo D&S"><div><div class="empresa">SIGOB 7x24 · D&amp;S Soluciones en Bombeo S.A.S.</div><h1>Inventario y consumos</h1><p>Control de existencias, compras, movimientos y valorización.</p></div></div><div class="acciones">
         {% if puede_gestionar %}<a class="btn verde" href="{% url 'inventario:nueva_entrada' %}">Nueva entrada</a><a class="btn rojo" href="{% url 'inventario:nuevo_consumo' %}">Nuevo consumo</a><a class="btn" href="{% url 'inventario:lista_productos' %}">Accesorios</a>{% endif %}
+        <a class="btn verde" href="{% url 'inventario:exportar_existencias' %}">Exportar existencias</a>
         <a class="btn gris" href="{% url 'home' %}">Volver</a>
     </div></section>
     {% if messages %}<div class="mensajes">{% for message in messages %}<div class="mensaje">{{ message }}</div>{% endfor %}</div>{% endif %}

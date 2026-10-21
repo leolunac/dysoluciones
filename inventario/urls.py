@@ -37,5 +37,10 @@ urlpatterns = [
         views.confirmar_consumo_vista,
         name="confirmar_consumo",
     ),
+    path(
+        "reportes/existencias.xlsx",
+        views.exportar_existencias_excel,
+        name="exportar_existencias",
+    ),
     path("reportes/consumos.xlsx", views.exportar_consumos_excel, name="exportar_consumos"),
 ]
