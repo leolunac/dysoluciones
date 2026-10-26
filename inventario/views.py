@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.http import HttpResponse, JsonResponse
@@ -53,13 +54,15 @@ def tablero(request):
                 output_field=DecimalField(max_digits=20, decimal_places=2),
             )
         )
-        .order_by("producto__accesorio__descripcion")
+        .order_by("producto__accesorio__descripcion", "pk")
     )
     if buscar:
         existencias = existencias.filter(
             Q(producto__accesorio__codigo__icontains=buscar)
             | Q(producto__accesorio__descripcion__icontains=buscar)
         )
+
+    pagina = Paginator(existencias, 50).get_page(request.GET.get("page"))
 
     valor = ExpressionWrapper(
         F("cantidad") * F("producto__precio_referencia"),
@@ -100,7 +103,8 @@ def tablero(request):
         request,
         "inventario/tablero.html",
         {
-            "existencias": existencias[:300],
+            "existencias": pagina,
+            "pagina": pagina,
             "buscar": buscar,
             "total_unidades": resumen["unidades"] or Decimal("0.00"),
             "valor_inventario": resumen["valorizado"] or Decimal("0.00"),

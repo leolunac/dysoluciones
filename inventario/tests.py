@@ -757,3 +757,37 @@ class IntegracionOperacionTest(InventarioBaseTest):
             timezone.localtime(consumo.fecha_operacion).date(),
             actividad.fecha,
         )
+
+
+class PaginacionTableroTest(InventarioBaseTest):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.usuario)
+        for numero in range(301):
+            accesorio = Accesorio.objects.create(
+                codigo=f"P{numero:03d}", descripcion=f"Producto prueba {numero:03d}", activo=True
+            )
+            producto = ProductoInventario.objects.create(accesorio=accesorio)
+            ExistenciaInventario.objects.create(
+                producto=producto, ubicacion=self.bodega, cantidad=Decimal("1.00")
+            )
+
+    def test_paginas_de_50_sin_limite_de_300(self):
+        url = reverse("inventario:tablero")
+        primera = self.client.get(url)
+        ultima = self.client.get(url, {"page": 7})
+        self.assertEqual(len(primera.context["existencias"]), 50)
+        self.assertEqual(primera.context["pagina"].paginator.count, 301)
+        self.assertEqual(len(ultima.context["existencias"]), 1)
+        self.assertContains(ultima, "P300")
+        self.assertLess(primera.content.find(b"Reporte de consumos"), primera.content.find(b"Existencias en bodega"))
+
+    def test_busqueda_se_conserva_y_pagina_invalida_es_segura(self):
+        url = reverse("inventario:tablero")
+        respuesta = self.client.get(url, {"buscar": "Producto prueba", "page": 2})
+        self.assertEqual(len(respuesta.context["existencias"]), 50)
+        self.assertContains(respuesta, "buscar=Producto%20prueba&amp;page=3", html=False)
+        invalida = self.client.get(url, {"page": "no-es-numero"})
+        self.assertEqual(invalida.context["pagina"].number, 1)
+        fuera_de_rango = self.client.get(url, {"page": 999})
+        self.assertEqual(fuera_de_rango.context["pagina"].number, 7)
