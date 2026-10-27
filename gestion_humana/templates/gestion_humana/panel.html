@@ -6,6 +6,7 @@
   <a class="gh-btn success" href="{% url 'gestion_humana:crear' %}">+ Nuevo empleado</a>
 </section>
 
+{% if puede_ver_desprendibles %}<p><a class="gh-btn secondary" href="{% url 'gestion_humana:desprendibles_administrar' %}">Desprendibles de pago</a></p>{% endif %}
 <section class="gh-grid gh-kpis">
   <div class="gh-card gh-kpi">Empleados activos<strong>{{ total_activos }}</strong></div>
   <div class="gh-card gh-kpi">Técnicos activos<strong>{{ total_tecnicos }}</strong></div>

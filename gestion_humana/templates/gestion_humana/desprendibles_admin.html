@@ -1,0 +1,6 @@
+{% extends 'gestion_humana/base.html' %}
+{% block gestion_humana_content %}
+<section class="gh-hero"><div><h1>Desprendibles de pago</h1><p>Gestión Humana · carga individual de PDF</p></div><a class="gh-btn secondary" href="{% url 'gestion_humana:panel' %}">Volver</a></section>
+<section class="gh-card"><h2>Cargar desprendible</h2><p>Revise que el archivo corresponda al técnico seleccionado antes de guardarlo.</p><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="gh-btn" type="submit">Guardar PDF</button></form></section>
+<section class="gh-card"><h2>Desprendibles cargados</h2><table class="gh-table"><tr><th>Técnico</th><th>Período</th><th>Archivo</th></tr>{% for r in registros %}<tr><td>{{ r.empleado.nombre_completo }}</td><td>{{ r.periodo_inicio|date:'d/m/Y' }} – {{ r.periodo_fin|date:'d/m/Y' }}</td><td><a href="{% url 'gestion_humana:desprendibles_descargar' r.pk %}">Descargar</a><form method="post" action="{% url 'gestion_humana:desprendibles_retirar' r.pk %}" onsubmit="return confirm('¿Desea retirar este desprendible? El técnico dejará de verlo.');" style="display:inline;margin-left:10px">{% csrf_token %}<button type="submit">Retirar</button></form></td></tr>{% empty %}<tr><td colspan="3">Aún no hay desprendibles.</td></tr>{% endfor %}</table></section>
+{% endblock %}

@@ -90,6 +90,7 @@ def panel(request):
         "gestion_humana/panel.html",
         {
             "empleados": empleados,
+            "puede_ver_desprendibles": request.user.is_active and request.user.groups.filter(name="GESTION_HUMANA").exists(),
             "busqueda": busqueda,
             "filtro_estado": estado,
             "filtro_tipo_empleado": tipo_empleado,

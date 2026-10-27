@@ -318,3 +318,24 @@ class HistorialEmpleado(models.Model):
 
     def __str__(self):
         return f"{self.empleado} - {self.accion}"
+
+
+class DesprendiblePago(models.Model):
+    empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT, related_name='desprendibles')
+    periodo_inicio = models.DateField()
+    periodo_fin = models.DateField()
+    archivo = models.FileField(storage=almacenamiento_privado, upload_to=ruta_privada, validators=[FileExtensionValidator(['pdf']), validar_tamano_archivo])
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    creado = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+    retirado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='desprendibles_retirados')
+    retirado = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-periodo_fin', '-pk']
+        constraints = [models.UniqueConstraint(fields=['empleado', 'periodo_inicio', 'periodo_fin'], condition=models.Q(activo=True), name='desprendible_empleado_periodo_unico')]
+
+    def clean(self):
+        super().clean()
+        if self.periodo_inicio and self.periodo_fin and self.periodo_fin < self.periodo_inicio:
+            raise ValidationError({'periodo_fin': 'La fecha final no puede ser anterior a la inicial.'})
