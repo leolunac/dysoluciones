@@ -3,6 +3,7 @@ from django.db.models.functions import Coalesce, TruncDate
 from .sectores import filtrar_sector, sectores_en
 from django.db import transaction
 from .historial_bitacora import capturar_campos, registrar_edicion
+from .whatsapp_asignacion_prueba import programar_correctivo_prueba
 import csv
 import json
 import os
@@ -2622,6 +2623,8 @@ def nueva_llamada(request):
 
         if form.is_valid():
             servicio = form.save()
+            if servicio.tipo_servicio == "CORRECTIVO" and servicio.tecnico_id:
+                programar_correctivo_prueba(servicio)
 
             registrar_evento(
                 servicio,

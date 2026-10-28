@@ -21,6 +21,7 @@ from .models import (
     Tecnico,
 )
 from .permisos_bitacora import es_usuario_externo
+from .whatsapp_asignacion_prueba import programar_preventivo_prueba
 
 
 ESTADOS_CON_DETALLE = [
@@ -120,6 +121,7 @@ def programar_preventivo(request):
         programacion.estado = "PROGRAMADO"
         programacion.full_clean()
         programacion.save()
+        programar_preventivo_prueba(programacion)
         return redirect("bandeja_revision_preventivos")
     return render(
         request,
