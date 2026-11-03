@@ -20,6 +20,7 @@ class Cliente(models.Model):
     ]
 
     FRECUENCIA_LAVADO = [
+        (None, 'Sin lavado periódico'),
         (4, 'Cada 4 meses'),
         (6, 'Cada 6 meses'),
     ]
@@ -31,7 +32,14 @@ class Cliente(models.Model):
     administrador = models.CharField(max_length=200)
     email = models.EmailField()
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO)
-    frecuencia_lavado = models.IntegerField(choices=FRECUENCIA_LAVADO)
+    frecuencia_lavado = models.IntegerField(
+        choices=FRECUENCIA_LAVADO,
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Seleccione 4 o 6 meses solo si la unidad tiene lavado periódico. "
+                  "Sin lavado periódico permite registrar servicios ocasionales.",
+    )
     fecha_ultimo_lavado = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)
 
