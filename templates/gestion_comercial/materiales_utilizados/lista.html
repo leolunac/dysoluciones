@@ -74,12 +74,16 @@
                         <td><span class="estado">{% if consumo.revision_actual %}{{ consumo.revision_actual.get_estado_display }}{% else %}Pendiente de revisión{% endif %}</span>{% if consumo.revision_actual.detalle_liquidacion %}<br><strong>Liquidación #{{ consumo.revision_actual.detalle_liquidacion.liquidacion_id }}</strong>{% endif %}{% if consumo.revision_actual.observaciones %}<br>{{ consumo.revision_actual.observaciones }}{% endif %}</td>
                         {% if puede_clasificar %}
                         <td class="gestion">
+                            {% if consumo.revision_actual.detalle_liquidacion_id %}
+                            <span class="estado">Incluido en liquidación #{{ consumo.revision_actual.detalle_liquidacion.liquidacion_id }}</span>
+                            {% else %}
                             <form method="post" action="{% url 'gestion_comercial:clasificar_material_utilizado' consumo.id %}">
                                 {% csrf_token %}
                                 <select name="estado" required>{% for valor, nombre in estados %}<option value="{{ valor }}"{% if consumo.revision_actual.estado == valor %} selected{% endif %}>{{ nombre }}</option>{% endfor %}</select>
                                 <input name="observaciones" value="{{ consumo.revision_actual.observaciones|default:'' }}" placeholder="Observación comercial">
                                 <button class="btn btn-azul" type="submit">Guardar clasificación</button>
                             </form>
+                            {% endif %}
                         </td>
                         {% endif %}
                     </tr>
