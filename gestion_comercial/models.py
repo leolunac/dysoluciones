@@ -442,6 +442,10 @@ class TarifaOperativa(models.Model):
 # =========================================================
 
 class Cotizacion(models.Model):
+    es_prueba = models.BooleanField(
+        default=False, editable=False,
+        help_text="Cotización de prueba excluida de la gráfica del panel gerencial.",
+    )
 
     ORIGENES = [
         ("UNIDAD_NUEVA", "Unidad nueva"),

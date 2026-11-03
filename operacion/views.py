@@ -2925,6 +2925,7 @@ def dashboard(request):
 
     data_cotizaciones = [
         Cotizacion.objects.filter(
+            es_prueba=False,
             estado=estado
         ).count()
         for estado in estados_cotizaciones
