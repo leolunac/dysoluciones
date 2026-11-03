@@ -2748,13 +2748,14 @@ def dashboard(request):
     # INDICADORES OPERATIVOS 7X24
     # =====================================================
 
-    total_servicios = Emergencia.objects.count()
+    servicios_reales = Emergencia.objects.filter(es_prueba=False)
+    total_servicios = servicios_reales.count()
 
-    pendientes = Emergencia.objects.filter(
+    pendientes = servicios_reales.filter(
         estado="PENDIENTE"
     ).count()
 
-    atendidas = Emergencia.objects.filter(
+    atendidas = servicios_reales.filter(
         estado="ATENDIDA"
     ).count()
 
@@ -2762,19 +2763,19 @@ def dashboard(request):
         activo=True
     ).count()
 
-    emergencias = Emergencia.objects.filter(
+    emergencias = servicios_reales.filter(
         tipo_servicio="EMERGENCIA"
     ).count()
 
-    correctivos = Emergencia.objects.filter(
+    correctivos = servicios_reales.filter(
         tipo_servicio="CORRECTIVO"
     ).count()
 
-    garantias = Emergencia.objects.filter(
+    garantias = servicios_reales.filter(
         tipo_servicio="GARANTIA"
     ).count()
 
-    revisiones = Emergencia.objects.filter(
+    revisiones = servicios_reales.filter(
         tipo_servicio="REVISION"
     ).count()
         # =====================================================
@@ -2833,7 +2834,7 @@ def dashboard(request):
     ).replace(day=1)
 
     qs_servicios = (
-        Emergencia.objects
+        servicios_reales
         .filter(
             fecha_llamada__date__gte=inicio
         )

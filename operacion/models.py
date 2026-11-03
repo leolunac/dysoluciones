@@ -360,6 +360,10 @@ def validar_sector_cliente(registro):
 
 
 class Emergencia(models.Model):
+    es_prueba = models.BooleanField(
+        default=False, editable=False,
+        help_text="Registro de prueba excluido de los indicadores de servicios del panel gerencial.",
+    )
     sector = models.ForeignKey(SectorCliente, on_delete=models.PROTECT, null=True, blank=True, related_name="servicios")
 
     def clean(self):
