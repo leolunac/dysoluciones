@@ -284,6 +284,58 @@
             .hero-actions .btn{width:100%}
             .module-grid,.kpi-grid{grid-template-columns:1fr}
         }
+
+/* Panel empresarial: navegación por áreas y acciones rápidas. */
+:root{--primary:#103c55;--secondary:#14749c;--accent:#0d9c8c;--bg:#f3f6f9;--text:#193a4e;--muted:#617689;--border:#e0e8ee;--shadow:0 5px 20px rgba(15,49,72,.045)}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{background:radial-gradient(ellipse at 0 0,#e1f1f2 0,transparent 38%),#f3f6f9;font-size:15px}
+.page-shell{max-width:1400px;padding:28px 28px 36px}
+.hero{padding:30px 34px;border-radius:22px;background:linear-gradient(115deg,#102f46,#125b7c 75%,#147b91);box-shadow:0 12px 35px #103c5514;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;width:280px;height:280px;right:-120px;top:-170px;border:45px solid #ffffff06;border-radius:50%;pointer-events:none}
+.brand-logo{width:82px;height:82px;background:#ffffff16;border:1px solid #ffffff22;border-radius:18px}
+.hero-kicker{font-size:.65rem;letter-spacing:.18em;color:#9edbdc;font-weight:700}
+.hero h1{font-size:1.75rem;letter-spacing:-.035em;margin-top:7px;font-weight:650}
+.hero h1 span{display:block;font-size:.93rem;letter-spacing:.06em;color:#badde9;margin-top:7px}
+.hero p{font-size:.87rem;color:#d4e8ee;margin-top:10px}
+.hero-actions{max-width:420px;position:relative;z-index:1}
+.btn{border-radius:9px;min-height:42px;padding:10px 14px;font-size:.8rem}
+.btn-light{background:#ffffff10;border:1px solid #ffffff35;color:#fff;box-shadow:none}
+.btn-primary{background:#21b5a1;color:#fff}
+.btn:hover{filter:brightness(1.08)}
+.quick-actions{display:grid;grid-template-columns:180px repeat(3,minmax(0,1fr));gap:12px;align-items:center;padding:17px 20px;border:1px solid var(--border);background:#fff;border-radius:16px;margin-bottom:35px;box-shadow:var(--shadow)}
+.eyebrow{display:block;color:#638195;font-size:.64rem;letter-spacing:.16em;font-weight:750;margin-bottom:7px}
+.quick-title strong{font-size:.93rem;font-weight:650}
+.quick-link{min-height:50px;display:flex;align-items:center;gap:12px;border:1px solid #dfe9ef;border-radius:10px;text-decoration:none;padding:12px 14px;font-weight:650;font-size:.84rem;transition:background .15s,border-color .15s}
+.quick-link:first-of-type{background:#edf9f5;border-color:#c7e9de;color:#14795f}
+.quick-link:hover{background:#eef6fa;border-color:#a8c8da}
+.quick-link svg{width:21px;height:21px;flex-shrink:0}.quick-link span:last-child{margin-left:auto;font-size:1.1rem;color:#7d99aa}
+.directory-heading{display:flex;justify-content:space-between;align-items:end;gap:24px;margin:0 0 20px}
+.directory-heading h2{margin:0;color:#153d54;font-size:1.65rem;font-weight:650;letter-spacing:-.035em}
+.directory-heading p{margin:8px 0 0;color:var(--muted);font-size:.88rem}
+.module-search{width:300px;flex-shrink:0}.module-search>span{display:block;font-size:.73rem;font-weight:600;margin-bottom:7px;color:var(--muted)}
+.module-search input{width:100%;min-height:45px;border:1px solid #d5e1e9;border-radius:10px;background:#fff;padding:11px 13px;font:inherit;font-size:.84rem;color:var(--text)}
+.area-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:23px}.area-nav a{font-size:.76rem;font-weight:600;color:#526c7e;border:1px solid #dce6ec;text-decoration:none;border-radius:30px;padding:9px 13px;background:#ffffff80}.area-nav a:hover{background:#123f57;color:#fff;border-color:#123f57}
+.area-grid{display:grid;grid-template-columns:1fr 1fr;gap:23px;align-items:start}
+.area-section{--tone:#2779a1;--wash:#eaf3fa;background:#fff;border:1px solid var(--border);border-radius:17px;padding:22px;box-shadow:var(--shadow);scroll-margin-top:20px}
+.area-section.verde{--tone:#138878;--wash:#e9f7f2}.area-section.naranja{--tone:#b87527;--wash:#fff5e7}.area-section.violeta{--tone:#7463ab;--wash:#f2effa}
+.area-heading{display:flex;align-items:center;gap:12px;margin-bottom:18px}.area-number{display:flex;align-items:center;justify-content:center;width:35px;height:35px;border-radius:10px;background:var(--wash);color:var(--tone);font-size:.73rem;font-weight:750;flex-shrink:0}
+.area-heading h3{font-size:1.05rem;font-weight:700;margin:0;letter-spacing:-.02em}.area-heading p{font-size:.73rem;margin:5px 0 0;color:var(--muted)}.area-count{margin-left:auto;font-size:.75rem;color:#91a5b3}
+.module-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.module-card{border:1px solid #e5ecf1;border-radius:12px;min-height:178px;padding:17px;box-shadow:none;position:relative;overflow:hidden;background:linear-gradient(150deg,#fff,#fcfdfe)}
+.module-card:hover{transform:translateY(-3px);border-color:var(--tone);box-shadow:0 9px 20px #163f5510}
+.module-icon{width:34px;height:34px;border-radius:10px;color:var(--tone);background:var(--wash);margin-bottom:12px}.module-icon svg{width:21px;height:21px}
+.module-card h3{font-size:.9rem;line-height:1.35;margin:0 0 7px;font-weight:650;color:#24475e}.module-card p{font-size:.76rem;line-height:1.55;color:#6a7e8d}.module-link{font-size:.72rem;font-weight:650;color:var(--tone);margin-top:15px}
+#operacion .module-card:first-child{grid-column:1/-1;min-height:130px;background:linear-gradient(110deg,#f1f7fb,#f8fbfd)}
+#personal{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px}#personal .area-heading{margin:0}#personal .module-grid{grid-template-columns:1fr}#personal .module-card{min-height:112px}#personal .module-icon{float:left;margin:0 14px 0 0}#personal .module-link{margin-top:8px}
+.empty-search{background:white;border:1px dashed #bdcfdc;border-radius:12px;padding:24px;text-align:center;color:var(--muted)}
+.indicators-section{margin-top:40px;border-top:1px solid #dce6ec;padding-top:30px}.section-title{font-size:1rem;margin-top:26px}.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi-card{border-radius:12px;padding:17px 19px}.kpi-card::before{width:3px;top:16px;bottom:16px;height:auto;border-radius:3px}.kpi-label{font-size:.77rem;font-weight:550}.kpi-value{font-size:1.8rem;font-weight:650;letter-spacing:-.04em}
+.charts-grid{grid-template-columns:1fr 1fr;gap:16px}.chart-wide{grid-column:auto}.chart-card{min-width:0;min-height:320px;border-radius:15px;padding:22px}.chart-card h3{font-size:.96rem}.chart-card p{font-size:.76rem;line-height:1.5}.chart-wrap{height:240px;min-width:0}.chart-wrap canvas{max-width:100%}
+.footer{padding-top:18px;font-size:.74rem;line-height:1.8;color:#8095a5}
+:focus-visible{outline:3px solid #159caa;outline-offset:4px}[hidden]{display:none!important}
+@media(max-width:1100px){.hero{align-items:flex-start;flex-direction:column}.hero-actions{max-width:none}.area-grid{gap:15px}.area-section{padding:17px}.quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.quick-title{grid-column:1/-1}.quick-title .eyebrow{display:none}.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:780px){.page-shell{padding:16px}.area-grid,.charts-grid{grid-template-columns:1fr}.directory-heading{align-items:stretch;flex-direction:column;gap:16px}.module-search{width:100%}.area-nav{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}.area-nav a{white-space:nowrap}#personal{grid-column:auto;display:block}#personal .area-heading{margin-bottom:18px}.quick-actions{padding:15px;gap:8px}.quick-link{font-size:.76rem;gap:8px;padding:10px}.quick-link span:last-child{display:none}.hero{padding:23px}.hero-actions .btn{width:auto}.hero h1{font-size:1.45rem}.brand{align-items:center}.hero p{line-height:1.5}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.quick-actions{grid-template-columns:1fr}.quick-title{grid-column:auto}.quick-link{font-size:.85rem}.quick-link span:last-child{display:block}.module-grid{grid-template-columns:1fr}.module-card{min-height:145px}#operacion .module-card:first-child{grid-column:auto}.brand-logo{width:65px;height:65px}.hero-kicker{font-size:.55rem}.hero-actions{gap:7px}.btn{font-size:.73rem;padding:9px 11px}.directory-heading h2{font-size:1.4rem}.area-heading p{line-height:1.5}.kpi-value{font-size:1.55rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.module-card,.quick-link{transition:none}.module-card:hover{transform:none}}
     </style>
 </head>
 
@@ -294,17 +346,15 @@
         <div class="brand">
             <img src="{% static 'img/logo_dys.png' %}" alt="D&S" class="brand-logo">
             <div>
-                <h1>SIGOB 7x24 | Panel Empresarial</h1>
+                <span class="hero-kicker">D&amp;S SOLUCIONES EN BOMBEO</span><h1>Panel empresarial <span>SIGOB 7x24</span></h1>
                 <p>
-                    Centro de control de operación, atención 7x24 y gestión comercial.
+                    Su operación conectada. Su información, a la mano.
                 </p>
             </div>
         </div>
 
         <div class="hero-actions">
-            <a class="btn btn-primary" href="{% url 'nueva_llamada' %}">
-                + Registrar llamada
-            </a>
+<a class="btn btn-primary" href="#indicadores">Ver indicadores ↓</a>
             <a class="btn btn-light" href="{% url 'centro_operaciones' %}">
                 Centro de Operaciones
             </a>
@@ -314,6 +364,108 @@
         </div>
     </header>
 
+<section class="quick-actions" aria-label="Acciones rápidas"><div class="quick-title"><span class="eyebrow">A UN CLIC</span><strong>Acciones rápidas</strong></div><a class="quick-link" href="{% url 'nueva_llamada' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 2-2 3-4 2C9 19 5 15 3 7 2 5 3 3 5 3"/></svg><span>Registrar llamada</span><span aria-hidden="true">↗</span></a><a class="quick-link" href="{% url 'gestion_comercial:nueva_liquidacion' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18H5z M8 7h8 M8 11h3 M8 15h3 M15 11v6 M12 14h6"/></svg><span>Nueva liquidación</span><span aria-hidden="true">↗</span></a><a class="quick-link" href="{% url 'gestion_comercial:nueva_cotizacion' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h5"/></svg><span>Nueva cotización</span><span aria-hidden="true">↗</span></a></section><section id="modulos" class="module-directory" aria-labelledby="titulo-modulos">
+<div class="directory-heading"><div><span class="eyebrow">SU ESPACIO DE TRABAJO</span><h2 id="titulo-modulos">¿Qué necesita gestionar?</h2><p>Elija un área para continuar con su trabajo.</p></div>
+<label class="module-search"><span>Buscar módulo</span><input id="buscar-modulo" type="search" placeholder="Inventario, clientes, remisiones…" autocomplete="off"></label></div>
+<nav class="area-nav" aria-label="Áreas de trabajo"><a href="#operacion">Operación y seguimiento</a><a href="#comercial">Comercial y facturación</a><a href="#inventario">Inventario y equipos</a><a href="#clientes">Clientes y documentos</a><a href="#personal">Gestión de personal</a></nav><div class="area-grid"><section id="operacion" class="area-section azul" data-area aria-labelledby="titulo-operacion"><div class="area-heading"><span class="area-number">01</span><div><h3 id="titulo-operacion">Operación y seguimiento</h3><p>Atención y control de los servicios</p></div><span class="area-count">05</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'centro_operaciones' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+                <h3>Centro de Operaciones</h3>
+                <p>Seguimiento de llamadas, emergencias, pendientes y casos activos.</p>
+            </div>
+            <div class="module-link">Abrir centro →</div>
+        </a><a class="module-card" data-module href="{% url 'escritorio_coordinador' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18v13H3z M8 21h8 M12 17v4"/></svg></div>
+                <h3>Escritorio del Coordinador</h3>
+                <p>Control operativo, asignaciones y seguimiento de servicios.</p>
+            </div>
+            <div class="module-link">Abrir escritorio →</div>
+        </a><a class="module-card" data-module href="{% url 'lista_bitacora' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18H6z M9 8h6 M9 12h6 M9 16h4"/></svg></div>
+                <h3>Bitácoras</h3>
+                <p>Consulta y registro de novedades, actividades y seguimiento operativo.</p>
+            </div>
+            <div class="module-link">Ver bitácoras →</div>
+        </a><a class="module-card" data-module href="{% url 'lista_actividades' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h10v16H5V5h4 M9 3h6v4H9z M9 13l2 2 4-4"/></svg></div>
+                <h3>Actividades de Técnicos</h3>
+                <p>Registro de trabajos realizados y actividades asociadas a clientes.</p>
+            </div>
+            <div class="module-link">Ver actividades →</div>
+        </a><a class="module-card" data-module href="{% url 'tablero_lavados' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12z"/></svg></div>
+                <h3>Tablero de Lavados</h3>
+                <p>Programación, próximos, vencidos, ejecución, histórico y estadísticas.</p>
+            </div>
+            <div class="module-link">Abrir tablero →</div>
+        </a></div></section><section id="comercial" class="area-section verde" data-area aria-labelledby="titulo-comercial"><div class="area-heading"><span class="area-number">02</span><div><h3 id="titulo-comercial">Comercial y facturación</h3><p>Propuestas, liquidaciones y resultados</p></div><span class="area-count">03</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'gestion_comercial:panel' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h18v13H3z M8 8V4h8v4 M3 13h18 M10 13v3h4v-3"/></svg></div>
+                <h3>Gestión Comercial</h3>
+                <p>Panel general de liquidaciones, revisión y procesos comerciales.</p>
+            </div>
+            <div class="module-link">Abrir gestión →</div>
+        </a><a class="module-card" data-module href="{% url 'gestion_comercial:lista_cotizaciones' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h5"/></svg></div>
+                <h3>Cotizaciones</h3>
+                <p>Crear, elaborar, generar PDF y controlar estados de propuestas comerciales.</p>
+            </div>
+            <div class="module-link">Ver cotizaciones →</div>
+        </a><a class="module-card" data-module href="{% url 'gestion_comercial:consolidado_facturacion' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h17 M6 16v-5 M12 16V7 M18 16V3"/></svg></div>
+                <h3>Consolidado de Facturación</h3>
+                <p>Consulta de liquidaciones facturadas, filtros y exportación a Excel.</p>
+            </div>
+            <div class="module-link">Abrir consolidado →</div>
+        </a></div></section><section id="inventario" class="area-section naranja" data-area aria-labelledby="titulo-inventario"><div class="area-heading"><span class="area-number">03</span><div><h3 id="titulo-inventario">Inventario y equipos</h3><p>Materiales y recursos para cada servicio</p></div><span class="area-count">03</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'inventario:tablero' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10"/></svg></div>
+                <h3>Inventario</h3>
+                <p>Existencias, entradas, proveedores, consumos por unidad y reportes valorizados.</p>
+            </div>
+            <div class="module-link">Abrir inventario →</div>
+        </a><a class="module-card" data-module href="{% url 'lista_remisiones' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h11v13H3z M14 10h4l3 4v4h-7 M5 18a2 2 0 1 0 4 0 M16 18a2 2 0 1 0 4 0"/></svg></div>
+                <h3>Remisiones</h3>
+                <p>Registro, consulta y conciliación de remisiones de técnicos.</p>
+            </div>
+            <div class="module-link">Ver remisiones →</div>
+        </a><a class="module-card" data-module href="{% url 'levantamiento_equipo' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a5 5 0 0 0-6 6L3 17l4 4 5-5a5 5 0 0 0 6-6l-3 3-4-4z"/></svg></div>
+                <h3>Levantamiento de Equipos</h3>
+                <p>Registro técnico de equipos y actualización de información de unidades.</p>
+            </div>
+            <div class="module-link">Registrar equipo →</div>
+        </a></div></section><section id="clientes" class="area-section violeta" data-area aria-labelledby="titulo-clientes"><div class="area-heading"><span class="area-number">04</span><div><h3 id="titulo-clientes">Clientes y documentos</h3><p>Información de las unidades en un solo lugar</p></div><span class="area-count">02</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'portal_unidades' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V7l8-4 8 4v14 M8 8v2 M16 8v2 M8 13v2 M16 13v2 M10 21v-4h4v4"/></svg></div>
+                <h3>Portal de Unidades</h3>
+                <p>Acceso a unidades y consulta de información técnica por cliente.</p>
+            </div>
+            <div class="module-link">Ver unidades →</div>
+        </a><a class="module-card" data-module href="{% url 'lista_documentos' %}">
+    <div>
+        <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h7l2 3h9v12H3z M3 6V3h7l2 3h7v3"/></svg></div>
+        <h3>Documentos de Clientes</h3>
+        <p>Publicación y consulta de informes, certificados y archivos asociados a cada unidad.</p>
+    </div>
+    <div class="module-link">Gestionar documentos →</div>
+</a></div></section><section id="personal" class="area-section azul" data-area aria-labelledby="titulo-personal"><div class="area-heading"><span class="area-number">05</span><div><h3 id="titulo-personal">Gestión de personal</h3><p>El equipo que hace posible la operación</p></div><span class="area-count">01</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'gestion_humana:panel' %}">
+            <div>
+                <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3 M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M17 3a4 4 0 0 1 0 8 M22 21v-3a4 4 0 0 0-3-4"/></svg></div>
+                <h3>Gestión Humana</h3>
+                <p>Empleados, contratos, seguridad social, cursos, documentos y alertas de vencimiento.</p>
+            </div>
+            <div class="module-link">Abrir gestión humana →</div>
+        </a></div></section></div><p id="sin-modulos" class="empty-search" hidden role="status">No encontramos módulos con ese nombre. Pruebe otra búsqueda.</p></section><section id="indicadores" class="indicators-section"><div class="directory-heading"><div><span class="eyebrow">VISTA GERENCIAL</span><h2>El pulso de la operación</h2><p>Indicadores y evolución de la información registrada en SIGOB.</p></div></div>
     <section class="kpi-grid">
         <div class="kpi-card kpi-blue">
             <div class="kpi-label">Servicios 7x24 registrados</div>
@@ -432,165 +584,7 @@
 
 </section>  
 
-    <h2 class="section-title">Operación 7x24</h2>
-
-    <section class="module-grid">
-        <a class="module-card" href="{% url 'centro_operaciones' %}">
-            <div>
-                <div class="module-icon">24</div>
-                <h3>Centro de Operaciones</h3>
-                <p>Seguimiento de llamadas, emergencias, pendientes y casos activos.</p>
-            </div>
-            <div class="module-link">Abrir centro →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'escritorio_coordinador' %}">
-            <div>
-                <div class="module-icon">CO</div>
-                <h3>Escritorio del Coordinador</h3>
-                <p>Control operativo, asignaciones y seguimiento de servicios.</p>
-            </div>
-            <div class="module-link">Abrir escritorio →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'lista_bitacora' %}">
-            <div>
-                <div class="module-icon">BI</div>
-                <h3>Bitácoras</h3>
-                <p>Consulta y registro de novedades, actividades y seguimiento operativo.</p>
-            </div>
-            <div class="module-link">Ver bitácoras →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'lista_actividades' %}">
-            <div>
-                <div class="module-icon">AT</div>
-                <h3>Actividades de Técnicos</h3>
-                <p>Registro de trabajos realizados y actividades asociadas a clientes.</p>
-            </div>
-            <div class="module-link">Ver actividades →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'tablero_lavados' %}">
-            <div>
-                <div class="module-icon">LA</div>
-                <h3>Tablero de Lavados</h3>
-                <p>Programación, próximos, vencidos, ejecución, histórico y estadísticas.</p>
-            </div>
-            <div class="module-link">Abrir tablero →</div>
-        </a>
-    </section>
-
-    <h2 class="section-title">Control técnico y documental</h2>
-
-    <section class="module-grid">
-        <a class="module-card" href="{% url 'inventario:tablero' %}">
-            <div>
-                <div class="module-icon">IN</div>
-                <h3>Inventario</h3>
-                <p>Existencias, entradas, proveedores, consumos por unidad y reportes valorizados.</p>
-            </div>
-            <div class="module-link">Abrir inventario →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'lista_remisiones' %}">
-            <div>
-                <div class="module-icon">RE</div>
-                <h3>Remisiones</h3>
-                <p>Registro, consulta y conciliación de remisiones de técnicos.</p>
-            </div>
-            <div class="module-link">Ver remisiones →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'levantamiento_equipo' %}">
-            <div>
-                <div class="module-icon">EQ</div>
-                <h3>Levantamiento de Equipos</h3>
-                <p>Registro técnico de equipos y actualización de información de unidades.</p>
-            </div>
-            <div class="module-link">Registrar equipo →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'portal_unidades' %}">
-            <div>
-                <div class="module-icon">UN</div>
-                <h3>Portal de Unidades</h3>
-                <p>Acceso a unidades y consulta de información técnica por cliente.</p>
-            </div>
-            <div class="module-link">Ver unidades →</div>
-        </a>
-        <a class="module-card" href="{% url 'lista_documentos' %}">
-    <div>
-        <div class="module-icon">DO</div>
-        <h3>Documentos de Clientes</h3>
-        <p>Publicación y consulta de informes, certificados y archivos asociados a cada unidad.</p>
-    </div>
-    <div class="module-link">Gestionar documentos →</div>
-</a>
-
-        <a class="module-card" href="{% url 'nueva_llamada' %}">
-            <div>
-                <div class="module-icon">LL</div>
-                <h3>Nueva Llamada</h3>
-                <p>Registro inmediato de una nueva solicitud o servicio 7x24.</p>
-            </div>
-            <div class="module-link">Registrar llamada →</div>
-        </a>
-    </section>
-
-    <h2 class="section-title">Administración y personal</h2>
-
-    <section class="module-grid">
-        <a class="module-card" href="{% url 'gestion_humana:panel' %}">
-            <div>
-                <div class="module-icon">GH</div>
-                <h3>Gestión Humana</h3>
-                <p>Empleados, contratos, seguridad social, cursos, documentos y alertas de vencimiento.</p>
-            </div>
-            <div class="module-link">Abrir gestión humana →</div>
-        </a>
-    </section>
-
-    <h2 class="section-title">Gestión Comercial</h2>
-
-    <section class="module-grid">
-        <a class="module-card" href="{% url 'gestion_comercial:panel' %}">
-            <div>
-                <div class="module-icon">GC</div>
-                <h3>Gestión Comercial</h3>
-                <p>Panel general de liquidaciones, revisión y procesos comerciales.</p>
-            </div>
-            <div class="module-link">Abrir gestión →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'gestion_comercial:nueva_liquidacion' %}">
-            <div>
-                <div class="module-icon">LI</div>
-                <h3>Nueva Liquidación</h3>
-                <p>Crear una liquidación comercial a partir de trabajos y costos registrados.</p>
-            </div>
-            <div class="module-link">Crear liquidación →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'gestion_comercial:lista_cotizaciones' %}">
-            <div>
-                <div class="module-icon">CO</div>
-                <h3>Cotizaciones</h3>
-                <p>Crear, elaborar, generar PDF y controlar estados de propuestas comerciales.</p>
-            </div>
-            <div class="module-link">Ver cotizaciones →</div>
-        </a>
-
-        <a class="module-card" href="{% url 'gestion_comercial:consolidado_facturacion' %}">
-            <div>
-                <div class="module-icon">FA</div>
-                <h3>Consolidado de Facturación</h3>
-                <p>Consulta de liquidaciones facturadas, filtros y exportación a Excel.</p>
-            </div>
-            <div class="module-link">Abrir consolidado →</div>
-        </a>
-    </section>
-
+</section>
     <footer class="footer">
         SIGOB 7x24 — D&amp;S Soluciones en Bombeo S.A.S.<br>
         Operación técnica y gestión comercial integradas en una sola plataforma.
@@ -706,5 +700,20 @@
 });
 </script>
 
+<script>
+(function(){
+ const input=document.getElementById('buscar-modulo');
+ const normalize=text=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ input.addEventListener('input',function(){
+  const term=normalize(input.value.trim());let total=0;
+  document.querySelectorAll('[data-area]').forEach(area=>{
+   let visible=0;
+   area.querySelectorAll('[data-module]').forEach(card=>{const match=normalize(card.textContent).includes(term);card.hidden=!match;if(match)visible++;});
+   area.hidden=visible===0;total+=visible;
+  });
+  document.getElementById('sin-modulos').hidden=total>0;
+ });
+})();
+</script>
 </body>
 </html>
