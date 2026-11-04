@@ -925,8 +925,10 @@ def lista_cotizaciones(request):
         GRUPO_SUPERVISOR,
     )
 
+    cotizaciones_reales = Cotizacion.objects.filter(es_prueba=False)
+
     cotizaciones = (
-        Cotizacion.objects
+        cotizaciones_reales
         .select_related(
             "cliente",
             "elaborado_por",
@@ -955,14 +957,14 @@ def lista_cotizaciones(request):
     cotizaciones = cotizaciones.order_by("-fecha_creacion")
 
     resumen = {
-        "total": Cotizacion.objects.count(),
-        "borradores": Cotizacion.objects.filter(
+        "total": cotizaciones_reales.count(),
+        "borradores": cotizaciones_reales.filter(
             estado="BORRADOR"
     ).count(),
-    "enviadas": Cotizacion.objects.filter(
+    "enviadas": cotizaciones_reales.filter(
         estado="ENVIADA"
     ).count(),
-    "listas_enviar": Cotizacion.objects.filter(
+    "listas_enviar": cotizaciones_reales.filter(
         estado="LISTA_ENVIAR"
     ).count(),
 }
