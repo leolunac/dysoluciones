@@ -4,7 +4,7 @@ import re
 from django import forms
 
 from gestion_comercial.models import CatalogoPrecio
-from operacion.models import Accesorio
+from operacion.models import Accesorio, Tecnico
 
 from .models import (
     ConsumoInventario,
@@ -14,6 +14,7 @@ from .models import (
     ProductoInventario,
     Proveedor,
     ReferenciaProveedor,
+    UbicacionInventario,
 )
 
 
@@ -228,11 +229,28 @@ DetalleEntradaFormSet = forms.inlineformset_factory(
 
 
 class ConsumoInventarioForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        bodegas = UbicacionInventario.objects.filter(
+            tipo="BODEGA", activa=True,
+        ).order_by("nombre", "pk")
+        self.fields["ubicacion_origen"].queryset = bodegas
+        self.fields["ubicacion_origen"].label = "Bodega de origen"
+        self.fields["tecnicos"].queryset = Tecnico.objects.filter(
+            activo=True,
+        ).order_by("nombre", "pk")
+        if not self.is_bound and not self.instance.pk:
+            if not self.initial.get("ubicacion_origen"):
+                principal = bodegas.filter(nombre="Bodega principal").first()
+                if principal:
+                    self.initial["ubicacion_origen"] = principal.pk
+
     class Meta:
         model = ConsumoInventario
-        fields = ("cliente", "ubicacion_origen", "fecha", "observaciones")
+        fields = ("cliente", "ubicacion_origen", "fecha", "tecnicos", "observaciones")
         widgets = {
             "fecha": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "tecnicos": forms.CheckboxSelectMultiple(),
             "observaciones": forms.Textarea(attrs={"rows": 2}),
         }
 

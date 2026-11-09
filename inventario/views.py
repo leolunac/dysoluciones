@@ -369,6 +369,7 @@ def nuevo_consumo(request):
                 with transaction.atomic():
                     consumo.creado_por = request.user
                     consumo.save()
+                    form.save_m2m()
                     formset.save()
                     accion = request.POST.get("accion", "borrador")
                     if accion in ("confirmar_continuar", "confirmar_terminar"):

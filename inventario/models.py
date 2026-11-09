@@ -342,6 +342,13 @@ class ConsumoInventario(models.Model):
         on_delete=models.PROTECT,
         related_name="consumos",
     )
+    tecnicos = models.ManyToManyField(
+        Tecnico,
+        blank=True,
+        related_name="consumos_bodega_participados",
+        verbose_name="Técnicos que realizaron la labor",
+        help_text="Participantes de la labor; la cantidad consumida no se divide ni se duplica.",
+    )
     fecha = models.DateTimeField(default=timezone.now, db_index=True)
     estado = models.CharField(max_length=15, choices=ESTADOS, default="BORRADOR")
     observaciones = models.TextField(blank=True)
