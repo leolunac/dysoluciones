@@ -1,3 +1,5 @@
+{% load reporte_administraciones_tags %}
+{% acceso_reporte_administraciones request.user as acceso_reporte_administraciones %}
 {% load static roles_sigob %}
 {% acceso_inventario_sigob request.user as acceso_inventario %}
 {% acceso_gestion_humana_sigob request.user as acceso_gestion_humana %}
@@ -223,6 +225,10 @@
     </section>
 
     <section class="modules">
+{% if acceso_reporte_administraciones %}
+<a class="module-card" href="{% url 'reporte_administraciones_panel' %}"><div><div class="module-icon">🏢</div><h3>Administraciones y unidades</h3><p>Consultar asignaciones, exportar a Excel e imprimir.</p></div></a>
+{% endif %}
+
 
         {% if acceso_gestion_humana %}
         <a href="{% url 'gestion_humana:panel' %}" class="module-card">

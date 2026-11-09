@@ -1,3 +1,5 @@
+{% load reporte_administraciones_tags %}
+{% acceso_reporte_administraciones request.user as acceso_reporte_administraciones %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -128,6 +130,10 @@ th{
         Informes y consumos técnicos
     </a>
 
+
+{% if acceso_reporte_administraciones %}
+<a class="btn" href="{% url 'reporte_administraciones_panel' %}">Administraciones y unidades</a>
+{% endif %}
     <a class="btn" href="{% url 'logout' %}">
         Cerrar sesi&#243;n
     </a>

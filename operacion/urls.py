@@ -1,3 +1,4 @@
+from .reporte_administraciones_panel import reporte_administraciones_panel
 from .views_adjuntos_bitacora import adjuntar_bitacora, descargar_adjunto_bitacora
 from .views_historial_bitacora import historial_bitacora
 from .views_revision_preventivos import (
@@ -57,6 +58,7 @@ from .views import (
 
 
 urlpatterns = [
+    path("administraciones/unidades/", reporte_administraciones_panel, name="reporte_administraciones_panel"),
 
     path(
         "ia/revisar-redaccion/",

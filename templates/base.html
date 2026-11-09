@@ -1,3 +1,5 @@
+{% load reporte_administraciones_tags %}
+{% acceso_reporte_administraciones request.user as acceso_reporte_administraciones %}
 {% load roles_sigob %}
 {% rol_menu_sigob request.user as rol_menu %}
 <!DOCTYPE html>
@@ -186,6 +188,10 @@ body{
 
     {% endif %}
 
+
+{% if acceso_reporte_administraciones %}
+<a href="{% url 'reporte_administraciones_panel' %}">🏢 Administraciones y unidades</a>
+{% endif %}
     <a href="/logout/">🚪 Cerrar sesión</a>
 
 </nav>

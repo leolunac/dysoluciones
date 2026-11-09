@@ -1,3 +1,5 @@
+{% load reporte_administraciones_tags %}
+{% acceso_reporte_administraciones request.user as acceso_reporte_administraciones %}
 
 {% load static %}
 <!DOCTYPE html>
@@ -444,14 +446,18 @@ body{background:radial-gradient(ellipse at 0 0,#e1f1f2 0,transparent 38%),#f3f6f
                 <p>Registro técnico de equipos y actualización de información de unidades.</p>
             </div>
             <div class="module-link">Registrar equipo →</div>
-        </a></div></section><section id="clientes" class="area-section violeta" data-area aria-labelledby="titulo-clientes"><div class="area-heading"><span class="area-number">04</span><div><h3 id="titulo-clientes">Clientes y documentos</h3><p>Información de las unidades en un solo lugar</p></div><span class="area-count">02</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'portal_unidades' %}">
+        </a></div></section><section id="clientes" class="area-section violeta" data-area aria-labelledby="titulo-clientes"><div class="area-heading"><span class="area-number">04</span><div><h3 id="titulo-clientes">Clientes y documentos</h3><p>Información de las unidades en un solo lugar</p></div><span class="area-count">03</span></div><div class="module-grid"><a class="module-card" data-module href="{% url 'portal_unidades' %}">
             <div>
                 <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V7l8-4 8 4v14 M8 8v2 M16 8v2 M8 13v2 M16 13v2 M10 21v-4h4v4"/></svg></div>
                 <h3>Portal de Unidades</h3>
                 <p>Acceso a unidades y consulta de información técnica por cliente.</p>
             </div>
             <div class="module-link">Ver unidades →</div>
-        </a><a class="module-card" data-module href="{% url 'lista_documentos' %}">
+        </a>
+{% if acceso_reporte_administraciones %}
+<a class="module-card" data-module href="{% url 'reporte_administraciones_panel' %}"><h4>Administraciones y unidades</h4><p>Asignaciones por administración, Excel e impresión.</p></a>
+{% endif %}
+<a class="module-card" data-module href="{% url 'lista_documentos' %}">
     <div>
         <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h7l2 3h9v12H3z M3 6V3h7l2 3h7v3"/></svg></div>
         <h3>Documentos de Clientes</h3>
