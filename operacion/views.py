@@ -1,3 +1,4 @@
+from .acceso_administraciones import asignaciones_administracion_vigentes
 from django.db.models import DateField
 from django.db.models.functions import Coalesce, TruncDate
 from .sectores import filtrar_sector, sectores_en
@@ -55,7 +56,6 @@ from .models import (
     Tecnico,
     UsuarioCliente,
     ClienteAsignado,
-    AdministracionUnidad,
     UsuarioAdministracion,
     BitacoraOperativa,
     RemisionTecnico,
@@ -2383,13 +2383,9 @@ def usuario_puede_ver_cliente(user, cliente_id):
     ).first()
 
     if usuario_administracion:
-        return AdministracionUnidad.objects.filter(
-            administracion=usuario_administracion.administracion,
-            cliente_id=cliente_id,
-            activo=True,
-            fecha_fin__isnull=True,
-            cliente__activo=True,
-        ).exists()
+        return asignaciones_administracion_vigentes(
+            usuario_administracion.administracion,
+        ).filter(cliente_id=cliente_id).exists()
 
     # =========================================
     # USUARIO CLIENTE TRADICIONAL
@@ -2485,11 +2481,8 @@ def portal_unidades(request):
     if usuario_administracion:
 
         clientes_ids = list(
-            AdministracionUnidad.objects.filter(
-                administracion=usuario_administracion.administracion,
-                activo=True,
-                fecha_fin__isnull=True,
-                cliente__activo=True,
+            asignaciones_administracion_vigentes(
+                usuario_administracion.administracion,
             ).values_list(
                 "cliente_id",
                 flat=True,
