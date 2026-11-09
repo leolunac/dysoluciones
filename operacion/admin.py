@@ -1,3 +1,4 @@
+from .reporte_administraciones import ReporteAdministracionesMixin
 from .models import SectorCliente
 from .models import AdjuntoBitacora
 from django.urls import reverse
@@ -187,7 +188,7 @@ class AdministracionUnidadInline(admin.TabularInline):
 
 
 @admin.register(Administracion)
-class AdministracionAdmin(admin.ModelAdmin):
+class AdministracionAdmin(ReporteAdministracionesMixin, admin.ModelAdmin):
     list_display = (
         "nombre",
         "nit",
@@ -216,7 +217,7 @@ class AdministracionAdmin(admin.ModelAdmin):
 
 
 @admin.register(AdministracionUnidad)
-class AdministracionUnidadAdmin(admin.ModelAdmin):
+class AdministracionUnidadAdmin(ReporteAdministracionesMixin, admin.ModelAdmin):
     list_display = (
         "administracion",
         "cliente",
@@ -453,7 +454,7 @@ class UsuarioClienteAdmin(admin.ModelAdmin):
 # =========================
 
 @admin.register(UsuarioAdministracion)
-class UsuarioAdministracionAdmin(admin.ModelAdmin):
+class UsuarioAdministracionAdmin(ReporteAdministracionesMixin, admin.ModelAdmin):
     list_display = (
         "user",
         "administracion",
