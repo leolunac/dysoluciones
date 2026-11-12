@@ -363,7 +363,14 @@ def nuevo_consumo(request):
     if request.method == "POST":
         form = ConsumoInventarioForm(request.POST)
         consumo = form.save(commit=False) if form.is_valid() else ConsumoInventario()
-        formset = DetalleConsumoFormSet(request.POST, instance=consumo)
+        # La ruta crea un consumo nuevo. El padre lo decide el servidor;
+        # nunca debe reutilizar el ID oculto de un intento revertido.
+        datos_detalles = request.POST.copy()
+        prefijo = DetalleConsumoFormSet.get_default_prefix()
+        for nombre in list(datos_detalles):
+            if nombre.startswith(f"{prefijo}-") and nombre.endswith("-consumo"):
+                datos_detalles[nombre] = ""
+        formset = DetalleConsumoFormSet(datos_detalles, instance=consumo)
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
@@ -375,6 +382,12 @@ def nuevo_consumo(request):
                     if accion in ("confirmar_continuar", "confirmar_terminar"):
                         confirmar_consumo(consumo.pk, request.user)
             except ValidationError as exc:
+                # El rollback no limpia los IDs de los objetos en memoria.
+                # Reconstruir evita enviarlos en las filas y en empty_form.
+                form = ConsumoInventarioForm(request.POST)
+                consumo = form.save(commit=False) if form.is_valid() else ConsumoInventario()
+                formset = DetalleConsumoFormSet(datos_detalles, instance=consumo)
+                formset.is_valid()
                 form.add_error(None, "; ".join(exc.messages))
             else:
                 if accion == "confirmar_continuar":
