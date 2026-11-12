@@ -389,7 +389,7 @@ class DetalleConsumoInventario(models.Model):
         ordering = ["id"]
 
     def clean(self):
-        if self.cantidad <= 0:
+        if self.cantidad is not None and self.cantidad <= 0:
             raise ValidationError({"cantidad": "La cantidad debe ser mayor que cero."})
 
     @property
