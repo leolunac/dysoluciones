@@ -1,0 +1,31 @@
+{% extends 'inventario/consumos_base.html' %}
+{% block titulo %}Entradas y compras{% endblock %}
+{% block encabezado %}Consulta de entradas y compras{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>Buscar una entrada</h2>
+  <p class="ayuda">Consulte por proveedor, NIT, factura o número de entrada. Los filtros de fechas corresponden a la fecha de la factura.</p>
+  {{ form.non_field_errors }}
+  <form method="get" class="filtros">
+    {% for campo in form %}<div><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>{% endfor %}
+    <div class="acciones"><button class="btn">Buscar</button><a class="btn secundario" href="?">Limpiar</a></div>
+  </form>
+</section>
+<section class="tarjeta">
+  <h2>{{ pagina.paginator.count }} entradas encontradas</h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Número</th><th>Fecha factura</th><th>Proveedor</th><th>Factura</th><th>Estado</th><th>Consulta</th></tr></thead>
+    <tbody>{% for entrada in pagina %}<tr>
+      <td>#{{ entrada.pk }}</td><td class="no-partir">{{ entrada.fecha_factura|date:'d/m/Y' }}</td>
+      <td><strong>{{ entrada.proveedor.nombre }}</strong><br><small>NIT: {{ entrada.proveedor.nit|default:'No registrado' }}</small></td>
+      <td>{{ entrada.numero_factura }}</td><td><span class="estado">{{ entrada.get_estado_display }}</span></td>
+      <td><a class="btn" href="{% url 'inventario:detalle_entrada' entrada.pk %}">{% if puede_gestionar %}Ver / corregir{% else %}Ver detalle{% endif %}</a></td>
+    </tr>{% empty %}<tr><td colspan="6">No hay entradas para esta consulta.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <nav class="paginacion">
+    {% if pagina.has_previous %}<a href="?{{ consulta }}&page={{ pagina.previous_page_number }}">Anterior</a>{% endif %}
+    <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    {% if pagina.has_next %}<a href="?{{ consulta }}&page={{ pagina.next_page_number }}">Siguiente</a>{% endif %}
+  </nav>
+</section>
+{% endblock %}

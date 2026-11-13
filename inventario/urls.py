@@ -1,12 +1,15 @@
 from django.urls import path
 
 from . import views
-from . import consumos
+from . import consumos, entradas
 
 
 app_name = "inventario"
 
 urlpatterns = [
+    path("entradas/", entradas.lista_entradas, name="lista_entradas"),
+    path("entradas/<int:entrada_id>/", entradas.detalle_entrada, name="detalle_entrada"),
+    path("entradas/<int:entrada_id>/materiales/<int:detalle_id>/corregir/", entradas.corregir_cantidad_vista, name="corregir_cantidad_entrada"),
     path("consumos/", consumos.lista_consumos, name="lista_consumos"),
     path("consumos/<int:consumo_id>/", consumos.detalle_consumo, name="detalle_consumo"),
     path("consumos/<int:consumo_id>/materiales/<int:detalle_id>/corregir/", consumos.corregir_cantidad_vista, name="corregir_cantidad_consumo"),

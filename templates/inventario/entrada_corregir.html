@@ -1,0 +1,22 @@
+{% extends 'inventario/consumos_base.html' %}
+{% block titulo %}Corregir entrada #{{ entrada.pk }}{% endblock %}
+{% block encabezado %}Corregir cantidad · Entrada #{{ entrada.pk }}{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>{{ entrada.proveedor.nombre }} · Factura {{ entrada.numero_factura }}</h2>
+  <p><strong>{{ detalle.producto.accesorio.codigo }} — {{ detalle.producto.accesorio.descripcion }}</strong></p>
+  <p>Cantidad actual: <strong class="cantidad">{{ detalle.cantidad|floatformat:2 }}</strong> {{ detalle.producto.unidad_medida }} · Estado: <strong>{{ entrada.get_estado_display }}</strong></p>
+  <div class="aviso">
+    {% if entrada.estado == 'BORRADOR' %}Se actualizará el borrador. Las existencias cambiarán al confirmar la entrada.
+    {% else %}Se ajustará únicamente la diferencia en la bodega del ingreso original. Si aumenta la cantidad, ingresará material adicional; si la reduce, se retirará material y se comprobará que haya stock suficiente.{% endif %}
+    El motivo y su usuario quedarán en el historial. Los precios y descuentos se conservan.
+  </div>
+  <form method="post" class="formulario-correccion">
+    {% csrf_token %}{{ form.non_field_errors }}
+    {% for oculto in form.hidden_fields %}{{ oculto }}{{ oculto.errors }}{% endfor %}
+    {% for campo in form.visible_fields %}<div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>{% endfor %}
+    <p class="ayuda">Ingrese la cantidad total correcta para esta línea, no la diferencia. Se admiten cantidades mayores que cero con hasta dos decimales.</p>
+    <div class="acciones"><button class="btn" type="submit">Guardar corrección</button><a class="btn secundario" href="{% url 'inventario:detalle_entrada' entrada.pk %}">Cancelar / ver historial</a></div>
+  </form>
+</section>
+{% endblock %}

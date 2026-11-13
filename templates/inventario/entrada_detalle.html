@@ -1,0 +1,45 @@
+{% extends 'inventario/consumos_base.html' %}
+{% block titulo %}Entrada #{{ entrada.pk }}{% endblock %}
+{% block encabezado %}Entrada por compra #{{ entrada.pk }}{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>{{ entrada.proveedor.nombre }}</h2>
+  <div class="datos">
+    <div><strong>Factura</strong>{{ entrada.numero_factura }}</div>
+    <div><strong>Fecha factura</strong>{{ entrada.fecha_factura|date:'d/m/Y' }}</div>
+    <div><strong>Estado</strong>{{ entrada.get_estado_display }}</div>
+    <div><strong>Registrado por</strong>{{ entrada.creado_por }}</div>
+  </div>
+  {% if entrada.observaciones %}<p><strong>Observaciones:</strong> {{ entrada.observaciones|linebreaksbr }}</p>{% endif %}
+  <div class="aviso">
+    {% if entrada.estado == 'BORRADOR' %}Esta entrada es un borrador: las correcciones no afectan existencias. Al confirmar se ingresarán las cantidades actualizadas.
+    {% else %}Entrada confirmada: aumentar una cantidad ingresa la diferencia en la bodega del movimiento original. Reducirla retira la diferencia si existen unidades suficientes.{% endif %}
+    Esta opción corrige cantidades; conserva proveedor, factura, precios y descuentos.
+  </div>
+  {% if puede_gestionar and entrada.estado == 'BORRADOR' %}
+  <form method="post" action="{% url 'inventario:confirmar_entrada' entrada.pk %}">{% csrf_token %}<button class="btn">Confirmar entrada</button></form>
+  {% endif %}
+</section>
+{% for detalle in detalles %}
+<section class="tarjeta">
+  <h2>{{ detalle.producto.accesorio.codigo }} — {{ detalle.producto.accesorio.descripcion }}</h2>
+  <div class="datos">
+    <div><strong>Cantidad actual</strong><span class="cantidad">{{ detalle.cantidad|floatformat:2 }}</span> {{ detalle.producto.unidad_medida }}</div>
+    <div><strong>Precio unitario de compra</strong>${{ detalle.precio_unitario_lista|floatformat:2 }}</div>
+    <div><strong>Descuento</strong>{{ detalle.porcentaje_descuento|floatformat:2 }} %</div>
+    <div><strong>Costo unitario neto</strong>${{ detalle.costo_unitario_neto|floatformat:2 }}</div>
+    <div><strong>Total neto de la línea</strong>${{ detalle.total_neto|floatformat:2 }}</div>
+  </div>
+  {% if puede_gestionar %}<p><a class="btn" href="{% url 'inventario:corregir_cantidad_entrada' entrada.pk detalle.pk %}">Corregir cantidad</a></p>{% endif %}
+  <h3>Historial de correcciones</h3>
+  <div class="tabla"><table class="historial">
+    <thead><tr><th>Fecha del cambio</th><th>Antes</th><th>Después</th><th>Estado al corregir</th><th>Motivo</th><th>Usuario</th><th>Movimiento</th></tr></thead>
+    <tbody>{% for cambio in detalle.correcciones.all %}<tr>
+      <td class="no-partir">{{ cambio.creado|date:'d/m/Y H:i' }}</td><td>{{ cambio.cantidad_anterior|floatformat:2 }}</td><td>{{ cambio.cantidad_nueva|floatformat:2 }}</td>
+      <td>{{ cambio.estado_entrada }}</td><td>{{ cambio.motivo|linebreaksbr }}</td><td>{{ cambio.registrado_por }}</td>
+      <td>{% if cambio.movimiento %}#{{ cambio.movimiento_id }} · {{ cambio.movimiento.get_tipo_display }}<br>{{ cambio.movimiento.destino|default:cambio.movimiento.origen }}{% else %}Sin movimiento: borrador{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="7">Esta línea no tiene correcciones.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% empty %}<section class="tarjeta">Esta entrada no contiene materiales.</section>{% endfor %}
+{% endblock %}

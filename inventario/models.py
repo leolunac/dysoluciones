@@ -158,6 +158,8 @@ class MovimientoInventario(models.Model):
     TIPOS = [
         ("SALDO_INICIAL", "Saldo inicial"),
         ("ENTRADA_COMPRA", "Entrada por compra"),
+        ("CORR_ENTRADA_INGRESO", "Corrección de entrada: ingreso adicional"),
+        ("CORR_ENTRADA_RETIRO", "Corrección de entrada: retiro"),
         ("TRASLADO", "Traslado"),
         ("CONSUMO", "Consumo en cliente"),
         ("CORR_CONSUMO_ENTRADA", "Corrección de consumo: devolución"),
@@ -418,3 +420,24 @@ class CorreccionCantidadConsumo(models.Model):
 
     def __str__(self):
         return f"Corrección {self.pk}: detalle {self.detalle_id}"
+
+
+class CorreccionCantidadEntrada(models.Model):
+    detalle = models.ForeignKey(DetalleEntradaInventario, on_delete=models.PROTECT, related_name="correcciones")
+    cantidad_anterior = models.DecimalField(max_digits=14, decimal_places=2)
+    cantidad_nueva = models.DecimalField(max_digits=14, decimal_places=2)
+    estado_entrada = models.CharField(max_length=15)
+    motivo = models.TextField()
+    registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="correcciones_entrada")
+    movimiento = models.OneToOneField(MovimientoInventario, on_delete=models.PROTECT, null=True, blank=True, related_name="correccion_entrada")
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado", "-pk"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(cantidad_anterior__gt=0), name="inventario_corr_ent_ant_positiva"),
+            models.CheckConstraint(condition=models.Q(cantidad_nueva__gt=0), name="inventario_corr_ent_nueva_positiva"),
+        ]
+
+    def __str__(self):
+        return f"Corrección de entrada {self.pk}: detalle {self.detalle_id}"
