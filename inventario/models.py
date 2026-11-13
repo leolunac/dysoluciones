@@ -160,6 +160,8 @@ class MovimientoInventario(models.Model):
         ("ENTRADA_COMPRA", "Entrada por compra"),
         ("TRASLADO", "Traslado"),
         ("CONSUMO", "Consumo en cliente"),
+        ("CORR_CONSUMO_ENTRADA", "Corrección de consumo: devolución"),
+        ("CORR_CONSUMO_SALIDA", "Corrección de consumo: salida adicional"),
         ("DEVOLUCION", "Devolución"),
         ("AJUSTE_ENTRADA", "Ajuste de entrada"),
         ("AJUSTE_SALIDA", "Ajuste de salida"),
@@ -395,3 +397,24 @@ class DetalleConsumoInventario(models.Model):
     @property
     def total(self):
         return self.cantidad * self.precio_referencia_snapshot
+
+
+class CorreccionCantidadConsumo(models.Model):
+    detalle = models.ForeignKey(DetalleConsumoInventario, on_delete=models.PROTECT, related_name="correcciones")
+    cantidad_anterior = models.DecimalField(max_digits=14, decimal_places=2)
+    cantidad_nueva = models.DecimalField(max_digits=14, decimal_places=2)
+    estado_consumo = models.CharField(max_length=15)
+    motivo = models.TextField()
+    registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="correcciones_consumo")
+    movimiento = models.OneToOneField(MovimientoInventario, on_delete=models.PROTECT, null=True, blank=True, related_name="correccion_consumo")
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado", "-pk"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(cantidad_anterior__gt=0), name="inventario_corr_anterior_positiva"),
+            models.CheckConstraint(condition=models.Q(cantidad_nueva__gt=0), name="inventario_corr_nueva_positiva"),
+        ]
+
+    def __str__(self):
+        return f"Corrección {self.pk}: detalle {self.detalle_id}"

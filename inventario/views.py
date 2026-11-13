@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
+from django.db.models import Case, When, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -34,6 +34,7 @@ from .models import (
     ProductoInventario,
     ReferenciaProveedor,
 )
+from .correcciones import TIPOS_CONSUMO
 from .permisos import exigir_consulta, exigir_gestion, puede_gestionar_inventario
 from .servicios import ajustar_existencia, confirmar_consumo, confirmar_entrada
 
@@ -81,21 +82,24 @@ def tablero(request):
     ).count()
     desde_estadisticas = timezone.now() - timedelta(days=30)
     consumos_periodo = MovimientoInventario.objects.filter(
-        tipo="CONSUMO",
+        tipo__in=TIPOS_CONSUMO,
         fecha_operacion__gte=desde_estadisticas,
-    )
+    ).annotate(cantidad_neta=Case(
+        When(tipo="CORR_CONSUMO_ENTRADA", then=-F("cantidad")),
+        default=F("cantidad"), output_field=DecimalField(max_digits=14, decimal_places=2),
+    ))
     productos_mas_usados = (
         consumos_periodo.values(
             "producto__accesorio__codigo",
             "producto__accesorio__descripcion",
         )
-        .annotate(total=Sum("cantidad"))
+        .annotate(total=Sum("cantidad_neta"))
         .order_by("-total")[:5]
     )
     clientes_mayor_consumo = (
         consumos_periodo.filter(cliente__isnull=False)
         .values("cliente__nombre")
-        .annotate(total=Sum("cantidad"))
+        .annotate(total=Sum("cantidad_neta"))
         .order_by("-total")[:5]
     )
 
@@ -550,7 +554,7 @@ def exportar_consumos_excel(request):
     fecha_desde = request.GET.get("fecha_desde", "").strip()
     fecha_hasta = request.GET.get("fecha_hasta", "").strip()
     movimientos = (
-        MovimientoInventario.objects.filter(tipo="CONSUMO")
+        MovimientoInventario.objects.filter(tipo__in=TIPOS_CONSUMO)
         .select_related("cliente", "producto__accesorio")
         .order_by("fecha_operacion", "id")
     )
@@ -578,7 +582,8 @@ def exportar_consumos_excel(request):
 
     total_general = Decimal("0.00")
     for movimiento in movimientos.iterator():
-        total = movimiento.cantidad * movimiento.precio_referencia_snapshot
+        cantidad_neta = -movimiento.cantidad if movimiento.tipo == "CORR_CONSUMO_ENTRADA" else movimiento.cantidad
+        total = cantidad_neta * movimiento.precio_referencia_snapshot
         total_general += total
         hoja.append(
             [
@@ -587,8 +592,11 @@ def exportar_consumos_excel(request):
                 ),
                 movimiento.cliente.nombre if movimiento.cliente_id else "",
                 movimiento.producto.accesorio.codigo,
-                movimiento.producto.accesorio.descripcion,
-                float(movimiento.cantidad),
+                movimiento.producto.accesorio.descripcion + (
+                    f" · {movimiento.get_tipo_display()} · {movimiento.referencia}"
+                    if movimiento.tipo != "CONSUMO" else ""
+                ),
+                float(cantidad_neta),
                 float(movimiento.precio_referencia_snapshot),
                 float(total),
             ]

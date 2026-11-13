@@ -1,11 +1,15 @@
 from django.urls import path
 
 from . import views
+from . import consumos
 
 
 app_name = "inventario"
 
 urlpatterns = [
+    path("consumos/", consumos.lista_consumos, name="lista_consumos"),
+    path("consumos/<int:consumo_id>/", consumos.detalle_consumo, name="detalle_consumo"),
+    path("consumos/<int:consumo_id>/materiales/<int:detalle_id>/corregir/", consumos.corregir_cantidad_vista, name="corregir_cantidad_consumo"),
     path("", views.tablero, name="tablero"),
     path(
         "existencias/<int:existencia_id>/ajustar/",
