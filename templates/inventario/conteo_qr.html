@@ -1,0 +1,23 @@
+{% extends 'inventario/consumos_base.html' %}
+{% block titulo %}Conteo {{ producto.accesorio.codigo }}{% endblock %}
+{% block encabezado %}Conteo físico de bodega{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>{{ producto.accesorio.codigo }} - {{ producto.accesorio.descripcion }}</h2>
+  <div class="datos"><div><strong>Bodega</strong>{{ bodega.nombre }}</div><div><strong>Existencia registrada</strong><span class="cantidad">{{ saldo|floatformat:2 }}</span> {{ producto.unidad_medida }}</div></div>
+  <div class="aviso">Cuente <strong>todas las unidades de este accesorio en esta bodega</strong>. Si está repartido en varias cajas, sume todas antes de registrar la cantidad física.</div>
+  <p class="ayuda">La existencia mostrada corresponde a esta consulta. Si hay otro movimiento antes de confirmar, deberá consultar y contar nuevamente.</p>
+  {% if error %}<div class="errores" role="alert">{{ error }}</div>{% endif %}
+  {% if puede_gestionar %}
+  <form method="post" class="formulario-correccion">
+    {% csrf_token %}<input type="hidden" name="accion" value="revisar">
+    {{ form.non_field_errors }}
+    {% for oculto in form.hidden_fields %}{{ oculto }}{{ oculto.errors }}{% endfor %}
+    {% for campo in form.visible_fields %}<div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>{% endfor %}
+    <p class="ayuda">Ingrese la cantidad total encontrada, no la diferencia. Se admite cero. Primero revisará el resultado y después podrá confirmar.</p>
+    <button class="btn" type="submit">Revisar diferencia</button>
+  </form>
+  {% else %}<p>Su usuario tiene permiso de consulta. El ajuste debe hacerlo el responsable de inventario.</p>{% endif %}
+  <p class="acciones"><a class="btn secundario" href="{% url 'inventario:conteo_qr_producto' producto.pk bodega.pk %}">Volver a consultar existencia</a><a class="btn secundario" href="{% url 'inventario:lector_qr' %}">Escanear otra caja / cambiar bodega</a></p>
+</section>
+{% endblock %}

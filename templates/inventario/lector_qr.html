@@ -1,0 +1,34 @@
+{% extends 'inventario/consumos_base.html' %}
+{% load static %}
+{% block titulo %}Conteo por QR{% endblock %}
+{% block encabezado %}Inventario físico por QR{% endblock %}
+{% block contenido %}
+<style>#detener-camara[hidden],#video-qr[hidden],#lienzo-qr[hidden]{display:none!important}</style>
+<section class="tarjeta" id="lector-qr" data-consulta="{% url 'inventario:lector_qr' %}">
+  <h2>Identificar una caja</h2>
+  <p>Escanee el QR de la caja para consultar el accesorio. La cantidad se cuenta manualmente.</p>
+  <div class="acciones">
+    <button class="btn" id="activar-camara" type="button">Abrir cámara</button>
+    <button class="btn secundario" id="detener-camara" type="button" hidden>Detener cámara</button>
+  </div>
+  <p id="estado-lector" role="status" aria-live="polite" class="ayuda">También puede elegir una foto del QR o escribir el código abajo.</p>
+  <video id="video-qr" autoplay muted playsinline hidden style="width:100%;max-width:640px;background:#102a3c;border-radius:8px"></video>
+  <canvas id="lienzo-qr" hidden></canvas>
+  <div class="campo" style="max-width:640px;margin-top:15px"><label for="foto-qr">Leer una foto del QR</label><input id="foto-qr" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></div>
+  <p class="ayuda">La imagen se procesa en su dispositivo. Para consultar o guardar necesita conexión a SIGOB. La cámara en vivo requiere HTTPS y permiso del navegador.</p>
+  <form method="get" class="formulario-correccion">
+    {{ form.non_field_errors }}
+    <div class="campo"><label for="{{ form.codigo.id_for_label }}">{{ form.codigo.label }}</label>{{ form.codigo }}{{ form.codigo.errors }}</div>
+    <button class="btn" type="submit">Consultar accesorio</button>
+  </form>
+</section>
+{% if producto %}
+<section class="tarjeta">
+  <h2>{{ producto.accesorio.codigo }} - {{ producto.accesorio.descripcion }}</h2>
+  <p>Seleccione la bodega donde está contando:</p>
+  <div class="acciones">{% for bodega in bodegas %}<a class="btn" href="{% url 'inventario:conteo_qr_producto' producto.pk bodega.pk %}">{{ bodega.nombre }}</a>{% empty %}<p>No hay bodegas activas disponibles. Solicite su revisión al responsable del inventario.</p>{% endfor %}</div>
+</section>
+{% endif %}
+<script src="{% static 'inventario/vendor/jsQR-1.4.0.js' %}" defer></script>
+<script src="{% static 'inventario/js/conteo_qr.js' %}" defer></script>
+{% endblock %}

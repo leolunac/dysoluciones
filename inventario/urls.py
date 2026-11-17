@@ -1,12 +1,14 @@
 from django.urls import path
 
-from . import views
+from . import views, conteo_qr
 from . import consumos, entradas
 
 
 app_name = "inventario"
 
 urlpatterns = [
+    path("conteo-qr/", conteo_qr.lector, name="lector_qr"),
+    path("conteo-qr/<int:producto_id>/<int:ubicacion_id>/", conteo_qr.conteo, name="conteo_qr_producto"),
     path("entradas/", entradas.lista_entradas, name="lista_entradas"),
     path("entradas/<int:entrada_id>/", entradas.detalle_entrada, name="detalle_entrada"),
     path("entradas/<int:entrada_id>/materiales/<int:detalle_id>/corregir/", entradas.corregir_cantidad_vista, name="corregir_cantidad_entrada"),

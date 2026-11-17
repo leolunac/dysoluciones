@@ -1,0 +1,17 @@
+{% extends 'inventario/consumos_base.html' %}
+{% block titulo %}Revisar conteo{% endblock %}
+{% block encabezado %}Revisar conteo antes de confirmar{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h2>{{ producto.accesorio.codigo }} - {{ producto.accesorio.descripcion }}</h2>
+  <p><strong>Bodega:</strong> {{ bodega.nombre }}</p>
+  <div class="datos"><div><strong>Existencia registrada</strong><span class="cantidad">{{ saldo|floatformat:2 }}</span></div><div><strong>Conteo físico total</strong><span class="cantidad">{{ fisico|floatformat:2 }}</span></div><div><strong>Diferencia</strong><span class="cantidad">{{ diferencia|floatformat:2 }}</span> {{ producto.unidad_medida }}</div></div>
+  <div class="aviso">{% if diferencia > 0 %}Se ingresará la diferencia y el saldo quedará en {{ fisico|floatformat:2 }} {{ producto.unidad_medida }}.{% elif diferencia < 0 %}Se retirará la diferencia y el saldo quedará en {{ fisico|floatformat:2 }} {{ producto.unidad_medida }}.{% else %}Las cantidades coinciden. No se modificará el inventario ni se creará un movimiento.{% endif %}</div>
+  <p><strong>Motivo:</strong> {{ motivo|linebreaksbr }}</p>
+  <p>Confirme que este conteo incluye todas las cajas de este accesorio en la bodega. El ajuste quedará registrado con su usuario, fecha y motivo.</p>
+  <form method="post" action="{% url 'inventario:conteo_qr_producto' producto.pk bodega.pk %}">
+    {% csrf_token %}<input type="hidden" name="accion" value="confirmar"><input type="hidden" name="confirmacion" value="{{ confirmacion }}">
+    <div class="acciones"><button class="btn" type="submit">{% if diferencia == 0 %}Finalizar sin ajuste{% else %}Confirmar ajuste de inventario{% endif %}</button><a class="btn secundario" href="{% url 'inventario:conteo_qr_producto' producto.pk bodega.pk %}">Cancelar / volver a contar</a></div>
+  </form>
+</section>
+{% endblock %}
