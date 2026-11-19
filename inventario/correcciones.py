@@ -14,7 +14,7 @@ def corregir_cantidad(*, consumo_id, detalle_id, cantidad, motivo, revision, usu
     exigir_gestion(usuario)
     if not usuario.is_active:
         raise PermissionDenied
-    cantidad = forms.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01")).clean(cantidad)
+    cantidad = forms.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0")).clean(cantidad)
     motivo = forms.CharField(min_length=5, max_length=1000, strip=True).clean(motivo)
     revision = forms.IntegerField(min_value=0).clean(revision)
     with transaction.atomic():
@@ -26,6 +26,8 @@ def corregir_cantidad(*, consumo_id, detalle_id, cantidad, motivo, revision, usu
             raise ValidationError("La cantidad ya fue corregida por otra operación. Recargue y revise el historial antes de continuar.")
         if consumo.estado not in ("BORRADOR", "CONFIRMADO"):
             raise ValidationError("El estado de este consumo no permite corregir cantidades.")
+        if cantidad == 0 and consumo.estado != "CONFIRMADO":
+            raise ValidationError("El cero se reserva para devoluciones totales de consumos confirmados. En un borrador la cantidad debe ser mayor que cero.")
         anterior = detalle.cantidad
         if cantidad == anterior:
             raise ValidationError("La cantidad nueva debe ser diferente de la actual.")

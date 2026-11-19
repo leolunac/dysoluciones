@@ -222,10 +222,12 @@ class CorreccionesConsumoTests(TestCase):
         self.corregir('2')
         response=self.client.get(reverse('inventario:exportar_consumos'))
         ws=load_workbook(BytesIO(response.content)).active
-        self.assertEqual(ws['E2'].value,5)
-        self.assertEqual(ws['E3'].value,-3)
-        self.assertEqual(ws['G4'].value,200)
-        self.assertIn('Corrección',ws['D3'].value)
+        self.assertEqual(ws['E2'].value,2)
+        self.assertEqual(ws['G3'].value,200)
+        movimientos=load_workbook(BytesIO(response.content))['Movimientos']
+        self.assertEqual(movimientos['E2'].value,5)
+        self.assertEqual(movimientos['E3'].value,-3)
+        self.assertEqual(movimientos['G4'].value,200)
         tablero=self.client.get(reverse('inventario:tablero'))
         self.assertEqual(tablero.context['productos_mas_usados'][0]['total'],Decimal('2'))
         self.assertEqual(tablero.context['clientes_mayor_consumo'][0]['total'],Decimal('2'))
@@ -240,7 +242,7 @@ class CorreccionesConsumoTests(TestCase):
         self.assertEqual(list(tablero.context['productos_mas_usados']),[])
         response=self.client.get(reverse('inventario:exportar_consumos'),{'fecha_desde':antigua.date().isoformat(),'fecha_hasta':antigua.date().isoformat()})
         ws=load_workbook(BytesIO(response.content)).active
-        self.assertEqual(ws['G4'].value,200)
+        self.assertEqual(ws['G3'].value,200)
 
     @patch('inventario.correcciones.registrar_movimiento',side_effect=ValidationError('Fallo simulado'))
     def test_rollback_de_movimiento_no_deja_auditoria_parcial(self,movimiento):

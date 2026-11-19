@@ -94,12 +94,14 @@ def tablero(request):
             "producto__accesorio__descripcion",
         )
         .annotate(total=Sum("cantidad_neta"))
+        .filter(total__gt=0)
         .order_by("-total")[:5]
     )
     clientes_mayor_consumo = (
         consumos_periodo.filter(cliente__isnull=False)
         .values("cliente__nombre")
         .annotate(total=Sum("cantidad_neta"))
+        .filter(total__gt=0)
         .order_by("-total")[:5]
     )
 
@@ -548,75 +550,17 @@ def exportar_existencias_excel(request):
 @login_required
 def exportar_consumos_excel(request):
     exigir_consulta(request.user)
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill
+    from .reporte_consumos import FechasReporteConsumos, crear_reporte_consumos
 
-    fecha_desde = request.GET.get("fecha_desde", "").strip()
-    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
-    movimientos = (
-        MovimientoInventario.objects.filter(tipo__in=TIPOS_CONSUMO)
-        .select_related("cliente", "producto__accesorio")
-        .order_by("fecha_operacion", "id")
-    )
-    if fecha_desde:
-        movimientos = movimientos.filter(fecha_operacion__date__gte=fecha_desde)
-    if fecha_hasta:
-        movimientos = movimientos.filter(fecha_operacion__date__lte=fecha_hasta)
-
-    libro = Workbook()
-    hoja = libro.active
-    hoja.title = "Consumos"
-    encabezados = [
-        "Fecha",
-        "Unidad / cliente",
-        "Código",
-        "Descripción",
-        "Cantidad",
-        "Valor unitario",
-        "Valor total",
-    ]
-    hoja.append(encabezados)
-    for celda in hoja[1]:
-        celda.font = Font(bold=True, color="FFFFFF")
-        celda.fill = PatternFill("solid", fgColor="0B5FA5")
-
-    total_general = Decimal("0.00")
-    for movimiento in movimientos.iterator():
-        cantidad_neta = -movimiento.cantidad if movimiento.tipo == "CORR_CONSUMO_ENTRADA" else movimiento.cantidad
-        total = cantidad_neta * movimiento.precio_referencia_snapshot
-        total_general += total
-        hoja.append(
-            [
-                timezone.localtime(movimiento.fecha_operacion).strftime(
-                    "%Y-%m-%d %H:%M"
-                ),
-                movimiento.cliente.nombre if movimiento.cliente_id else "",
-                movimiento.producto.accesorio.codigo,
-                movimiento.producto.accesorio.descripcion + (
-                    f" · {movimiento.get_tipo_display()} · {movimiento.referencia}"
-                    if movimiento.tipo != "CONSUMO" else ""
-                ),
-                float(cantidad_neta),
-                float(movimiento.precio_referencia_snapshot),
-                float(total),
-            ]
-        )
-
-    hoja.append(["", "", "", "", "", "TOTAL", float(total_general)])
-    hoja.cell(hoja.max_row, 6).font = Font(bold=True)
-    hoja.cell(hoja.max_row, 7).font = Font(bold=True)
-    for columna in (6, 7):
-        for fila in range(2, hoja.max_row + 1):
-            hoja.cell(fila, columna).number_format = '$#,##0.00'
-    anchos = [18, 42, 16, 48, 12, 18, 18]
-    for indice, ancho in enumerate(anchos, start=1):
-        hoja.column_dimensions[chr(64 + indice)].width = ancho
-
-    respuesta = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    filtros = FechasReporteConsumos(request.GET)
+    if not filtros.is_valid():
+        return HttpResponse("Fechas del reporte no válidas. Use AAAA-MM-DD y un rango ordenado.", status=400, content_type="text/plain; charset=utf-8")
+    desde = filtros.cleaned_data["fecha_desde"]
+    hasta = filtros.cleaned_data["fecha_hasta"]
+    libro = crear_reporte_consumos(fecha_desde=desde, fecha_hasta=hasta)
+    respuesta = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     respuesta["Content-Disposition"] = (
-        f'attachment; filename="consumos_{fecha_desde or "inicio"}_{fecha_hasta or "hoy"}.xlsx"'
+        f'attachment; filename="consumos_{desde.isoformat() if desde else "inicio"}_{hasta.isoformat() if hasta else "hoy"}.xlsx"'
     )
     libro.save(respuesta)
     return respuesta

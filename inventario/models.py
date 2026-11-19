@@ -393,8 +393,11 @@ class DetalleConsumoInventario(models.Model):
         ordering = ["id"]
 
     def clean(self):
-        if self.cantidad is not None and self.cantidad <= 0:
-            raise ValidationError({"cantidad": "La cantidad debe ser mayor que cero."})
+        if self.cantidad is not None:
+            if self.cantidad < 0:
+                raise ValidationError({"cantidad": "La cantidad no puede ser negativa."})
+            if self.cantidad == 0 and (not self.consumo_id or self.consumo.estado != "CONFIRMADO"):
+                raise ValidationError({"cantidad": "La cantidad debe ser mayor que cero. El cero se reserva para devoluciones totales de consumos confirmados."})
 
     @property
     def total(self):
@@ -414,8 +417,8 @@ class CorreccionCantidadConsumo(models.Model):
     class Meta:
         ordering = ["-creado", "-pk"]
         constraints = [
-            models.CheckConstraint(condition=models.Q(cantidad_anterior__gt=0), name="inventario_corr_anterior_positiva"),
-            models.CheckConstraint(condition=models.Q(cantidad_nueva__gt=0), name="inventario_corr_nueva_positiva"),
+            models.CheckConstraint(condition=models.Q(cantidad_anterior__gte=0), name="inventario_corr_anterior_no_negativa"),
+            models.CheckConstraint(condition=models.Q(cantidad_nueva__gte=0), name="inventario_corr_nueva_no_negativa"),
         ]
 
     def __str__(self):

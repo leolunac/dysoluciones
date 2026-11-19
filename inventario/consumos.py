@@ -32,6 +32,11 @@ class CorregirCantidadForm(forms.Form):
     revision = forms.IntegerField(min_value=0, widget=forms.HiddenInput())
 
 
+class CorregirCantidadConsumoConfirmadoForm(CorregirCantidadForm):
+    # El formulario base sigue exigiendo positivos para entradas y borradores.
+    cantidad = forms.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0"), label="Cantidad realmente consumida", widget=forms.NumberInput(attrs={"step": "0.01", "min": "0"}))
+
+
 @login_required
 @require_GET
 def lista_consumos(request):
@@ -81,7 +86,8 @@ def corregir_cantidad_vista(request, consumo_id, detalle_id):
     exigir_gestion(request.user)
     detalle = get_object_or_404(DetalleConsumoInventario.objects.select_related("consumo__cliente", "consumo__ubicacion_origen", "producto__accesorio"), pk=detalle_id, consumo_id=consumo_id)
     revision = detalle.correcciones.order_by("-pk").values_list("pk", flat=True).first() or 0
-    form = CorregirCantidadForm(request.POST if request.method == "POST" else None,
+    clase_form = CorregirCantidadConsumoConfirmadoForm if detalle.consumo.estado == "CONFIRMADO" else CorregirCantidadForm
+    form = clase_form(request.POST if request.method == "POST" else None,
                                initial={"cantidad": detalle.cantidad, "revision": revision})
     if request.method == "POST" and form.is_valid():
         try:
@@ -90,6 +96,7 @@ def corregir_cantidad_vista(request, consumo_id, detalle_id):
             form.add_error(None, "; ".join(exc.messages))
             detalle.refresh_from_db()
         else:
-            messages.success(request, "Cantidad corregida. El cambio quedó registrado en el historial.")
+            mensaje = "Devolución total registrada. El consumo quedó en cero y las unidades regresaron al inventario." if form.cleaned_data["cantidad"] == 0 else "Cantidad corregida. El cambio quedó registrado en el historial."
+            messages.success(request, mensaje)
             return redirect("inventario:detalle_consumo", consumo_id=consumo_id)
     return render(request, "inventario/consumo_corregir.html", {"detalle": detalle, "consumo": detalle.consumo, "form": form})
