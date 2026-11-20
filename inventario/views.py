@@ -48,7 +48,11 @@ def tablero(request):
             "producto__accesorio",
             "ubicacion",
         )
-        .filter(ubicacion__tipo="BODEGA")
+        .filter(
+            ubicacion__tipo="BODEGA",
+            producto__activo=True,
+            producto__accesorio__activo=True,
+        )
         .annotate(
             valor_total=ExpressionWrapper(
                 F("cantidad") * F("producto__precio_referencia"),
@@ -71,12 +75,16 @@ def tablero(request):
     )
     resumen = ExistenciaInventario.objects.filter(
         ubicacion__tipo="BODEGA",
+        producto__activo=True,
+        producto__accesorio__activo=True,
     ).aggregate(
         unidades=Sum("cantidad"),
         valorizado=Sum(valor),
     )
     bajos = ExistenciaInventario.objects.filter(
         ubicacion__tipo="BODEGA",
+        producto__activo=True,
+        producto__accesorio__activo=True,
         cantidad__lte=F("producto__stock_minimo"),
         producto__stock_minimo__gt=0,
     ).count()
@@ -464,7 +472,11 @@ def exportar_existencias_excel(request):
 
     existencias = (
         ExistenciaInventario.objects
-        .filter(ubicacion__tipo="BODEGA")
+        .filter(
+            ubicacion__tipo="BODEGA",
+            producto__activo=True,
+            producto__accesorio__activo=True,
+        )
         .select_related("producto__accesorio", "ubicacion")
         .order_by("producto__accesorio__codigo", "ubicacion__nombre")
     )
