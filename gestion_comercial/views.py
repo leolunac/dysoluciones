@@ -1687,7 +1687,7 @@ def generar_pdf_cotizacion(request, cotizacion_id):
     # CIERRE
     # =====================================================
 
-        elaborado_nombre = (
+    elaborado_nombre = (
         cotizacion.elaborado_por.get_full_name().strip()
         or cotizacion.elaborado_por.username
     )
