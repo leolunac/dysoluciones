@@ -141,6 +141,16 @@
             margin-top:22px;
         }
 
+        [hidden]{display:none!important;}
+        .buscar-cliente-fila{display:flex;gap:8px;align-items:stretch;}
+        .buscar-cliente-fila input{min-width:0;}
+        #limpiar-busqueda-cliente{border:1px solid #cbd5e1;padding:9px;}
+        #buscador-cliente{margin-bottom:12px;}
+        .resultados-cliente{list-style:none;padding:0;margin:8px 0 0;border:1px solid #cbd5e1;border-radius:8px;max-height:240px;overflow-y:auto;}
+        .resultado-cliente{display:block;width:100%;padding:11px;text-align:left;background:white;color:#073b6f;border:0;border-bottom:1px solid #e2e8f0;cursor:pointer;font:inherit;overflow-wrap:anywhere;}
+        .resultado-cliente:hover,.resultado-cliente:focus-visible{background:#e9f5fb;}
+        .buscar-cliente-fila input:focus-visible,.resultado-cliente:focus-visible{outline:2px solid #1685bd;outline-offset:-2px;}
+
         @media(max-width:700px){
             .grid{
                 grid-template-columns:1fr;
@@ -210,7 +220,18 @@
                         {{ form.cliente.label }}
                     </label>
 
-                    {{ form.cliente }}
+                    <div id="buscador-cliente" hidden>
+                        <label for="buscar-cliente">Buscar unidad / cliente</label>
+                        <div class="buscar-cliente-fila">
+                            <input type="search" id="buscar-cliente" class="campo"
+                                   placeholder="Escriba parte del nombre..." autocomplete="off"
+                                   aria-controls="resultados-cliente" aria-describedby="estado-busqueda-cliente">
+                            <button type="button" id="limpiar-busqueda-cliente" class="btn btn-light">Limpiar</button>
+                        </div>
+                        <small id="estado-busqueda-cliente" class="hint" role="status" aria-live="polite">Escriba un nombre y pulse el resultado para seleccionarlo.</small>
+                        <ul id="resultados-cliente" class="resultados-cliente" hidden></ul>
+                    </div>
+                    <div id="selector-cliente">{{ form.cliente }}</div>
                 </div>
 
                 <div class="field">
@@ -320,5 +341,70 @@
 
 </div>
 
+<script>
+(() => {
+    "use strict";
+    const select = document.querySelector("#selector-cliente select");
+    const buscador = document.getElementById("buscador-cliente");
+    const input = document.getElementById("buscar-cliente");
+    const lista = document.getElementById("resultados-cliente");
+    const estado = document.getElementById("estado-busqueda-cliente");
+    const limpiar = document.getElementById("limpiar-busqueda-cliente");
+    if (!select || select.multiple || select.disabled) return;
+    const normalizar = texto => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es").trim();
+    const opciones = Array.from(select.options).filter(opcion => opcion.value && !opcion.disabled && !(opcion.parentElement.tagName === "OPTGROUP" && opcion.parentElement.disabled));
+    function buscar() {
+        lista.replaceChildren();
+        const palabras = normalizar(input.value).split(/\s+/).filter(Boolean);
+        lista.hidden = palabras.length === 0;
+        if (!palabras.length) {
+            estado.textContent = "Escriba un nombre y pulse el resultado para seleccionarlo.";
+            return;
+        }
+        const coincidencias = opciones.filter(opcion => palabras.every(palabra => normalizar(opcion.textContent).includes(palabra)));
+        estado.textContent = coincidencias.length === 0
+            ? "No se encontraron unidades o clientes. Pruebe con otro nombre."
+            : `${coincidencias.length} coincidencia(s). Seleccione un resultado.` + (coincidencias.length > 10 ? " Se muestran las primeras 10; escriba más para precisar." : "");
+        lista.hidden = coincidencias.length === 0;
+        coincidencias.slice(0, 10).forEach(opcion => {
+            const item = document.createElement("li");
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "resultado-cliente";
+            boton.textContent = opcion.textContent;
+            boton.addEventListener("click", () => {
+                select.value = opcion.value;
+                select.dispatchEvent(new Event("change", {bubbles: true}));
+                input.value = "";
+                lista.replaceChildren();
+                lista.hidden = true;
+                estado.textContent = `Seleccionado: ${opcion.textContent}`;
+                select.focus();
+            });
+            item.append(boton);
+            lista.append(item);
+        });
+    }
+    input.addEventListener("input", buscar);
+    input.addEventListener("keydown", evento => {
+        if (evento.key === "Enter") {
+            evento.preventDefault();
+            const primero = lista.querySelector("button");
+            if (primero) primero.focus();
+        }
+    });
+    limpiar.addEventListener("click", () => {
+        input.value = "";
+        buscar();
+        input.focus();
+    });
+    select.addEventListener("change", () => {
+        input.value = "";
+        buscar();
+        if (select.value) estado.textContent = `Seleccionado: ${select.options[select.selectedIndex].textContent}`;
+    });
+    buscador.hidden = false;
+})();
+</script>
 </body>
 </html>
